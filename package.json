@@ -1,0 +1,19 @@
+{
+  "name": "peepsbot",
+  "version": "1.0.0",
+  "description": "peeps bot backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^12.3.1",
+    "dotenv": "^8.2.0",
+    "firebase-admin": "^9.1.1",
+    "googleapis": "^39.2.0",
+    "moment-timezone": "^0.5.31"
+  }
+}
