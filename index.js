@@ -1607,6 +1607,13 @@ class ProcessorBot {
 
     async randomLittleQuote() {
         let quotes = await this.readLittleQuotes();
+
+        for (const row of quotes) {
+            if (row[0].startsWith("\"")) {
+                row[0] = row[0].slice(1, row[0].length - 1)
+            }
+        }
+
         let total = 0;
         for (const row of quotes) {
             total += parseInt(row[1]);
@@ -1648,6 +1655,13 @@ class ProcessorBot {
 
     async notRandomLittleQuote(messagecontent) {
         let quotes = await this.readLittleQuotes();
+
+        for (const row of quotes) {
+            if (row[0].startsWith("\"")) {
+                row[0] = row[0].slice(1, row[0].length - 1)
+            }
+        }
+
         let probs = [];
         let total = 0;
         for (let i = 0; i < quotes.length; i++) {
