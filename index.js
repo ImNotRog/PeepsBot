@@ -1518,6 +1518,13 @@ class ProcessorBot {
         });
     }
 
+    stripQuotes(txt) {
+        if(txt.startsWith('"')) {
+            txt = txt.slice(1,txt.length - 1)
+        }
+        return txt;
+    }
+
     async readLittleQuotes() {
         
         let res = await this.sheets.spreadsheets.values.get({
@@ -1526,11 +1533,17 @@ class ProcessorBot {
         })
         let rows = res.data.values;
 
+        for (const row of rows) {
+            row[0] = this.stripQuotes(row[0])
+        }
+
         return rows;
     
     }
 
     async addLittleQuote(quote,stars) {
+
+        quote = this.stripQuotes(quote);
 
         let alreadydone = await this.readLittleQuotes();
         let line = -1;
@@ -1608,12 +1621,6 @@ class ProcessorBot {
     async randomLittleQuote() {
         let quotes = await this.readLittleQuotes();
 
-        for (const row of quotes) {
-            if (row[0].startsWith("\"")) {
-                row[0] = row[0].slice(1, row[0].length - 1)
-            }
-        }
-
         let total = 0;
         for (const row of quotes) {
             total += parseInt(row[1]);
@@ -1655,12 +1662,6 @@ class ProcessorBot {
 
     async notRandomLittleQuote(messagecontent) {
         let quotes = await this.readLittleQuotes();
-
-        for (const row of quotes) {
-            if (row[0].startsWith("\"")) {
-                row[0] = row[0].slice(1, row[0].length - 1)
-            }
-        }
 
         let probs = [];
         let total = 0;
