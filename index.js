@@ -1526,11 +1526,6 @@ class ProcessorBot {
         })
         let rows = res.data.values;
 
-        for(const row of rows){
-            if (row[0].startsWith("\"")) {
-                row[0] = row[0].slice(1, row[0].length - 1)
-            }
-        }
         return rows;
     
     }
@@ -1807,6 +1802,7 @@ class ProcessorBot {
      */
     async onReaction(reaction, user) {
 
+        
         if (reaction.message.channel.id !== "754912483390652426" && reaction.message.channel.id !== "756698378116530266") return;
 
         // When we receive a reaction we check if the reaction is partial or not
