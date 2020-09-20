@@ -1808,6 +1808,17 @@ class ProcessorBot {
             this.ttt.onTTT(message, args);
 
         }
+        
+        if (command === "profile") {
+            
+            message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!. )
+            "embed": {
+                "title": "Mr. Litte's Inbox",
+                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "description": "Click here to send me a Schoology message"
+            }
+            
+        }
     }
 
     /**
