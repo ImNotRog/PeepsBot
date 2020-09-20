@@ -325,6 +325,20 @@ class NN {
         return this.forwardPropogate(inputs);
     }
 
+    runRealOutput(inputsOrig) {
+        let inputs = this.normalize(inputsOrig);
+        let stuff =  this.forwardPropogate(inputs);
+        let maxval = -1;
+        let maxind = 0;
+        for (let i = 0; i < stuff.length; i++) {
+            if (stuff[i] > maxval) {
+                maxval = stuff[i];
+                maxind = i;
+            }
+        }
+        return maxind
+    }
+
     /**
      * @param {number[]} inputs 
      * @returns {{ outputs: number[], beforeOutputs: number[]}}
@@ -762,25 +776,52 @@ class NN {
 
 }
 
-let testSet = "I've just got so much hw but is the rpm rock mice thing hw?"
+let testSet = "bio's so hard wow"
+let origtest = testSet;
 
-let outputs = ["There is no such thing as a homework emergency", "like all beautiful things, this quiz must come to an end", "I'm going to say it three times. Rock Pocket Mice Activity is not homework. Rock Pocket Mice Activity is not homework. Rock Pocket Mice Activity is not homework."]
+let outputs = 
+[
+    "There is no such thing as a homework emergency", 
+    "like all beautiful things, this quiz must come to an end", 
+    "I'm going to say it three times. Rock Pocket Mice Activity is not homework. Rock Pocket Mice Activity is not homework. Rock Pocket Mice Activity is not homework.",
+    "i'm lurking in the background",
+    "I'm Mr.Little, your biology teacher!",
+    "heh heh",
+    "how did you guys like that?",
+    "thats why biology is such a challenging course",
+    "cannot not",
+    "knock that out"
+]
 
-let training0 = ["I have so much hw", "There's so much homework", "I'm never going to finish this homework", "There's just too much hw", "How much hw is there?"];
-let labels0 = [0,0,0,0,0]
+let trainingmat = [
+    ["I have so much hw", "Wait, there's so much homework", "I'm never going to finish this homework", "There's just too much hw", "How much hw is there?"],
+    ["When is this test over?", "Is the test over?", "When am I going to finish this quiz?", "The quiz better be over", "Did the test end?"],
+    ["Is the rock pocket mice homework?", "Is the rpm activity homework?", "Is the rpm going to be hw?"],
+    ["where are you?", "what are you doing?", "what do you do while we work?"],
+    ["who are you?", "wait, who are you?"],
+    ["LOL HAHA", "LMAO", "why did you assign all that hw?", "you gave us so much hw! why?", "why did you give us so much hw?"],
+    ["WHAT WAS THAT?", "wait, was that you?"],
+    ["There's so much bio hw", "bio h is so hard", "I hate biology honors", "bio honors has so much hw"],
+    ["yesn't", "yes but no", "do you think so?", "yesnt"],
+    [""]
 
-let training1 = ["When is this test over?", "Is the test over?", "When am I going to finish this quiz?", "The quiz better be over", "Did the test end?"]
-let labels1 = [1,1,1,1,1]
+]
 
-let training2 = ["Is the rock pocket mice homework?", "Is the rpm activity homework?", "Is the rpm going to be hw?"]
-let labels2 = [2,2,2,2,2,2,2,2,]
+let training = []
+let labels = []
 
-let training = [ ...training0, ...training1, ...training2 ]
-let labels = [ ...labels0, ...labels1, ...labels2 ]
+for(let i = 0; i < trainingmat.length; i++){
+    for(let j = 0; j < trainingmat[i].length; j++){
+        training.push(trainingmat[i][j]);
+        labels.push(i);
+    }
+}
+
+
 let allwords = [];
 for(let train of training) {
 
-    train = train.replace(/\?/g, '')
+    train = train.replace(/,\?/g, '')
     train = train.toLowerCase();
 
     const words = train.split(" ");
@@ -808,8 +849,7 @@ for(let i = 0; i < training.length; i++) {
     }
 }
 
-console.log(training);
-testSet = testSet.replace(/.\?/, "")
+testSet = testSet.replace(/.\?/g, "")
 testSet = testSet.toLowerCase()
 let testfreq = []
 for (const word of allwords) {
@@ -827,7 +867,7 @@ let nn = new NN({
     labels: labels,
     csv: [],
     rate: 0.1,
-    layers: [allwords.length, 10, 3]
+    layers: [allwords.length, 10, outputs.length]
 })
 
 nn.batchSize = 5;
@@ -838,7 +878,8 @@ let start = async function() {
         
     }
 
-    console.log(nn.run(testSet))
+    console.log(origtest)
+    console.log( outputs[ nn.runRealOutput(testSet) ])
 }
 
 start();
