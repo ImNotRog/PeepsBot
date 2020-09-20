@@ -1739,14 +1739,20 @@ class ProcessorBot {
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
-
+        const commandList = ["stopttt", "help", "playfirstsongofplaylist", "littlerr", "cache", "spreadsheets", "little", "littler", "ttt", "profile");
+        commandList.sort();
+                             
         if (command === "stopttt") {
             this.ttt.stop();
             message.react("✅");
         }
 
         if(command === "help") {
-            message.reply("This bot is new. The only commands are !TTT and !STOPTTT.")
+            let result = "";
+            for (int i = 0; i < commandList.length; i++) {
+                result = result.concat(commandList[i], "\n");
+            }
+            message.channel.send(result);
         }
 
         if(command === "playfirstsongofplaylist") {
@@ -1811,7 +1817,7 @@ class ProcessorBot {
         
         if (command === "profile") {
             
-            message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!." );
+            message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
             // "embed": {
             //     "title": "Mr. Litte's Inbox",
             //     "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
