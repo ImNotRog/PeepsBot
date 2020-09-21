@@ -1849,9 +1849,9 @@ class ProcessorBot {
         commandList = [help, playfirst, littlerr, cache, spreadsheets, little, littler, ttt, profile];
 
         
-        for(const command of commandList) {
-            if(command === command.name) {
-                command.runFunc();
+        for(const c of commandList) {
+            if(command === c.name) {
+                c.runFunc();
             }
         }
 
