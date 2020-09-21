@@ -1762,112 +1762,112 @@ class ProcessorBot {
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
 
-        let commandList = [];
-        const help = new Command("help",
-                                 "Lists all available commands",
-                                 function () {
-                                     let result = "";
-                                     for (let i = 0; i < commandList.length; i++) {
-                                         if (commandList[i].enabled) {
-                                             result = result.concat(commandList[i].name, " - ENABLED", "\n", commandList[i].description, "\n");
-                                         } else {
-                                             result = result.concat(commandList[i].name, " - DISABLED", "\n", commandList[i].description, "\n");
-                                         }
-                                     }
-                                     message.channel.send(result);
-                                 });
-        const playfirst = new Command("playfirst",
-                                      "Plays the first song on the playlist.",
-                                      function () {
-                                          try {
-                                              this.playList(args[0] + " " + args[1], message);
-                                          } catch (err) {
-                                              message.reply(err);
-                                          }
-                                      });
-        const littlerr = new Command("littlerr",
-                                     "!little's smarter brother's smarter brother. Generates a definitively-not-random quote using the massive capacity of its neural network brain.",
-                                     function () {
-                                         let testSet = args.join(" ");
-                                         testSet = testSet.replace(/.\?/, "")
-                                         testSet = testSet.toLowerCase()
-                                         let testfreq = []
-                                         for (const word of allwords) {
-                                             if (testSet.includes(word)) {
-                                                 testfreq.push(1);
-                                             } else {
-                                                 testfreq.push(0);
-                                             }
-                                         }
-                                         testSet = testfreq;
+        // let commandList = [];
+        // const help = new Command("help",
+        //                          "Lists all available commands",
+        //                          function () {
+        //                              let result = "";
+        //                              for (let i = 0; i < commandList.length; i++) {
+        //                                  if (commandList[i].enabled) {
+        //                                      result = result.concat(commandList[i].name, " - ENABLED", "\n", commandList[i].description, "\n");
+        //                                  } else {
+        //                                      result = result.concat(commandList[i].name, " - DISABLED", "\n", commandList[i].description, "\n");
+        //                                  }
+        //                              }
+        //                              message.channel.send(result);
+        //                          });
+        // const playfirst = new Command("playfirst",
+        //                               "Plays the first song on the playlist.",
+        //                               function () {
+        //                                   try {
+        //                                       this.playList(args[0] + " " + args[1], message);
+        //                                   } catch (err) {
+        //                                       message.reply(err);
+        //                                   }
+        //                               });
+        // const littlerr = new Command("littlerr",
+        //                              "!little's smarter brother's smarter brother. Generates a definitively-not-random quote using the massive capacity of its neural network brain.",
+        //                              function () {
+        //                                  let testSet = args.join(" ");
+        //                                  testSet = testSet.replace(/.\?/, "")
+        //                                  testSet = testSet.toLowerCase()
+        //                                  let testfreq = []
+        //                                  for (const word of allwords) {
+        //                                      if (testSet.includes(word)) {
+        //                                          testfreq.push(1);
+        //                                      } else {
+        //                                          testfreq.push(0);
+        //                                      }
+        //                                  }
+        //                                  testSet = testfreq;
 
-                                         let stuff = nn.run(testSet);
-                                         let maxval = -1;
-                                         let maxind = 0;
-                                         for(let i = 0; i < stuff.length; i++){
-                                             if(stuff[i] > maxval) {
-                                                 maxval = stuff[i];
-                                                 maxind = i;
-                                             }
-                                         }
+        //                                  let stuff = nn.run(testSet);
+        //                                  let maxval = -1;
+        //                                  let maxind = 0;
+        //                                  for(let i = 0; i < stuff.length; i++){
+        //                                      if(stuff[i] > maxval) {
+        //                                          maxval = stuff[i];
+        //                                          maxind = i;
+        //                                      }
+        //                                  }
 
-                                         message.channel.send(outputs[maxind]);
-                                     });
-        const cache = new Command("cache",
-                                  "Caches messages",
-                                  function () {
-                                      message.channel.messages.fetch({
-                                          limit: 90
-                                      });
-                                      message.react("✅");
-                                  });
-        const spreadsheets = new Command("spreadsheets",
-                                         "Shows Mr. LittleBot's dummy thicc sheets.",
-                                         function () {
-                                             message.reply(`Spreadsheets: Little Quotes: <https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0>,\nOur Groovy History: <https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805>`);
-                                         });
-        const little = new Command("little",
-                                   "Generates a random Little quote.",
-                                   async function () {
-                                       message.channel.send(await this.randomLittleQuote());
-                                   });
-        const littler = new Command("littler",
-                                    "!little's smarter brother. Generates a not-so-random quote based on what you put after it.",
-                                    async function () {
-                                        message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
-                                    });
-        const ttt = new Command("ttt",
-                                "Starts a tic-tac-toe game.",
-                                function () {
-                                    this.ttt.onTTT(message, args);
-                                });
-        const profile = new Command("profile",
-                                    "Shows you Mr. Little's profile.",
-                                    function () {
-                                        message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
-                                    });
-        commandList = [help, playfirst, littlerr, cache, spreadsheets, little, littler, ttt, profile];
+        //                                  message.channel.send(outputs[maxind]);
+        //                              });
+        // const cache = new Command("cache",
+        //                           "Caches messages",
+        //                           function () {
+        //                               message.channel.messages.fetch({
+        //                                   limit: 90
+        //                               });
+        //                               message.react("✅");
+        //                           });
+        // const spreadsheets = new Command("spreadsheets",
+        //                                  "Shows Mr. LittleBot's dummy thicc sheets.",
+        //                                  function () {
+        //                                      message.reply(`Spreadsheets: Little Quotes: <https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0>,\nOur Groovy History: <https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805>`);
+        //                                  });
+        // const little = new Command("little",
+        //                            "Generates a random Little quote.",
+        //                            async function () {
+        //                                message.channel.send(await this.randomLittleQuote());
+        //                            });
+        // const littler = new Command("littler",
+        //                             "!little's smarter brother. Generates a not-so-random quote based on what you put after it.",
+        //                             async function () {
+        //                                 message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
+        //                             });
+        // const ttt = new Command("ttt",
+        //                         "Starts a tic-tac-toe game.",
+        //                         function () {
+        //                             this.ttt.onTTT(message, args);
+        //                         });
+        // const profile = new Command("profile",
+        //                             "Shows you Mr. Little's profile.",
+        //                             function () {
+        //                                 message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
+        //                             });
+        // commandList = [help, playfirst, littlerr, cache, spreadsheets, little, littler, ttt, profile];
 
         
-        for(const c of commandList) {
-            if(command === c.name) {
-                c.runFunc();
-            }
-        }
+        // for(const c of commandList) {
+        //     if(command === c.name) {
+        //         c.runFunc();
+        //     }
+        // }
 
-        /*
+        
         if (command === "stopttt") {
             this.ttt.stop();
             message.react("✅");
         }
 
-        if(command === "help") {
-            let result = "";
-            for (let i = 0; i < commandList.length; i++) {
-                result = result.concat(commandList[i], "\n");
-            }
-            message.channel.send(result);
-        }
+        // if(command === "help") {
+        //     let result = "";
+        //     for (let i = 0; i < commandList.length; i++) {
+        //         result = result.concat(commandList[i], "\n");
+        //     }
+        //     message.channel.send(result);
+        // }
 
         if(command === "playfirstsongofplaylist") {
             try {
@@ -1939,7 +1939,7 @@ class ProcessorBot {
             // }
             
         }
-        */
+        
     }
 
     /**
