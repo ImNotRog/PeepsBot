@@ -1282,11 +1282,13 @@ class command {
             this.body();
         } else {
             message.channel.send("That command is disabled");
+        }
     }
 
     toggle() {
         this.enabled = !this.enabled;
     }
+}
 
 class ProcessorBot {
 
