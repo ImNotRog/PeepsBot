@@ -1268,7 +1268,7 @@ class TTTbot {
 
 }
 
-class command {
+class Command {
     constructor(name, description, body) {
         this.name = name;
         this.description = description;
@@ -1761,8 +1761,9 @@ class ProcessorBot {
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
+
         let commandList = [];
-        const help = new command("help",
+        const help = new Command("help",
                                  "Lists all available commands",
                                  function () {
                                      let result = "";
@@ -1775,7 +1776,7 @@ class ProcessorBot {
                                      }
                                      message.channel.send(result);
                                  });
-        const playfirst = new command("playfirst",
+        const playfirst = new Command("playfirst",
                                       "Plays the first song on the playlist.",
                                       function () {
                                           try {
@@ -1784,7 +1785,7 @@ class ProcessorBot {
                                               message.reply(err);
                                           }
                                       });
-        const littlerr = new command("littlerr",
+        const littlerr = new Command("littlerr",
                                      "!little's smarter brother's smarter brother. Generates a definitively-not-random quote using the massive capacity of its neural network brain.",
                                      function () {
                                          let testSet = args.join(" ");
@@ -1812,7 +1813,7 @@ class ProcessorBot {
 
                                          message.channel.send(outputs[maxind]);
                                      });
-        const cache = new command("cache",
+        const cache = new Command("cache",
                                   "Caches messages",
                                   function () {
                                       message.channel.messages.fetch({
@@ -1820,33 +1821,40 @@ class ProcessorBot {
                                       });
                                       message.react("✅");
                                   });
-        const spreadsheets = new command("spreadsheets",
+        const spreadsheets = new Command("spreadsheets",
                                          "Shows Mr. LittleBot's dummy thicc sheets.",
                                          function () {
                                              message.reply(`Spreadsheets: Little Quotes: <https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0>,\nOur Groovy History: <https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805>`);
                                          });
-        const little = new command("little",
+        const little = new Command("little",
                                    "Generates a random Little quote.",
                                    function () {
                                        message.channel.send(await this.randomLittleQuote());
                                    });
-        const littler = new command("littler",
+        const littler = new Command("littler",
                                     "!little's smarter brother. Generates a not-so-random quote based on what you put after it.",
                                     function () {
                                         message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
                                     });
-        const ttt = new command("ttt",
+        const ttt = new Command("ttt",
                                 "Starts a tic-tac-toe game.",
                                 function () {
                                     this.ttt.onTTT(message, args);
                                 });
-        const profile = new command("profile",
+        const profile = new Command("profile",
                                     "Shows you Mr. Little's profile.",
                                     function () {
                                         message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
                                     });
         commandList = [help, playfirst, littlerr, cache, spreadsheets, little, littler, ttt, profile];
-        commandList.sort();
+
+        
+        for(const command of commandList) {
+            if(command === command.name) {
+                command.runFunc();
+            }
+        }
+
         /*
         if (command === "stopttt") {
             this.ttt.stop();
