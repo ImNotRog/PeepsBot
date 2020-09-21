@@ -1739,7 +1739,7 @@ class ProcessorBot {
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
-        const commandList = ["stopttt", "help", "playfirstsongofplaylist", "littlerr", "cache", "spreadsheets", "little", "littler", "ttt", "profile");
+        const commandList = ["stopttt", "help", "playfirstsongofplaylist", "littlerr", "cache", "spreadsheets", "little", "littler", "ttt", "profile"];
         commandList.sort();
                              
         if (command === "stopttt") {
@@ -1749,7 +1749,7 @@ class ProcessorBot {
 
         if(command === "help") {
             let result = "";
-            for (int i = 0; i < commandList.length; i++) {
+            for (let i = 0; i < commandList.length; i++) {
                 result = result.concat(commandList[i], "\n");
             }
             message.channel.send(result);
