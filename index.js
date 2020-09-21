@@ -1828,12 +1828,12 @@ class ProcessorBot {
                                          });
         const little = new Command("little",
                                    "Generates a random Little quote.",
-                                   function () {
+                                   async function () {
                                        message.channel.send(await this.randomLittleQuote());
                                    });
         const littler = new Command("littler",
                                     "!little's smarter brother. Generates a not-so-random quote based on what you put after it.",
-                                    function () {
+                                    async function () {
                                         message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
                                     });
         const ttt = new Command("ttt",
