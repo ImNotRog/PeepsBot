@@ -1,3 +1,28 @@
+/**
+ * {
+  "embeds": [
+    {
+      "title": "– Spreadsheets –",
+      "description": "A list of this bot's spreadsheets.",
+      "color": 65280,
+      "fields": [
+        {
+          "name": "Little Quotes",
+          "value": "[Little Quotes description] Click [here](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,) to go to Little Quotes."
+        },
+        {
+          "name": "Our Groovy History",
+          "value": "[Groovy History description] Click [here](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805) to go to Our Groovy History."
+        }
+      ],
+      "footer": {
+        "text": "Requested by [someone]"
+      }
+    }
+  ]
+}
+ */
+
 const Discord = require("discord.js");
 
 require("dotenv").config();
@@ -625,7 +650,6 @@ class ProcessorBot {
                 range: `${listname}!A2:B`
             })
             let rows = res.data.values;
-            // console.log(rows);
             return rows;
         } else {
             throw "Wait, that's illegal."
@@ -819,8 +843,6 @@ class ProcessorBot {
         let alreadydone = await this.readLittleQuotes();
         let line = -1;
 
-        console.log(quote);
-
         for(let i = 0; i < alreadydone.length; i++ ){
             if(alreadydone[i][0] === quote) {
                 line = i+2;
@@ -903,7 +925,10 @@ class ProcessorBot {
         for(const row of quotes) {
             randomnum -= parseInt(row[1])
             if(randomnum <= 0) {
-                return this.stripQuotes(row[0]);
+
+                let quote = this.stripQuotes(row[0])
+                console.log(`My wisdom was summoned, and I responded with ${quote}.`)
+                return quote;
             }
         }
     }
@@ -1099,7 +1124,7 @@ class ProcessorBot {
         
         if (reaction.emoji.name === "👍") {
             this.addLittleQuote(reaction.message.content, reaction.count)
-            console.log(`${reaction.message.author}'s message "${reaction.message.content}" has ${reaction.count} thumbs ups!`);
+            console.log(`"${reaction.message.content}" has ${reaction.count} thumbs ups!`);
         }
 
         
