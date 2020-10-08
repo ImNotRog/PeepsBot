@@ -1,27 +1,3 @@
-/**
- * {
-  "embeds": [
-    {
-      "title": "– Spreadsheets –",
-      "description": "A list of this bot's spreadsheets.",
-      "color": 65280,
-      "fields": [
-        {
-          "name": "Little Quotes",
-          "value": "[Little Quotes description] Click [here](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,) to go to Little Quotes."
-        },
-        {
-          "name": "Our Groovy History",
-          "value": "[Groovy History description] Click [here](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805) to go to Our Groovy History."
-        }
-      ],
-      "footer": {
-        "text": "Requested by [someone]"
-      }
-    }
-  ]
-}
- */
 
 const Discord = require("discord.js");
 
@@ -571,7 +547,10 @@ class ProcessorBot {
         this.getSheetIDs();
 
         this.collectingChannels = ["754912483390652426", "756698378116530266"]
-        this.updateChannels = ["748669830244073536",] //"756704885264875633"]
+        // this.updateChannels = ["748669830244073536",] //"756704885264875633"]
+        this.updateChannels = [];
+
+        this.musicBots = ["234395307759108106"]
 
     }
 
@@ -986,18 +965,19 @@ class ProcessorBot {
      * @param {String} txt 
      */
     async processPlayMessage(txt){
-        if(txt.startsWith("[")) {
+        if (txt && txt.startsWith("[")) {
             let endtitle = txt.indexOf("](");
-            let title = txt.slice(1,endtitle);
+            let title = txt.slice(1, endtitle);
 
             let startlink = endtitle + 2;
             let endlink = txt.indexOf(") [<@")
-            let link = txt.slice(startlink,endlink);
+            let link = txt.slice(startlink, endlink);
 
             await this.addday();
 
-            await this.addGroovyEntry(title,link)
+            await this.addGroovyEntry(title, link)
         }
+        
     }
 
     /**
@@ -1005,6 +985,18 @@ class ProcessorBot {
      * @param {Discord.Message} message
      */
     async onMessage(message) {
+        try {
+            await this.onMessageDo(message);
+        } catch(err) {
+            message.channel.send("**There was an error:**\n" + err);
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message
+     */
+    async onMessageDo(message) {
 
         for(const id of this.destroy) {
             if(message.author.id === id) {
@@ -1013,7 +1005,7 @@ class ProcessorBot {
         }
 
         if (message.author.bot) {
-            if(message.embeds[0]){
+            if(this.musicBots.indexOf( message.author.id ) !== -1 && message.embeds[0]){
 
                 let prevmsg = await message.channel.messages.fetch({
                     limit: 2
@@ -1043,14 +1035,6 @@ class ProcessorBot {
             message.react("✅");
         }
 
-        // if(command === "help") {
-        //     let result = "";
-        //     for (let i = 0; i < commandList.length; i++) {
-        //         result = result.concat(commandList[i], "\n");
-        //     }
-        //     message.channel.send(result);
-        // }
-
         if(command === "playfirstsongofplaylist") {
             try {
                 this.playList(args[0] + " " + args[1], message)
@@ -1067,7 +1051,25 @@ class ProcessorBot {
         }
 
         if(command === "spreadsheets") {
-            message.reply(`Spreadsheets: Little Quotes: <https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0>,\nOur Groovy History: <https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805>`)
+            message.channel.send(new Discord.MessageEmbed({
+                "title": "– Spreadsheets –",
+                "description": "A list of PeepsBot's spreadsheets.",
+                "color": "#00ffff",
+                "fields": [
+                    {
+                        "name": "Little Quotes",
+                        "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
+                    },
+                    {
+                        "name": "Our Groovy History",
+                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805) to go to Our Groovy History."
+                    }
+                ],
+                "footer": {
+                    "text": `Requested by ${message.author.username}`,
+                    "icon_url": message.author.displayAvatarURL()
+                }
+            }));
         }
 
         if(command === "little") {
@@ -1078,11 +1080,11 @@ class ProcessorBot {
             message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
         }
 
-        if (command === "ttt") {
+        // if (command === "ttt") {
 
-            this.ttt.onTTT(message, args);
+        //     this.ttt.onTTT(message, args);
 
-        }
+        // }
         
         if (command === "profile") {
             
