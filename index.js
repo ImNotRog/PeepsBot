@@ -532,7 +532,7 @@ class ProcessorBot {
         this.ttt = new TTTbot(this.ref);
 
         this.destroy = [];
-        this.prefix = "!"
+        this.prefix = "--"
 
         this.daysmap = new Map();
 
@@ -578,6 +578,42 @@ class ProcessorBot {
             await channel.send("**PeepsBot is now online.**")
         }
 
+        // console.log(this.daysmap)
+
+        // let keys = [... this.daysmap.keys()];
+        // let key = keys[0];
+        // let keyid = this.daysmap.get(key);
+        // let rows = (await this.readSheet(this.groovySheetID, key));
+        // let values = [];
+        // for(let i = 0; i < rows.length; i++){
+        //     let val = rows[i][0];
+        //     if(values.indexOf(val) === -1) {
+        //         values.push(val);
+        //     } else {
+        //         let requests = [];
+        //         requests.push( {
+        //             deleteDimension: {
+        //                 range: {
+        //                     sheetId: keyid,
+        //                     dimension: "ROWS",
+        //                     startIndex: i,
+        //                     endIndex: i+1
+        //                 }
+        //             }
+        //         });
+
+        //         await this.sheets.spreadsheets.batchUpdate({
+        //             spreadsheetId: this.groovySheetID,
+        //             resource: { requests },
+        //         });
+
+        //     }
+
+            
+        // }
+
+        // console.log(rows);
+
          
     }
 
@@ -608,41 +644,6 @@ class ProcessorBot {
 
         await this.addday();
         await this.formatPage();
-    }
-
-    getNow() {
-        let today = moment.tz("America/Los_Angeles")
-        let todaystr = today.format("ddd MM/DD/YYYY")
-        
-        return [today,todaystr]
-    }
-
-    getTodayStr(){
-        return this.getNow()[1];
-    }
-
-    async readList(listname) {
-        if(this.daysmap.has(listname)) {
-            let currsheetid = this.daysmap.get(listname)
-            let res = await this.sheets.spreadsheets.values.get({
-                spreadsheetId: this.groovySheetID,
-                range: `${listname}!A2:B`
-            })
-            let rows = res.data.values;
-            return rows;
-        } else {
-            throw "Wait, that's illegal."
-        }
-    }
-
-    /**
-     * 
-     * @param {String} listname 
-     * @param {Discord.Message} message
-     */
-    async playList(listname,message) {
-        let list = await this.readList(listname);
-        await message.channel.send("-play " + list[0][0]);
     }
 
     async addday() {
@@ -753,6 +754,41 @@ class ProcessorBot {
         });
     }
 
+    getNow() {
+        let today = moment.tz("America/Los_Angeles")
+        let todaystr = today.format("ddd MM/DD/YYYY")
+        
+        return [today,todaystr]
+    }
+
+    getTodayStr(){
+        return this.getNow()[1];
+    }
+
+    async readList(listname) {
+        if(this.daysmap.has(listname)) {
+            let currsheetid = this.daysmap.get(listname)
+            let res = await this.sheets.spreadsheets.values.get({
+                spreadsheetId: this.groovySheetID,
+                range: `${listname}!A2:B`
+            })
+            let rows = res.data.values;
+            return rows;
+        } else {
+            throw "Wait, that's illegal."
+        }
+    }
+
+    /**
+     * 
+     * @param {String} listname 
+     * @param {Discord.Message} message
+     */
+    async playList(listname,message) {
+        let list = await this.readList(listname);
+        await message.channel.send("-play " + list[0][0]);
+    }
+
     async getSheetIDs() {
         this.quoteSheetID = "";
         let getdata = (await this.sheets.spreadsheets.get({ spreadsheetId: this.quoteID }));
@@ -801,18 +837,32 @@ class ProcessorBot {
 
     async readLittleQuotes() {
         
-        let res = await this.sheets.spreadsheets.values.get({
-            spreadsheetId: this.quoteID,
-            range: `Sheet1!A2:B`
-        })
-        let rows = res.data.values;
+        // let res = await this.sheets.spreadsheets.values.get({
+        //     spreadsheetId: this.quoteID,
+        //     range: `Sheet1!A2:B`
+        // })
+        // let rows = res.data.values;
 
+        let rows = await this.readSheet(this.quoteID, `Sheet1!A2:B`)
         for (const row of rows) {
             row[0] = this.stripQuotes(row[0])
         }
 
         return rows;
     
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {string} range 
+     */
+    async readSheet(id, range) {
+        let res = await this.sheets.spreadsheets.values.get({
+            spreadsheetId: id,
+            range
+        })
+        return res.data.values;
     }
 
     async addLittleQuote(quote,stars) {
@@ -1029,26 +1079,6 @@ class ProcessorBot {
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
-        
-        if (command === "stopttt") {
-            this.ttt.stop();
-            message.react("✅");
-        }
-
-        if(command === "playfirstsongofplaylist") {
-            try {
-                this.playList(args[0] + " " + args[1], message)
-            } catch (err) {
-                message.reply(err);
-            }
-        }
-
-        if(command === "cache") {
-            message.channel.messages.fetch({
-                limit: 90
-            });
-            message.react("✅")
-        }
 
         if(command === "spreadsheets") {
             message.channel.send(new Discord.MessageEmbed({
@@ -1060,10 +1090,10 @@ class ProcessorBot {
                         "name": "Little Quotes",
                         "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
                     },
-                    {
-                        "name": "Our Groovy History",
-                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805) to go to Our Groovy History."
-                    }
+                    // {
+                    //     "name": "Our Groovy History",
+                    //     "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805)"
+                    // }
                 ],
                 "footer": {
                     "text": `Requested by ${message.author.username}`,
@@ -1079,21 +1109,10 @@ class ProcessorBot {
         if(command === "littler") {
             message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
         }
-
-        // if (command === "ttt") {
-
-        //     this.ttt.onTTT(message, args);
-
-        // }
         
         if (command === "profile") {
             
             message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
-            // "embed": {
-            //     "title": "Mr. Litte's Inbox",
-            //     "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            //     "description": "Click here to send me a Schoology message"
-            // }
             
         }
         
