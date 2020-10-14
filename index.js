@@ -1115,6 +1115,10 @@ class ProcessorBot {
             message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
             
         }
+
+        if(command === "help") {
+            message.channel.send(`This is a relatively new bot. The only command is ${this.prefix}little.`)
+        }
         
     }
 
