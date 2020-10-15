@@ -1074,6 +1074,12 @@ class ProcessorBot {
             return;
         };
 
+        if(message.content === "!little") {
+            message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
+        } else if(message.content === "<@!750573267026182185>") {
+            message.channel.send(`Try ${this.prefix}little`);
+        }
+
         if (!message.content.startsWith(this.prefix)) return;
 
         const commandBody = message.content.slice(this.prefix.length);
