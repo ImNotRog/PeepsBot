@@ -1077,7 +1077,7 @@ class ProcessorBot {
         if(message.content === "!little") {
             message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
         } else if(message.content === "<@!750573267026182185>") {
-            message.channel.send(`Try ${this.prefix}little`);
+            message.channel.send(await this.randomLittleQuote());
         }
 
         if (!message.content.startsWith(this.prefix)) return;
