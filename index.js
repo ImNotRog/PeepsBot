@@ -552,6 +552,8 @@ class ProcessorBot {
 
         this.musicBots = ["234395307759108106"]
 
+        this.approvedMusicServers = ["748669830244073533"]
+
     }
 
     /**
@@ -577,43 +579,48 @@ class ProcessorBot {
             let channel = await client.channels.fetch(id)
             await channel.send("**PeepsBot is now online.**")
         }
+        
+        let keys = [... this.daysmap.keys()];
 
-        // console.log(this.daysmap)
+        let requests = [];
 
-        // let keys = [... this.daysmap.keys()];
-        // let key = keys[0];
-        // let keyid = this.daysmap.get(key);
-        // let rows = (await this.readSheet(this.groovySheetID, key));
-        // let values = [];
-        // for(let i = 0; i < rows.length; i++){
-        //     let val = rows[i][0];
-        //     if(values.indexOf(val) === -1) {
-        //         values.push(val);
-        //     } else {
-        //         let requests = [];
-        //         requests.push( {
-        //             deleteDimension: {
-        //                 range: {
-        //                     sheetId: keyid,
-        //                     dimension: "ROWS",
-        //                     startIndex: i,
-        //                     endIndex: i+1
-        //                 }
-        //             }
-        //         });
+        for(let key of keys){
+            let keyid = this.daysmap.get(key);
+            let rows = (await this.readSheet(this.groovySheetID, key));
+            let values = [];
+            let numdeleted = 0;
 
-        //         await this.sheets.spreadsheets.batchUpdate({
-        //             spreadsheetId: this.groovySheetID,
-        //             resource: { requests },
-        //         });
+            for(let i = 0; i < rows.length; i++){
+                let val = rows[i][0];
+                if(values.indexOf(val) === -1) {
+                    values.push(val);
+                } else {
+                    
+                    requests.push( {
+                        deleteDimension: {
+                            range: {
+                                sheetId: keyid,
+                                dimension: "ROWS",
+                                startIndex: i-numdeleted,
+                                endIndex: i+1-numdeleted
+                            }
+                        }
+                    });
 
-        //     }
+                    numdeleted++;
 
-            
-        // }
+                }
 
-        // console.log(rows);
+                
+            }
+        }
 
+        await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.groovySheetID,
+            resource: { requests },
+        });
+
+        console.log("Cleanup done!")
          
     }
 
@@ -1055,7 +1062,7 @@ class ProcessorBot {
         }
 
         if (message.author.bot) {
-            if(this.musicBots.indexOf( message.author.id ) !== -1 && message.embeds[0]){
+            if(this.approvedMusicServers.indexOf(message.guild.id) !== -1 && this.musicBots.indexOf( message.author.id ) !== -1 && message.embeds[0]){
 
                 let prevmsg = await message.channel.messages.fetch({
                     limit: 2
