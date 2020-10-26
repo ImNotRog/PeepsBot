@@ -615,10 +615,13 @@ class ProcessorBot {
             }
         }
 
-        await this.sheets.spreadsheets.batchUpdate({
-            spreadsheetId: this.groovySheetID,
-            resource: { requests },
-        });
+        try {
+            await this.sheets.spreadsheets.batchUpdate({
+                spreadsheetId: this.groovySheetID,
+                resource: { requests },
+            });
+        } catch (err){ }
+        
 
         console.log("Cleanup done!")
          
