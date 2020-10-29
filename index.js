@@ -18,16 +18,13 @@ const client = new Discord.Client();
 const { google } = require('googleapis');
 
 let moment = require("moment-timezone");
-const { max } = require("moment-timezone");
-// const { title } = require("process");
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
  * given callback function.
  * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials, callback) {
+function authorize(credentials) {
     const { client_secret, client_id, redirect_uris } = credentials.installed;
     const oAuth2Client = new google.auth.OAuth2(
         client_id, client_secret, redirect_uris[0]);
@@ -43,8 +40,370 @@ function authorize(credentials, callback) {
 }
 
 class SheetsUser {
-    SheetsUser() {
+    /**
+     * 
+     * @param {google.auth.OAuth2} auth 
+     * @param {Map<string,string>} sheetIdMap 
+     */
+    constructor(auth, sheetIdMap) {
+        this.sheets = google.sheets({version: 'v4', auth});
+        this.map = new Map();
+        for(const key of sheetIdMap.keys()) {
+            this.map.set(key, {
+                id: sheetIdMap.get(key),
+                sheets: ""
+            })
+        }
+        this.setup = false;
+        this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    }
+
+    async SetUpSheets() {
+        for(const key of this.map.keys()) {
+
+            let info = await this.getSpreadsheetInfo(key);
+            let newmap = new Map();
+
+            for(const sheet of info.data.sheets){
+                newmap.set(sheet.properties.title, sheet.properties.sheetId);
+            }
+
+            this.map.get(key).sheets = newmap;
+        }
+    }
+
+    async SetUpSheet(name) {
+        let info = await this.getSpreadsheetInfo(name);
+        let newmap = new Map();
+
+        for(const sheet of info.data.sheets){
+            newmap.set(sheet.properties.title, sheet.properties.sheetId);
+        }
+
+        this.map.get(name).sheets = newmap;
+    }
+
+    handleSheetId(param) {
+        return (this.map.has(param) ? this.map.get(param).id : param);
+    }
+
+    async getSubsheets(name) {
+        return [...this.map.get(name).sheets.keys()];
+    }
+
+    async add(sheetname,subsheetname,row) {
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        let requests = [];
+
+        let mappedrow = row.map((x) => {
+            if(typeof x === "string") {
+                return {
+                    userEnteredValue: {
+                        stringValue: x
+                    }
+                }
+            } else if(typeof x === "number") {
+                return {
+                    userEnteredValue: {
+                        numberValue: x
+                    }
+                }
+            }
+        })
+
+        requests.push({
+            appendCells: {
+                "sheetId": subsheetid,
+                "rows": [
+                    { 
+                        values: mappedrow
+                    }
+                ],
+                fields: "*"
+            }
+        })
+
+        await this.executeRequest(sheetname, requests);
+    }
+
+    async bulkAdd(sheetname, subsheetname, rows) {
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        let requests = [];
+
+        let mappedrows = rows.map((y) => {
+            return {
+                values: y.map((x) => {
+                    if(typeof x === "string") {
+                        return {
+                            userEnteredValue: {
+                                stringValue: x
+                            }
+                        }
+                    } else if(typeof x === "number") {
+                        return {
+                            userEnteredValue: {
+                                numberValue: x
+                            }
+                        }
+                    }
+                })
+            }
+        })
         
+
+        requests.push({
+            appendCells: {
+                "sheetId": subsheetid,
+                "rows": mappedrows,
+                fields: "*"
+            }
+        })
+
+        await this.executeRequest(sheetname, requests);
+    }
+
+    async updateRow(sheetname, subsheetname, row, num) {
+        let requests = [];
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        let mappedrow = row.map((x) => {
+            if(typeof x === "string") {
+                return {
+                    userEnteredValue: {
+                        stringValue: x
+                    }
+                }
+            } else if(typeof x === "number") {
+                return {
+                    userEnteredValue: {
+                        numberValue: x
+                    }
+                }
+            }
+        })
+
+        requests.push({
+            updateCells: {
+                rows: [{values: mappedrow }],
+                fields: "*",
+                range: {
+                    "sheetId": subsheetid,
+                    "startRowIndex": num,
+                    "endRowIndex": num+1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": row.length
+                },
+            }
+        })
+
+        await this.executeRequest(sheetname, requests);
+    }
+
+    newRow(oldrow,newrow,rowcheck) {
+        for(let i = 0; i < rowcheck.length; i++) {
+            if(rowcheck[i] === true) { // It matters!
+                // Don't change anything
+            } else if(rowcheck[i] === "KEEP") {
+                // Don't change anything
+            } else if(rowcheck[i] === "CHANGE") {
+                oldrow[i] = newrow[i];
+            } else if(typeof rowcheck[i] === "function") {
+                oldrow[i] = rowcheck[i](oldrow[i], newrow[i]);
+            }
+        }
+        return oldrow;
+    }
+
+    async addWithoutDuplicates(sheetname, subsheetname, row, check) {
+        let rows = await this.readSheet(sheetname, subsheetname);
+
+        let duplicate = false;
+        for(let i = 1; i < rows.length; i++) {
+            let currrow = rows[i];
+            let currisduplicate = true;
+            for(let j = 0; j < check.length; j++) {
+                if(check[j] === true) {
+                    if(currrow[j] !== row[j]) {
+                        currisduplicate = false;
+                    }
+                }
+            }
+            if(currisduplicate) {
+                duplicate = true;
+                await this.updateRow(sheetname, subsheetname, this.newRow(currrow.slice(0,row.length),row,check), i);
+            }
+        }
+
+        if(!duplicate) {
+            await this.add(sheetname,subsheetname,row);
+        }
+    }
+
+    async bulkAddWithoutDuplicates(sheetname, subsheetname, addrows, check) {
+        let changes = new Map();
+        let rows = await this.readSheet(sheetname, subsheetname);
+        let newrows = [];
+
+        for(const row of addrows) {
+            let duplicate = false;
+            for(let i = 1; i < rows.length+newrows.length; i++) {
+
+                let currrow;
+
+                if(i >= rows.length) currrow = newrows[i - rows.length];
+                else currrow = rows[i];
+
+                if(changes.has(i)) currrow = changes.get(i);
+                let currisduplicate = true;
+                for(let j = 0; j < check.length; j++) {
+                    if(check[j] === true) {
+                        if(currrow[j] !== row[j]) {
+                            currisduplicate = false;
+                        }
+                    }
+                }
+                if(currisduplicate) {
+
+                    duplicate = true;
+                    if(i < rows.length) {
+                        changes.set(i, this.newRow(currrow.slice(0,row.length), row, check));
+                    } else {
+                        newrows[i - rows.length] = this.newRow(currrow.slice(0,row.length), row, check);
+                    }
+                    
+                }
+            }
+            if(!duplicate) {
+                newrows.push(row);
+            }
+        }
+
+        await this.bulkAdd(sheetname, subsheetname, newrows);
+        for(const key of changes.keys()){
+            await this.updateRow(sheetname, subsheetname, changes.get(key), key);
+        }
+
+    }
+
+    async getSpreadsheetInfo(name) {
+        name = this.handleSheetId(name);
+        return await this.sheets.spreadsheets.get({ spreadsheetId: name });
+    }
+
+    async readSheet(sheetname,subsheetname,range) {
+        let info = this.map.get(sheetname);
+        let res = await this.sheets.spreadsheets.values.get({
+            spreadsheetId: info.id,
+            range: range ? `${subsheetname}!${range}` : subsheetname
+        })
+        return res.data.values;
+    }
+
+    async createSubsheet(sheetname,subsheetname,format) {
+        let requests = [];
+
+        requests.push({
+            addSheet: {
+                properties: {
+                    title: subsheetname,
+                    tabColor: format.tabColor
+                }
+            }
+        })
+
+        await this.executeRequest(sheetname, requests);
+        await this.SetUpSheet(sheetname);
+        await this.formatSubsheet(sheetname,subsheetname,format);
+    }
+
+    async formatSubsheet(sheetname,subsheetname,format) {
+        let requests = [];
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        
+        if(format.columnResize) {
+            for(let i = 0; i < format.columnResize.length; i++) {
+                requests.push({
+                    "updateDimensionProperties": {
+                        "range": {
+                            "sheetId": subsheetid,
+                            "dimension": "COLUMNS",
+                            "startIndex": i,
+                            "endIndex": i + 1
+                        },
+                        "properties": {
+                            "pixelSize": format.columnResize[i]
+                        },
+                        "fields": "pixelSize"
+                    }
+                })
+            }
+            
+        }
+
+        
+        if(format.headers) {
+            let headermap = format.headers.map((x) => {
+            return {
+                userEnteredValue: {
+                    stringValue: x
+                }
+            }});
+
+            requests.push({
+                updateCells: {
+                    "rows": [{
+                        values: headermap
+                    }],
+                    fields: "*",
+                    range: {
+                        "sheetId": subsheetid,
+                        "startRowIndex": 0,
+                        "endRowIndex": 1,
+                        "startColumnIndex": 0,
+                        "endColumnIndex": format.headers.length
+                    },
+                }
+            })
+            requests.push({
+                repeatCell: {
+                    range: {
+                        sheetId: subsheetid,
+                        startRowIndex: 0,
+                        endRowIndex: 1
+                    },
+                    cell: {
+                        userEnteredFormat: {
+                            horizontalAlignment: "CENTER",
+                            textFormat: {
+                                bold: true
+                            }
+                        }
+                    },
+                    "fields": "userEnteredFormat(textFormat,horizontalAlignment)"
+                }
+            });
+            requests.push( {
+                update_sheet_properties: {
+                    properties: {
+                        sheet_id: subsheetid,
+                        grid_properties: {
+                            frozen_row_count: 1
+                        }
+                    },
+                    fields: 'gridProperties.frozenRowCount'
+                }
+            })
+        }
+        
+        this.executeRequest(sheetname, requests);
+        
+    }
+
+    async executeRequest(sheetname,requests) {
+        if(requests.length === 0) return;
+        await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.map.get(sheetname).id,
+            resource: { requests },
+        });
     }
 }
 
@@ -53,25 +412,31 @@ class ProcessorBot {
     /**
      * @constructor
      * @param {google.auth.OAuth2} auth 
+     * @param {FirebaseFirestore.Firestore} db
      */
-    constructor(auth) {
-
-        this.sheets = google.sheets({ version: 'v4', auth });
+    constructor(auth,db) {
 
         this.destroy = [];
         this.prefix = "--"
 
         this.daysmap = new Map();
 
-        this.groovySheetID = "1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU"
-        this.todaySheetID = ""
+        let currmap = new Map();
+        currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
+        currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
+        this.sheetsUser = new SheetsUser(auth, currmap);
 
-        this.quoteID = "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM"
-        this.quoteSheetID = ""
-
-        this.colors = [this.RGBtoObj(255, 0, 0), this.RGBtoObj(255, 255, 0), this.RGBtoObj(0, 255, 0), this.RGBtoObj(0, 255, 255), this.RGBtoObj(0, 0, 255), this.RGBtoObj(255, 0, 255), this.RGBtoObj(255, 150, 0), this.RGBtoObj(0, 0, 0)]
-    
-        this.getSheetIDs();
+        this.colors = 
+        [
+            this.RGBtoObj(255, 0, 0), 
+            this.RGBtoObj(255, 255, 0), 
+            this.RGBtoObj(0, 255, 0), 
+            this.RGBtoObj(0, 255, 255), 
+            this.RGBtoObj(0, 0, 255), 
+            this.RGBtoObj(255, 0, 255), 
+            this.RGBtoObj(255, 150, 0), 
+            this.RGBtoObj(0, 0, 0)
+        ];
 
         this.collectingChannels = ["754912483390652426", "756698378116530266"]
         this.updateChannels = [];
@@ -80,6 +445,22 @@ class ProcessorBot {
 
         this.approvedMusicServers = ["748669830244073533"]
 
+        this.db = db;
+    }
+
+    async createUser(id) {
+        await this.db.collection("PeepsBot").doc(id).set({
+            BioRank: 0,
+            Inventory: {
+            },
+            TRGs: {
+            },
+            Ts: 0
+        });
+    }
+
+    async getRef(){ 
+        return (await this.db.collection("PeepsBot").doc("KEY").get()).data();
     }
 
     /**
@@ -87,10 +468,10 @@ class ProcessorBot {
      * @param {Discord.Client} client 
      */
     async onConstruct(client){
-        
-        await this.getdays();
 
-        await this.readList(this.getTodayStr())
+        await this.sheetsUser.SetUpSheets();
+
+        console.log(await this.getRef());
 
         for (const id of this.collectingChannels) {
 
@@ -98,59 +479,14 @@ class ProcessorBot {
             channel.messages.fetch({
                 limit: 90
             })
+
         }
 
         for (const id of this.updateChannels) {
-
             let channel = await client.channels.fetch(id)
             await channel.send("**PeepsBot is now online.**")
         }
         
-        let keys = [... this.daysmap.keys()];
-
-        let requests = [];
-
-        for(let key of keys){
-            let keyid = this.daysmap.get(key);
-            let rows = (await this.readSheet(this.groovySheetID, key));
-            let values = [];
-            let numdeleted = 0;
-
-            for(let i = 0; i < rows.length; i++){
-                let val = rows[i][0];
-                if(values.indexOf(val) === -1) {
-                    values.push(val);
-                } else {
-                    
-                    requests.push( {
-                        deleteDimension: {
-                            range: {
-                                sheetId: keyid,
-                                dimension: "ROWS",
-                                startIndex: i-numdeleted,
-                                endIndex: i+1-numdeleted
-                            }
-                        }
-                    });
-
-                    numdeleted++;
-
-                }
-
-                
-            }
-        }
-
-        try {
-            await this.sheets.spreadsheets.batchUpdate({
-                spreadsheetId: this.groovySheetID,
-                resource: { requests },
-            });
-        } catch (err){ }
-        
-
-        console.log("Cleanup done!")
-         
     }
 
     RGBtoObj(r, g, b) {
@@ -161,208 +497,39 @@ class ProcessorBot {
         }
     }
 
-    /**
-     * 
-     */
-    async getdays() {
-        let getdata = (await this.sheets.spreadsheets.get({ spreadsheetId: this.groovySheetID }));
-
-        ;const [today, todaystr] = this.getNow();
-
-        this.daysmap.clear();
-        for (const curr of getdata.data.sheets) {
-            this.daysmap.set(curr.properties.title, curr.properties.sheetId)
-
-            if(curr.properties.title === todaystr) {
-                this.todaySheetID = curr.properties.sheetId
-            }
-        }
-
-        await this.addday();
-        await this.formatPage();
-    }
-
-    async addday() {
-
-        ;const [today, todaystr] = this.getNow();
-
-        if (!this.daysmap.has(todaystr)) {
-            let requests = [];
-
-            requests.push({
-                addSheet: {
-                    properties: {
-                        title: todaystr,
-                        tabColor: this.colors[today.day()]
-                    }
-                }
-            })
-
-            await this.sheets.spreadsheets.batchUpdate({
-                spreadsheetId: this.groovySheetID,
-                resource: { requests },
-            });
-
-            await this.getdays();
-
-        }
-
-    }
-
-    async formatPage() {
-        let requests = [];
-
-        requests.push( {
-            update_sheet_properties: {
-                properties: {
-                    sheet_id: this.todaySheetID,
-                    grid_properties: {
-                        frozen_row_count: 1
-                    }
-                },
-                fields: 'gridProperties.frozenRowCount'
-            }
-        })
-
-        requests.push({
-            "updateDimensionProperties": {
-                "range": {
-                    "sheetId": this.todaySheetID,
-                    "dimension": "COLUMNS",
-                    "startIndex": 0,
-                    "endIndex": 2
-                },
-                "properties": {
-                    "pixelSize": 600
-                },
-                "fields": "pixelSize"
-            }
-        },)
-
-        requests.push({
-            updateCells: {
-                "rows": [{
-                    values: [{
-                        userEnteredValue: {
-                            stringValue: "Title"
-                        }
-                    }, {
-                        userEnteredValue: {
-                            stringValue: "Link"
-                        }
-                    }]
-                }],
-                fields: "*",
-                range: {
-                    "sheetId": this.todaySheetID,
-                    "startRowIndex": 0,
-                    "endRowIndex": 1,
-                    "startColumnIndex": 0,
-                    "endColumnIndex": 2
-                },
-            }
-        })
-
-        requests.push({
-            repeatCell: {
-                range: {
-                    sheetId: this.todaySheetID,
-                    startRowIndex: 0,
-                    endRowIndex: 1
-                },
-                cell: {
-                    userEnteredFormat: {
-                        horizontalAlignment: "CENTER",
-                        textFormat: {
-                            bold: true
-                        }
-                    }
-                },
-                "fields": "userEnteredFormat(textFormat,horizontalAlignment)"
-            }
-        });
-
-        await this.sheets.spreadsheets.batchUpdate({
-            spreadsheetId: this.groovySheetID,
-            resource: {
-                requests
-            },
-        });
-    }
-
-    getNow() {
-        let today = moment.tz("America/Los_Angeles")
-        let todaystr = today.format("ddd MM/DD/YYYY")
-        
-        return [today,todaystr]
+    getDay() {
+        return moment.tz("America/Los_Angeles").day();
     }
 
     getTodayStr(){
-        return this.getNow()[1];
+        return moment.tz("America/Los_Angeles").format("ddd MM/DD/YYYY");
     }
 
-    async readList(listname) {
-        if(this.daysmap.has(listname)) {
-            let currsheetid = this.daysmap.get(listname)
-            let res = await this.sheets.spreadsheets.values.get({
-                spreadsheetId: this.groovySheetID,
-                range: `${listname}!A2:B`
-            })
-            let rows = res.data.values;
-            return rows;
-        } else {
-            throw "Wait, that's illegal."
-        }
-    }
-
-    /**
-     * 
-     * @param {String} listname 
-     * @param {Discord.Message} message
-     */
-    async playList(listname,message) {
-        let list = await this.readList(listname);
-        await message.channel.send("-play " + list[0][0]);
-    }
-
-    async getSheetIDs() {
-        this.quoteSheetID = "";
-        let getdata = (await this.sheets.spreadsheets.get({ spreadsheetId: this.quoteID }));
-        for (const curr of getdata.data.sheets) { 
-            this.quoteSheetID = curr.properties.sheetId
-        }
+    async readList() {
+        return this.sheetsUser.readSheet("music", "Groovy");
     }
 
     async addGroovyEntry(title,link) {
-        let requests = [];
-
-        requests.push({
-            appendCells: {
-                "sheetId": this.todaySheetID,
-                "rows": [
-                    { 
-                        values: [ {
-                            userEnteredValue: {
-                                stringValue: title
-                            }
-                        }, {
-                            userEnteredValue: {
-                                stringValue: link
-                            }
-                        }]
-                    }
-                ],
-                fields: "*"
-            }
-        })
-
-        await this.sheets.spreadsheets.batchUpdate({
-            spreadsheetId: this.groovySheetID,
-            resource: {
-                requests
-            },
-        });
+        this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title,link,1,this.getTodayStr()], [true,true, (x) => parseInt(x)+1, "CHANGE"]);
     }
+
+    /**
+     * @param {String} txt 
+     */
+    async processPlayMessage(txt){
+        if (txt && txt.startsWith("[")) {
+            let endtitle = txt.indexOf("](");
+            let title = txt.slice(1, endtitle);
+
+            let startlink = endtitle + 2;
+            let endlink = txt.indexOf(") [<@")
+            let link = txt.slice(startlink, endlink);
+
+            await this.addGroovyEntry(title, link)
+        }
+        
+    }
+
 
     stripQuotes(txt) {
         if(txt.startsWith('"')) {
@@ -373,103 +540,17 @@ class ProcessorBot {
 
     async readLittleQuotes() {
 
-        let rows = await this.readSheet(this.quoteID, `Sheet1!A2:B`)
+        let rows = (await this.sheetsUser.readSheet("quotes", "Quotes")).slice(1);
         for (const row of rows) {
             row[0] = this.stripQuotes(row[0])
         }
-
         return rows;
     
     }
 
-    /**
-     * 
-     * @param {string} id 
-     * @param {string} range 
-     */
-    async readSheet(id, range) {
-        let res = await this.sheets.spreadsheets.values.get({
-            spreadsheetId: id,
-            range
-        })
-        return res.data.values;
-    }
-
     async addLittleQuote(quote,stars) {
-
         quote = this.stripQuotes(quote);
-
-        let alreadydone = await this.readLittleQuotes();
-        let line = -1;
-
-        for(let i = 0; i < alreadydone.length; i++ ){
-            if(alreadydone[i][0] === quote) {
-                line = i+2;
-            }
-        }
-
-        if(line === -1) {
-            let requests = [];
-
-            requests.push({
-                appendCells: {
-                    "sheetId": this.quoteSheetID,
-                    "rows": [{
-                        values: [{
-                            userEnteredValue: {
-                                stringValue: quote
-                            }
-                        }, {
-                            userEnteredValue: {
-                                numberValue: stars
-                            }
-                        }]
-                    }],
-                    fields: "*"
-                }
-            })
-
-            await this.sheets.spreadsheets.batchUpdate({
-                spreadsheetId: this.quoteID,
-                resource: {
-                    requests
-                },
-            });
-        } else {
-
-            let requests = [];
-
-            requests.push({
-                updateCells: {
-                    "rows": [{
-                        values: [{
-                            userEnteredValue: {
-                                stringValue: quote
-                            }
-                        }, {
-                            userEnteredValue: {
-                                numberValue: stars
-                            }
-                        }]
-                    }],
-                    fields: "*",
-                    range: {
-                        "sheetId": this.quoteSheetID,
-                        "startRowIndex": line-1,
-                        "endRowIndex": line,
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 2
-                    },
-                }
-            })
-
-            await this.sheets.spreadsheets.batchUpdate({
-                spreadsheetId: this.quoteID,
-                resource: {
-                    requests
-                },
-            });
-        }
+        this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote,stars], [true, "CHANGE"])
     }
 
     async randomLittleQuote() {
@@ -492,19 +573,10 @@ class ProcessorBot {
         }
     }
 
-    /**
-     * 
-     * @param {string} txt1 
-     * @param {string} txt2 
-     */
     similarities(txt1, txt2) {
 
-        if(txt1.startsWith("\"")) {
-            txt1 = txt1.slice(1,txt1.length-1)
-        }
-        if (txt2.startsWith("\"")) {
-            txt2 = txt2.slice(1, txt2.length - 1)
-        }
+        txt1 = txt1.replace(/[\.?!'"]/g, "");
+        txt2 = txt2.replace(/[\.?!'"]/g, "");
 
         let words1 = txt1.toLowerCase().split(" ");
         let words2 = txt2.toLowerCase().split(" ");
@@ -520,44 +592,18 @@ class ProcessorBot {
     async notRandomLittleQuote(messagecontent) {
         let quotes = await this.readLittleQuotes();
 
-        let probs = [];
-        let total = 0;
+        let max = -1;
+        let maxmsg = "";
         for (let i = 0; i < quotes.length; i++) {
             const row = quotes[i];
-            probs.push(this.similarities(row[0],messagecontent));
-            total += probs[i];
-        }
-
-        let currtotal = Math.random() * total;
-        if(total === 0){
-            return "Sorry, I'm not sure what to think about that."
-        }
-        for (let i = 0; i < quotes.length; i++) {
-            currtotal -= probs[i];
-            if(currtotal <= 0) {
-                return quotes[i][0]
+            if (this.similarities(row[0],messagecontent) > max) {
+                max = this.similarities(row[0],messagecontent);
+                maxmsg = row[0];
             }
+            
         }
-        return "Error"
-    }
-
-    /**
-     * @param {String} txt 
-     */
-    async processPlayMessage(txt){
-        if (txt && txt.startsWith("[")) {
-            let endtitle = txt.indexOf("](");
-            let title = txt.slice(1, endtitle);
-
-            let startlink = endtitle + 2;
-            let endlink = txt.indexOf(") [<@")
-            let link = txt.slice(startlink, endlink);
-
-            await this.addday();
-
-            await this.addGroovyEntry(title, link)
-        }
-        
+        max > 0 ? console.log(`My brilliant wisdom was summoned, and I responded with ${maxmsg}.`) : "";
+        return max > 0 ? maxmsg : "Sorry, I'm not sure what to think about that.";
     }
 
     /**
@@ -626,10 +672,23 @@ class ProcessorBot {
                         "name": "Little Quotes",
                         "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
                     },
-                    // {
-                    //     "name": "Our Groovy History",
-                    //     "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/1dBQuwHZ35GSpFDuwT_9xQRErFRwCuAO6ePiH_aAIOyU/edit#gid=1430553805)"
-                    // }
+                ],
+                "footer": {
+                    "text": `Requested by ${message.author.username}`,
+                    "icon_url": message.author.displayAvatarURL()
+                }
+            }));
+        }
+        if(command === "groovy") {
+            message.channel.send(new Discord.MessageEmbed({
+                "title": "– Groovy Spreadsheet –",
+                "description": "F Period Bio Gang Groovy",
+                "color": "#00ffff",
+                "fields": [
+                    {
+                        "name": "Our Groovy History",
+                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
+                    }
                 ],
                 "footer": {
                     "text": `Requested by ${message.author.username}`,
@@ -647,9 +706,7 @@ class ProcessorBot {
         }
         
         if (command === "profile") {
-            
             message.channel.send("Hi wonderful biologists! I'm Mr. Little, biology teacher, TOSA, and SELF mentor!");
-            
         }
 
         if(command === "help") {
@@ -705,12 +762,10 @@ class ProcessorBot {
         }
     });
 
-    let processorbot = new ProcessorBot(sheets);
-
-    console.log("Up now!")
+    let processorbot = new ProcessorBot(sheets,db);
 
     client.on("message", async function (message) {
-        processorbot.onMessage(message)
+        await processorbot.onMessage(message)
     });
 
     client.on("messageReactionAdd", async function(reaction, user){
@@ -720,8 +775,11 @@ class ProcessorBot {
     client.on("messageReactionRemove", async function(reaction,user){
         await processorbot.onReaction(reaction,user)
     })
+
     await client.login(config);
     await processorbot.onConstruct(client);
+
+    console.log("Up now!")
 
 })();
 
