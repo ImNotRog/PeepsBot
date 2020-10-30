@@ -467,10 +467,9 @@ class TonyBot {
         return moment.tz("America/Los_Angeles").format();
     }
 
-    async updateTRG(id, str, sectionarr) {
+    async updateTRG(id, trgnum, sectionarr) {
 
-        let trgnum = this.dashToNum(str);
-        if(trgnum.error) return trgnum;
+        
 
         let trgdata = await this.getUserCollectionDoc(id,"TRG",trgnum);
         if(!trgdata.error) {
@@ -499,10 +498,8 @@ class TonyBot {
         return trgdata;
     }
 
-    async TRGdata(id,str) {
-        let trgnum = this.dashToNum(str);
-        if(trgnum.error) return trgnum;
-        return this.getUserCollectionDoc(id, "TRG", trgnum);
+    async TRGdata(id,num) {
+        return this.getUserCollectionDoc(id, "TRG", num);
     }
 
     formatTime(t){
@@ -553,26 +550,29 @@ class TonyBot {
             } else {
                 tochange[args[3]-1] = true;
             }
-            let changed = await this.updateTRG(message.author.id, args[1], tochange);
 
-            if(changed.error && changed.num === 0) {
-                if(!await this.forceCreate(message)) return false;
-                changed = await this.updateTRG(message.author.id, args[1], tochange);
-            }
+            let trgnum = this.dashToNum(args[1]);
 
-            if(changed.error && changed.num === 1) {
-                message.channel.send("Doesn't seem like that Doc exists.");
-                return false;
-            }
-
-            if(changed.error && changed.num === 2) {
+            if(trgnum.error && trgnum.num === 2) {
                 message.channel.send("Invalid TRG number. Try 3-1.");
                 return false;
             }
 
-            if(changed.error && changed.num === 3) {
+            if(trgnum.error && trgnum.num === 3) {
                 message.channel.send("TRG doesn't exist.");
                 return false;
+            }
+
+            let changed = await this.updateTRG(message.author.id, trgnum, tochange);
+
+            if(changed.error && changed.num === 0) {
+                if(!await this.forceCreate(message)) return false;
+                changed = await this.updateTRG(message.author.id, trgnum, tochange);
+            }
+
+            if(changed.error && changed.num === 1) {
+                await this.createTRGforUser(message.author.id, trgnum);
+                changed = await this.updateTRG(message.author.id, trgnum, tochange);
             }
 
             let changedfields = [];
@@ -582,22 +582,13 @@ class TonyBot {
                     value: "Just completed at " + this.formatTime(this.now())
                 })
             }
+
             message.channel.send({
                 "embed": {
-                    "title": "Action: Complete TRG",
+                    "title": `Action: Complete TRG ${args[1]}`,
                     "description": "The following changes were made:",
-                    "color": 1111111,
-                    "timestamp": this.now(),
-                    "author": {
-                    "name": "Mr. Little",
-                    "url": "https://pausd.schoology.com/user/52984930/info",
-                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                    },
+                    ...this.embedInfo(message),
                     "fields": changedfields,
-                    "footer": {
-                        "text": `Requested by ${message.author.username}`,
-                        "icon_url": message.author.displayAvatarURL()
-                    }
                 }
             })
 
@@ -615,17 +606,7 @@ class TonyBot {
             "embed": {
                 "title": "Create a Profile",
                 "description": `You haven't created a profile yet.\nBy creating a profile, you get access to PeepsBot's other features. React with :thumbsup: to continue.`,
-                "color": 1111111,
-                "timestamp": this.now(),
-                "author": {
-                    "name": "Mr. Little",
-                    "url": "https://pausd.schoology.com/user/52984930/info",
-                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                },
-                "footer": {
-                    "text": `Requested by ${message.author.username}`,
-                    "icon_url": message.author.displayAvatarURL()
-                }
+                ...this.embedInfo(message),
             }
         })
 
@@ -650,18 +631,8 @@ class TonyBot {
             await message.channel.send({
                 "embed": {
                     "title": "Welcome!",
-                    "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --TRGhelp`,
-                    "color": 1111111,
-                    "timestamp": this.now(),
-                    "author": {
-                        "name": "Mr. Little",
-                        "url": "https://pausd.schoology.com/user/52984930/info",
-                        "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                    },
-                    "footer": {
-                        "text": `Requested by ${message.author.username}`,
-                        "icon_url": message.author.displayAvatarURL()
-                    }
+                    "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --help`,
+                    ...this.embedInfo(message),
                     
                 }
             })
@@ -679,55 +650,152 @@ class TonyBot {
      */
     async onGet(message, args) {
         if(args[0].toLowerCase() === "trg"){
-            let data = (await this.TRGdata(message.author.id, args[1]));
-            
-            if(data.error && data.num === 0) {
-                if(!await this.forceCreate(message)) return false;
-                data = (await this.TRGdata(message.author.id, args[1]));
-            }
 
-            if(data.error && data.num === 1) {
-                message.channel.send("Doesn't seem like that Doc exists.");
-                return false;
-            }
+            let trgnum = this.dashToNum(args[1]);
 
-            if(data.error && data.num === 2) {
+            if(trgnum.error && trgnum.num === 2) {
                 message.channel.send("Invalid TRG number. Try 3-1.");
                 return false;
             }
 
-            if(data.error && data.num === 3) {
+            if(trgnum.error && trgnum.num === 3) {
                 message.channel.send("TRG doesn't exist.");
                 return false;
             }
 
-            let fields = [];
-            for(let i = 0; i < data.sections.length; i++) {
-                
-                fields.push({
-                    name: `Section ${i+1}: ${this.sectionTitles[i]}`,
-                    value: data.sections[i] ? "Complete at " + this.formatTime(data.sectionTimestamps[i]) : "Incomplete"
-                })
-            }
+            let embed = await message.channel.send({
+                 "embed": {
+                    "title": "TRG Status",
+                    "description": `Loading...`,
+                    "color": 1111111
+                 }
+            });
+
+            embed.react("⬅️");
+            embed.react("❌");
+            embed.react("➡️");
             
-            message.channel.send({
+            this.displayGet(embed, trgnum, message);
+
+        }
+    }
+
+    embedInfo(message) {
+        return {
+            "color": 1111111,
+            "timestamp": this.now(),
+            "author": {
+                "name": "Mr. Little",
+                "url": "https://pausd.schoology.com/user/52984930/info",
+                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+            },
+            "footer": {
+                "text": `Requested by ${message.author.username}`,
+                "icon_url": message.author.displayAvatarURL()
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.message} message 
+     * @param {*} id 
+     * @param {*} trgnum 
+     */
+    async createTRGforUser(id,trgnum) {
+        await this.base.doc("" + id).collection("TRG").doc("" + trgnum).set({
+            sections: [false,false,false],
+            sectionTimestamps: [this.now(),this.now(),this.now()]
+        })
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {*} trgnum 
+     * @param {Discord.Message} origmessage 
+     */
+    async displayGet(message, trgnum, origmessage, num)  {
+        let data = (await this.TRGdata(origmessage.author.id, trgnum));
+        
+        if(data.error && data.num === 0) {
+            if(!await this.forceCreate(origmessage)) return false;
+            data = (await this.TRGdata(origmessage.author.id, trgnum));
+        }
+
+        let dataunit = this.TRGref["" + trgnum];
+
+        let changed = false;
+        if(data.error && data.num === 1 && dataunit) {
+            await this.createTRGforUser(origmessage.author.id, trgnum);
+            data = (await this.TRGdata(origmessage.author.id, trgnum));
+        }
+        if(data.error && data.num === 1 && typeof num !== "number") {
+            message.edit({
                 "embed": {
                     "title": "TRG Status",
-                    "description": `Your TRG ${args[1]} status, as listed in the database.`,
+                    "description": `The TRG does not currently exist.`,
                     "color": 1111111,
                     "timestamp": this.now(),
-                    "author": {
-                    "name": "Mr. Little",
-                    "url": "https://pausd.schoology.com/user/52984930/info",
-                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                    },
-                    "fields": fields,
-                    "footer": {
-                        "text": `Requested by ${message.author.username}`,
-                        "icon_url": message.author.displayAvatarURL()
-                    }
+                    ...this.embedInfo(origmessage)
                 }
             })
+            return false;
+        } else if(data.error && data.num === 1) {
+            trgnum = num;
+            data = (await this.TRGdata(origmessage.author.id, trgnum));
+            changed = true;
+        }
+
+        let dashnotation = this.TRGref["" + trgnum].unit + "-" + this.TRGref["" + trgnum].num
+        
+        let fields = [];
+
+        if(changed){
+            fields.push({
+                name: "Error",
+                value: "There are no more TRGs in that direction."
+            })
+        }
+
+        for(let i = 0; i < data.sections.length; i++) {
+            
+            fields.push({
+                name: `Section ${i+1}: ${this.sectionTitles[i]}`,
+                value: data.sections[i] ? "Complete at " + this.formatTime(data.sectionTimestamps[i]) : "Incomplete"
+            })
+        }
+        
+        await message.edit({
+            "embed": {
+                "title": `TRG ${dashnotation} Status`,
+                "description": `Your TRG ${dashnotation} status, as listed in the database.`,
+                ...this.embedInfo(origmessage),
+                "fields": fields,
+                
+            }
+        })
+
+        const filter = (reaction, user) => {
+            return ['⬅️','➡️','❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+        };
+
+        let collected;
+        try {
+            collected = await message.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
+        } catch(err) {
+            await message.reactions.removeAll();
+            return false;
+        }
+        const reaction = collected.first();
+
+        await reaction.users.remove(origmessage.author.id);
+        if(reaction.emoji.name === "❌"){
+            message.delete();
+        } else if(reaction.emoji.name === "⬅️") {
+            this.displayGet(message,trgnum-1,origmessage, trgnum);
+        } else if(reaction.emoji.name === "➡️") {
+            this.displayGet(message,trgnum+1,origmessage, trgnum);
         }
     }
 
