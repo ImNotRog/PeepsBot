@@ -407,6 +407,345 @@ class SheetsUser {
     }
 }
 
+class TonyBot {
+
+    /**
+     * @constructor
+     * @param {FirebaseFirestore.Firestore} db
+     */
+    constructor(db) {
+        this.db = db;
+        this.base = this.db.collection("PeepsBot");
+        this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
+    }
+
+    async onConstruct() {
+        this.TRGref = await this.getUserCollection("KEY", "TRG");
+    }
+
+    async createUser(id) {
+        if( (await this.base.doc(id).get()).exists ) return false;
+
+        await this.base.doc(id).set({
+            BioRank: 0,
+            T: 0
+        });
+
+        await this.base.doc(id).collection("TRG").doc("0").set({
+            sections: [false,false,false],
+            sectionTimestamps: [this.now(),this.now(),this.now()]
+        })
+        await this.base.doc(id).collection("Inventory").doc("0").set({
+            poggers: "epic"
+        })
+        return true;
+    }
+
+    dashToNum(str) {
+
+        let unit = parseInt(str.split('-')[0]);
+        let num = parseInt(str.split('-')[1]);
+
+        if(isNaN(unit) || isNaN(num)) return {error: true, num: 2, message: "INVALID TRG NUMBER"};
+
+        let tofind = {
+            unit,
+            num
+        }
+            
+        for(let i = 0; i < this.TRGref.length; i++){
+            if(this.TRGref[i].unit === tofind.unit && 
+                this.TRGref[i].num === tofind.num){
+                return i;
+            }
+        }
+
+        return {error: true, num: 3, message: "TRG NOT FOUND"};
+    }
+
+    now() {
+        return moment.tz("America/Los_Angeles").format();
+    }
+
+    async updateTRG(id, str, sectionarr) {
+
+        let trgnum = this.dashToNum(str);
+        if(trgnum.error) return trgnum;
+
+        let trgdata = await this.getUserCollectionDoc(id,"TRG",trgnum);
+        if(!trgdata.error) {
+            let newSecArray = [];
+            let newSecTimeArray = [];
+            let changed = [];
+            for(let i = 0; i < 3; i++) {
+                if(!trgdata.sections[i] && sectionarr[i]) {
+                    newSecArray.push(true);
+                    newSecTimeArray.push(this.now());
+                    changed.push(true);
+                } else {
+                    newSecArray.push(trgdata.sections[i])
+                    newSecTimeArray.push(trgdata.sectionTimestamps[i]);
+                    changed.push(false);
+                }
+            }
+            await this.updateUserCollectionDoc(id, "TRG", trgnum, {
+                sections: newSecArray,
+                sectionTimestamps: newSecTimeArray
+            })
+
+            return changed;
+        }
+
+        return trgdata;
+    }
+
+    async TRGdata(id,str) {
+        let trgnum = this.dashToNum(str);
+        if(trgnum.error) return trgnum;
+        return this.getUserCollectionDoc(id, "TRG", trgnum);
+    }
+
+    formatTime(t){
+        return moment.tz(t, "America/Los_Angeles").format("MM/DD h:mm:ss a")
+    }
+
+    async getUser(id) {
+        let ref = (await this.base.doc(id).get());
+        return (ref.exists) ? ref.data() : {error: true, num: 0, message: "USER DOESN'T EXIST"};;
+    }
+
+    async getUserCollection(id, collection) {
+        if (!(await this.base.doc(id).get()).exists) return {error: true, num: 0, message: "USER DOESN'T EXIST"};
+        return (await this.base.doc("" + id).collection("" + collection).get()).docs.map((x) => x.data());
+    }
+
+    async getUserCollectionDoc(id, collection, id2) {
+        if (!(await this.base.doc(id).get()).exists) return {error: true, num: 0, message: "USER DOESN'T EXIST"};
+        let doc = (await this.base.doc("" + id).collection("" + collection).doc("" + id2).get());
+        if(!doc.exists) return {error: true, num: 1, message: "DOC DOESN'T EXIST"};
+        return doc.data();
+    }
+
+    async userExists(id) {
+        return (await this.base.doc(id).get()).exists
+    }
+
+    async updateUser(id, info) {
+        await this.base.doc("" + id).update(info);
+    }
+
+    async updateUserCollectionDoc(id,collection,id2, info) {
+        await this.base.doc("" + id).collection("" + collection).doc("" + id2).update(info);
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {string[]} args 
+     */
+    async onComplete(message, args) {
+
+        if(args.length >= 3 && args[0].toLowerCase() === "trg" && (["sec", "section", "all"].indexOf( args[2].toLowerCase() ) !== -1)) {
+
+            let tochange = [false,false,false];
+            if(args[2].toLowerCase() === 'all') {
+                tochange = [true,true,true];
+            } else {
+                tochange[args[3]-1] = true;
+            }
+            let changed = await this.updateTRG(message.author.id, args[1], tochange);
+
+            if(changed.error && changed.num === 0) {
+                if(!await this.forceCreate(message)) return false;
+                changed = await this.updateTRG(message.author.id, args[1], tochange);
+            }
+
+            if(changed.error && changed.num === 1) {
+                message.channel.send("Doesn't seem like that Doc exists.");
+                return false;
+            }
+
+            if(changed.error && changed.num === 2) {
+                message.channel.send("Invalid TRG number. Try 3-1.");
+                return false;
+            }
+
+            if(changed.error && changed.num === 3) {
+                message.channel.send("TRG doesn't exist.");
+                return false;
+            }
+
+            let changedfields = [];
+            for(let i = 0; i < changed.length; i++) {
+                if(changed[i]) changedfields.push({
+                    name: `Section ${i+1}: ${this.sectionTitles[i]}`,
+                    value: "Just completed at " + this.formatTime(this.now())
+                })
+            }
+            message.channel.send({
+                "embed": {
+                    "title": "Action: Complete TRG",
+                    "description": "The following changes were made:",
+                    "color": 1111111,
+                    "timestamp": this.now(),
+                    "author": {
+                    "name": "Mr. Little",
+                    "url": "https://pausd.schoology.com/user/52984930/info",
+                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                    },
+                    "fields": changedfields,
+                    "footer": {
+                        "text": `Requested by ${message.author.username}`,
+                        "icon_url": message.author.displayAvatarURL()
+                    }
+                }
+            })
+
+        } else {
+            message.channel.send(`Format: --complete TRG 3-1 SEC 1`);
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+    */
+    async forceCreate(message) {
+        let m = await message.channel.send({
+            "embed": {
+                "title": "Create a Profile",
+                "description": `You haven't created a profile yet.\nBy creating a profile, you get access to PeepsBot's other features. React with :thumbsup: to continue.`,
+                "color": 1111111,
+                "timestamp": this.now(),
+                "author": {
+                    "name": "Mr. Little",
+                    "url": "https://pausd.schoology.com/user/52984930/info",
+                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                },
+                "footer": {
+                    "text": `Requested by ${message.author.username}`,
+                    "icon_url": message.author.displayAvatarURL()
+                }
+            }
+        })
+
+        await m.react("👍");
+        await m.react("❌");
+
+        const filter = (reaction, user) => {
+            return ['👍', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+        };
+
+        let collected;
+        try {
+            collected = await m.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
+        } catch {
+            return false;
+        }
+        const reaction = collected.first();
+
+        if (reaction.emoji.name === '👍') {
+            await this.createUser(message.author.id);
+            m.delete();
+            await message.channel.send({
+                "embed": {
+                    "title": "Welcome!",
+                    "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --TRGhelp`,
+                    "color": 1111111,
+                    "timestamp": this.now(),
+                    "author": {
+                        "name": "Mr. Little",
+                        "url": "https://pausd.schoology.com/user/52984930/info",
+                        "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                    },
+                    "footer": {
+                        "text": `Requested by ${message.author.username}`,
+                        "icon_url": message.author.displayAvatarURL()
+                    }
+                    
+                }
+            })
+            return true;
+        } else{
+            m.delete();
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {string[]} args 
+     */
+    async onGet(message, args) {
+        if(args[0].toLowerCase() === "trg"){
+            let data = (await this.TRGdata(message.author.id, args[1]));
+            
+            if(data.error && data.num === 0) {
+                if(!await this.forceCreate(message)) return false;
+                data = (await this.TRGdata(message.author.id, args[1]));
+            }
+
+            if(data.error && data.num === 1) {
+                message.channel.send("Doesn't seem like that Doc exists.");
+                return false;
+            }
+
+            if(data.error && data.num === 2) {
+                message.channel.send("Invalid TRG number. Try 3-1.");
+                return false;
+            }
+
+            if(data.error && data.num === 3) {
+                message.channel.send("TRG doesn't exist.");
+                return false;
+            }
+
+            let fields = [];
+            for(let i = 0; i < data.sections.length; i++) {
+                
+                fields.push({
+                    name: `Section ${i+1}: ${this.sectionTitles[i]}`,
+                    value: data.sections[i] ? "Complete at " + this.formatTime(data.sectionTimestamps[i]) : "Incomplete"
+                })
+            }
+            
+            message.channel.send({
+                "embed": {
+                    "title": "TRG Status",
+                    "description": `Your TRG ${args[1]} status, as listed in the database.`,
+                    "color": 1111111,
+                    "timestamp": this.now(),
+                    "author": {
+                    "name": "Mr. Little",
+                    "url": "https://pausd.schoology.com/user/52984930/info",
+                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                    },
+                    "fields": fields,
+                    "footer": {
+                        "text": `Requested by ${message.author.username}`,
+                        "icon_url": message.author.displayAvatarURL()
+                    }
+                }
+            })
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {string[]} args 
+     */
+    async onCreate(message,args) {
+        if( !(await this.userExists(message.author.id)) ) {
+            await this.forceCreate(message);
+        } else {
+            message.channel.send("You've already created an account.");
+        }
+    }
+
+}
+
 class ProcessorBot {
 
     /**
@@ -445,22 +784,12 @@ class ProcessorBot {
 
         this.approvedMusicServers = ["748669830244073533"]
 
-        this.db = db;
-    }
+        this.approvedTonyServers = ["748669830244073533"]
 
-    async createUser(id) {
-        await this.db.collection("PeepsBot").doc(id).set({
-            BioRank: 0,
-            Inventory: {
-            },
-            TRGs: {
-            },
-            Ts: 0
-        });
-    }
+        this.tonyBot = new TonyBot(db);
 
-    async getRef(){ 
-        return (await this.db.collection("PeepsBot").doc("KEY").get()).data();
+        this.reference = {};
+
     }
 
     /**
@@ -469,9 +798,8 @@ class ProcessorBot {
      */
     async onConstruct(client){
 
+        await this.tonyBot.onConstruct();
         await this.sheetsUser.SetUpSheets();
-
-        console.log(await this.getRef());
 
         for (const id of this.collectingChannels) {
 
@@ -530,7 +858,6 @@ class ProcessorBot {
         
     }
 
-
     stripQuotes(txt) {
         if(txt.startsWith('"')) {
             txt = txt.slice(1,txt.length - 1)
@@ -575,8 +902,8 @@ class ProcessorBot {
 
     similarities(txt1, txt2) {
 
-        txt1 = txt1.replace(/[\.?!'"]/g, "");
-        txt2 = txt2.replace(/[\.?!'"]/g, "");
+        txt1 = txt1.replace(/[\.?!',"]/g, "");
+        txt2 = txt2.replace(/[\.?!',"]/g, "");
 
         let words1 = txt1.toLowerCase().split(" ");
         let words2 = txt2.toLowerCase().split(" ");
@@ -605,16 +932,147 @@ class ProcessorBot {
         max > 0 ? console.log(`My brilliant wisdom was summoned, and I responded with ${maxmsg}.`) : "";
         return max > 0 ? maxmsg : "Sorry, I'm not sure what to think about that.";
     }
+    
+    now() {
+        return moment.tz("America/Los_Angeles").format();
+    }
 
     /**
      * 
-     * @param {Discord.Message} message
+     * @param {Discord.Message} message 
      */
-    async onMessage(message) {
+    async help(message) {
+        let m = await message.channel.send(this.helpEmbed(message,0))
+
+        if(this.approvedTonyServers.indexOf( message.guild.id ) === -1) {
+            await m.react("❌");
+
+            const filter = (reaction, user) => {
+                return ['❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+            };
+
+            try {
+                await m.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] });
+            } catch(err) {}
+
+            m.delete();
+
+            return true;
+            
+        }
+
+        await m.react("❌")
+        await m.react("➡")
+        this.helpMenu(m, 0, message)
+        
+    }
+
+    /**
+     * 
+     * @param {Discord.message} message 
+     * @param {*} num 
+     */
+    helpEmbed(message,num) {
+        if(num === 0){
+            return {
+                "embed": {
+                    "title": "Help",
+                    "description": "I'm a bot that spews out random tidbits of Mr.Little's wisdom.",
+                    "color": 1111111,
+                    "timestamp": this.now(),
+                    "author": {
+                    "name": "Mr. Little",
+                    "url": "https://pausd.schoology.com/user/52984930/info",
+                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                    },
+                    "fields": [
+                        {
+                            "name": this.prefix+"little",
+                            "value": "A completely random Mr.Little quote."
+                        },
+                        {
+                            "name": this.prefix+"littler [sentence]",
+                            "value": "A less random Mr.Little quote that has the most words in common with your sentence."
+                        },
+                        {
+                            "name": this.prefix+"spreadsheets",
+                            "value": "Gives the spreadsheet where all the Mr.Little quotes live."
+                        }
+                    ],
+                    "footer": {
+                        "text": `Requested by ${message.author.username}`,
+                        "icon_url": message.author.displayAvatarURL()
+                    }
+                    
+                }
+            }
+        } else if(num === 1) {
+            return {
+                "embed": {
+                    "title": "Help",
+                    "description": "I'm also a bot that keeps track of your TRGs and converts them to currency.",
+                    "color": 1111111,
+                    "timestamp": this.now(),
+                    "author": {
+                    "name": "Mr. Little",
+                    "url": "https://pausd.schoology.com/user/52984930/info",
+                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+                    },
+                    "fields": [
+                        {
+                            "name": this.prefix+"create",
+                            "value": "Create a profile."
+                        },
+                        {
+                            "name": this.prefix+"get TRG #-#",
+                            "value": "Returns the status on your TRG, as stored in the database."
+                        },
+                        {
+                            "name": this.prefix+"complete TRG #-# ['SEC 1' or 'ALL']",
+                            "value": "Completes the given TRG."
+                        }
+                    ],
+                    "footer": {
+                        "text": `Requested by ${message.author.username}`,
+                        "icon_url": message.author.displayAvatarURL()
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} helpmessage 
+     * @param {Discord.Message} origmessage
+     */
+    async helpMenu(helpmessage,state,origmessage){
+        
+        const filter = (reaction, user) => {
+            return ['➡','❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+        };
+
+        let collected;
         try {
-            await this.onMessageDo(message);
+            collected = await helpmessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] });
         } catch(err) {
-            message.channel.send("**There was an error:**\n" + err);
+            helpmessage.delete();
+            return true;
+        }
+        
+        const reaction = collected.first();
+        if(reaction.emoji.name === '❌') {
+            helpmessage.delete();
+        } else {
+            await reaction.users.remove(origmessage.author.id);
+            if(state === 1){
+                await helpmessage.edit(this.helpEmbed(origmessage,0));
+                this.helpMenu(helpmessage, 0, origmessage);
+            } else {
+                await helpmessage.edit(this.helpEmbed(origmessage,1));
+                this.helpMenu(helpmessage,1,origmessage)
+            }
         }
     }
 
@@ -622,7 +1080,7 @@ class ProcessorBot {
      * 
      * @param {Discord.Message} message
      */
-    async onMessageDo(message) {
+    async onMessage(message) {
 
         for(const id of this.destroy) {
             if(message.author.id === id) {
@@ -679,7 +1137,8 @@ class ProcessorBot {
                 }
             }));
         }
-        if(command === "groovy") {
+
+        if(command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
             message.channel.send(new Discord.MessageEmbed({
                 "title": "– Groovy Spreadsheet –",
                 "description": "F Period Bio Gang Groovy",
@@ -696,6 +1155,18 @@ class ProcessorBot {
                 }
             }));
         }
+        
+        if(command === "complete") {
+            this.tonyBot.onComplete(message,args);
+        }
+
+        if(command === "get"){
+            this.tonyBot.onGet(message,args);
+        }
+
+        if(command === "create") {
+            this.tonyBot.onCreate(message,args);
+        }
 
         if(command === "little") {
             message.channel.send(await this.randomLittleQuote());
@@ -710,7 +1181,7 @@ class ProcessorBot {
         }
 
         if(command === "help") {
-            message.channel.send(`This is a relatively new bot. The only command is ${this.prefix}little.`)
+            this.help(message);
         }
         
     }
@@ -721,7 +1192,6 @@ class ProcessorBot {
      * @param {*} user 
      */
     async onReaction(reaction, user) {
-
         
         if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
 
