@@ -4,4 +4,5 @@ nn.js
 .idea
 token.js
 ttt.js
-.avscode
+.vscode
+.DS_Store
