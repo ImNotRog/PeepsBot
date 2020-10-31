@@ -752,7 +752,7 @@ class TonyBot {
                     }
                 })
             }
-            await this.createTRG(tofind.num, tofind.unit);
+            await this.createTRG(tofind.unit, tofind.num);
             message.channel.send({
                 "embed": {
                     "title": `TRG ${str} has been creatted!`,
