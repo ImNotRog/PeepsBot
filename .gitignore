@@ -1,6 +1,7 @@
 .env
 node_modules
-newnn.js
+nn.js
 .idea
-newtoken.js
-newttt.js
+token.js
+ttt.js
+.avscode
