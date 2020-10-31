@@ -420,6 +420,10 @@ class TonyBot {
     }
 
     async onConstruct() {
+        await this.setTRGref();
+    }
+
+    async setTRGref(){
         this.TRGref = await this.getUserCollection("KEY", "TRG");
     }
 
@@ -441,17 +445,22 @@ class TonyBot {
         return true;
     }
 
-    dashToNum(str) {
-
+    strToTRG(str){
         let unit = parseInt(str.split('-')[0]);
         let num = parseInt(str.split('-')[1]);
 
         if(isNaN(unit) || isNaN(num)) return {error: true, num: 2, message: "INVALID TRG NUMBER"};
 
-        let tofind = {
+        return {
             unit,
             num
         }
+    }
+
+    dashToNum(str) {
+
+        let tofind = this.strToTRG(str);
+        if(tofind.error) return tofind;
             
         for(let i = 0; i < this.TRGref.length; i++){
             if(this.TRGref[i].unit === tofind.unit && 
@@ -533,6 +542,9 @@ class TonyBot {
 
     async updateUserCollectionDoc(id,collection,id2, info) {
         await this.base.doc("" + id).collection("" + collection).doc("" + id2).update(info);
+    }
+    async createUserCollectionDoc(id,collection,id2, info) {
+        await this.base.doc("" + id).collection("" + collection).doc("" + id2).set(info);
     }
 
     /**
@@ -709,6 +721,56 @@ class TonyBot {
         })
     }
 
+    async createTRG(unit, num){
+        await this.setTRGref();
+        let i = 0;
+        while(this.TRGref[i]) {
+            i++;
+        }
+        await this.createUserCollectionDoc("KEY", "TRG", ""+i, {
+            unit,
+            num
+        })
+        await this.setTRGref();
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {boolean} verified 
+     * @param {*} args 
+     */
+    async onCreateTRG(message,verified,str) {
+        if(verified) {
+            let tofind = this.strToTRG(str);
+            if(tofind.error) {
+                message.channel.send({
+                    "embed": {
+                        "title": "Invalid TRG",
+                        "description": `You entered TRG ${str}, which is not a valid TRG number. Try #-#`,
+                        ... this.embedInfo(message)
+                    }
+                })
+            }
+            await this.createTRG(tofind.num, tofind.unit);
+            message.channel.send({
+                "embed": {
+                    "title": `TRG ${str} has been creatted!`,
+                    "description": `You created TRG ${str}.`,
+                    ... this.embedInfo(message)
+                }
+            })
+        } else {
+            message.channel.send({
+                "embed": {
+                    "title": "Invalid Perms",
+                    "description": "You do not have permissions to create a TRG.",
+                    ... this.embedInfo(message)
+                }
+            })
+        }
+    }
+
     /**
      * 
      * @param {Discord.Message} message 
@@ -801,10 +863,9 @@ class TonyBot {
 
     /**
      * 
-     * @param {Discord.Message} message 
-     * @param {string[]} args 
+     * @param {Discord.Message} message
      */
-    async onCreate(message,args) {
+    async onCreate(message) {
         if( !(await this.userExists(message.author.id)) ) {
             await this.forceCreate(message);
         } else {
@@ -1233,7 +1294,12 @@ class ProcessorBot {
         }
 
         if(command === "create") {
-            this.tonyBot.onCreate(message,args);
+            if(args[0] === "TRG"){
+                this.tonyBot.onCreateTRG(message, message.member.hasPermission("ADMINISTRATOR"), args[1]);
+            } else {
+                this.tonyBot.onCreate(message);
+            }
+            
         }
 
         if(command === "little") {
