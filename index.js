@@ -690,7 +690,7 @@ class TonyBot extends TonyBotDB {
      * 
      * @param {Discord.Message} message 
     */
-    async onCreate(message) {
+    async createUser(message) {
         let m = await message.channel.send({
             "embed": {
                 "title": "Create a Profile",
@@ -738,7 +738,7 @@ class TonyBot extends TonyBotDB {
         if(args[0].toLowerCase() === "trg"){
             // If user doesn't exist, make them exist or resolve
             if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.onCreate(message))) {
+                if(!(await this.createUser(message))) {
                     return false;
                 }
             }
@@ -839,7 +839,7 @@ class TonyBot extends TonyBotDB {
 
             // If user doesn't exist, make them exist or resolve
             if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.onCreate(message))) {
+                if(!(await this.createUser(message))) {
                     return false;
                 }
             }
@@ -891,6 +891,148 @@ class TonyBot extends TonyBotDB {
                 description: `Your TRG ${unit}-${num} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
+        } else if(args[0].toLowerCase() === "all") {
+            if(args[1].toLowerCase() === "trgs") {
+                let alltrgs = [];
+                for(const unit of this.units.keys()){
+                    for(const num of this.units.get(unit).TRGS.keys()){
+                        alltrgs.push(`TRG ${unit}-${num}`);
+                    }
+                }
+                this.sendClosableEmbed(message, {
+                    title: "All TRGs",
+                    description: alltrgs.join("\n"),
+                    ...this.embedInfo(message)
+                })
+            } else if(args[1].toLowerCase() === "units") {
+                let allunits = [];
+                for(const unit of this.units.keys()){
+                    allunits.push(`Unit ${unit}`);
+                }
+                this.sendClosableEmbed(message, {
+                    title: "All Units",
+                    description: allunits.join("\n"),
+                    ...this.embedInfo(message)
+                })
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message
+     * @param {string[]} args 
+    */
+    async onCreate(message,args){
+        if(args[0].toLowerCase() === "trg") {
+
+            // They must be admin
+            if(!message.member.hasPermission("ADMINISTRATOR")){
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Only admins can create global TRGs. Ask them to create it for you.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.createUser(message))) {
+                    return false;
+                }
+            }
+
+            // Get TRG numbers, check for errors
+            let nums = this.dashNotationToNums(args[1]);
+            if(nums === false) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Your TRG number, TRG ${args[1]}, was invalid. Try TRG #-# instead, e.g. TRG 3-1.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            let [unit, num] = nums;
+
+            // Check if the unit exists
+            if(!this.unitExists(unit)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Unit ${unit} does not exist. To avoid errors, please explicitly create that unit using create unit ${unit}.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // Check if the TRG exists
+            if(this.TRGExists(unit, num)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `TRG ${args[1]} already exists.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // Create the TRG
+            await this.createTRG(unit, num)
+
+            // Send the success message
+            this.sendClosableEmbed(message, {
+                title: `Create TRG ${args[1]}`,
+                description: `TRG ${args[1]} has been successfully created.`,
+                ...this.embedInfo(message)
+            })
+
+        } else if(args[0].toLowerCase() === "unit"){
+            // They must be admin
+            if(!message.member.hasPermission("ADMINISTRATOR")){
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Only admins can create global units. Ask them to create it for you.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.createUser(message))) {
+                    return false;
+                }
+            }
+
+            let unit = parseInt(args[1]);
+            if(isNaN(unit)){
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `${args[1]} is not a valid unit. Try unit # instead, like unit 3.`,
+                    ...this.embedInfo(message)
+                })
+            }
+
+            // Check if the unit exists
+            if(this.unitExists(unit)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Unit ${unit} already exists.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // Create Unit
+            await this.createUnit(unit);
+            this.sendClosableEmbed(message,{
+                title: `Created Unit ${unit}`,
+                description: `Unit ${unit} was created.`,
+                ...this.embedInfo(message)
+            })
+
+        } else {
+            this.createUser(message);
         }
     }
 
@@ -1315,11 +1457,7 @@ class ProcessorBot {
         }
 
         if(command === "create") {
-            if(args[0] === "TRG"){
-                // this.tonyBot.onCreateTRG(message, message.member.hasPermission("ADMINISTRATOR"), args[1]);
-            } else {
-                this.tonyBot.onCreate(message);
-            }
+            this.tonyBot.onCreate(message,args);
             
         }
 
