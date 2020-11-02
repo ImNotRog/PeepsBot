@@ -407,8 +407,7 @@ class SheetsUser {
     }
 }
 
-class TonyBot {
-
+class TonyBotDB {
     /**
      * @constructor
      * @param {FirebaseFirestore.Firestore} db
@@ -416,204 +415,282 @@ class TonyBot {
     constructor(db) {
         this.db = db;
         this.base = this.db.collection("PeepsBot");
+        this.key = this.base.doc("KEY");
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
+        this.units = new Map();
     }
 
     async onConstruct() {
-        await this.setTRGref();
+        await this.refreshUnits();
     }
 
-    async setTRGref(){
-        this.TRGref = await this.getUserCollection("KEY", "TRG");
-    }
+    /* ACCESSORS */
 
-    async createUser(id) {
-        if( (await this.base.doc(id).get()).exists ) return false;
+    async refreshUnits() {
+        let units = (await this.key.collection("UNITS").get());
+        
+        let tofind = units.docs.map(doc => doc.id);
 
-        await this.base.doc(id).set({
-            BioRank: 0,
-            T: 0
-        });
-
-        await this.base.doc(id).collection("TRG").doc("0").set({
-            sections: [false,false,false],
-            sectionTimestamps: [this.now(),this.now(),this.now()]
-        })
-        await this.base.doc(id).collection("Inventory").doc("0").set({
-            poggers: "epic"
-        })
-        return true;
-    }
-
-    strToTRG(str){
-        let unit = parseInt(str.split('-')[0]);
-        let num = parseInt(str.split('-')[1]);
-
-        if(isNaN(unit) || isNaN(num)) return {error: true, num: 2, message: "INVALID TRG NUMBER"};
-
-        return {
-            unit,
-            num
-        }
-    }
-
-    dashToNum(str) {
-
-        let tofind = this.strToTRG(str);
-        if(tofind.error) return tofind;
-            
-        for(let i = 0; i < this.TRGref.length; i++){
-            if(this.TRGref[i].unit === tofind.unit && 
-                this.TRGref[i].num === tofind.num){
-                return i;
+        for(const key of tofind) {
+            if(!this.units.has(key)) {
+                this.units.set(key, {});
             }
         }
 
-        return {error: true, num: 3, message: "TRG NOT FOUND"};
+        let alltrgs = [];
+        for(const key of tofind) {
+            alltrgs.push(this.key.collection("UNITS").doc(key).collection("TRGS").get());
+        }
+        
+        alltrgs = await Promise.all(alltrgs);
+
+        for(let i = 0; i < alltrgs.length; i++) {
+            let currTRGMap = new Map();
+
+            for(let j = 0; j < alltrgs[i].docs.length; j++){
+                currTRGMap.set(alltrgs[i].docs[j].id,alltrgs[i].docs[j].data());
+            }
+
+            this.units.get(tofind[i]).TRGS = currTRGMap;
+        }
+
+    }
+
+    async refreshUnit(unit) {
+
+        if(!this.units.has(unit+"")) {
+            this.units.set(unit+"", {});
+        }
+
+        let alltrgs = (await this.key.collection("UNITS").doc(unit+"").collection("TRGS").get());
+        let currTRGMap = new Map();
+        for(let i = 0; i < alltrgs.docs.length; i++) {
+            currTRGMap.set(alltrgs.docs[i].id, alltrgs.docs[i].data());
+        }
+
+        this.units.get(unit+"").TRGS = currTRGMap;
+
     }
 
     now() {
         return moment.tz("America/Los_Angeles").format();
     }
 
-    async updateTRG(id, trgnum, sectionarr) {
-
-        
-
-        let trgdata = await this.getUserCollectionDoc(id,"TRG",trgnum);
-        if(!trgdata.error) {
-            let newSecArray = [];
-            let newSecTimeArray = [];
-            let changed = [];
-            for(let i = 0; i < 3; i++) {
-                if(!trgdata.sections[i] && sectionarr[i]) {
-                    newSecArray.push(true);
-                    newSecTimeArray.push(this.now());
-                    changed.push(true);
-                } else {
-                    newSecArray.push(trgdata.sections[i])
-                    newSecTimeArray.push(trgdata.sectionTimestamps[i]);
-                    changed.push(false);
-                }
-            }
-            await this.updateUserCollectionDoc(id, "TRG", trgnum, {
-                sections: newSecArray,
-                sectionTimestamps: newSecTimeArray
-            })
-
-            return changed;
-        }
-
-        return trgdata;
-    }
-
-    async TRGdata(id,num) {
-        return this.getUserCollectionDoc(id, "TRG", num);
-    }
-
     formatTime(t){
         return moment.tz(t, "America/Los_Angeles").format("MM/DD h:mm:ss a")
     }
 
-    async getUser(id) {
-        let ref = (await this.base.doc(id).get());
-        return (ref.exists) ? ref.data() : {error: true, num: 0, message: "USER DOESN'T EXIST"};;
+    /* EXISTENCE */
+
+    unitExists(unit) {
+        if(this.units.get(unit+"")){
+            return true;
+        }
+        return false;
     }
 
-    async getUserCollection(id, collection) {
-        if (!(await this.base.doc(id).get()).exists) return {error: true, num: 0, message: "USER DOESN'T EXIST"};
-        return (await this.base.doc("" + id).collection("" + collection).get()).docs.map((x) => x.data());
-    }
-
-    async getUserCollectionDoc(id, collection, id2) {
-        if (!(await this.base.doc(id).get()).exists) return {error: true, num: 0, message: "USER DOESN'T EXIST"};
-        let doc = (await this.base.doc("" + id).collection("" + collection).doc("" + id2).get());
-        if(!doc.exists) return {error: true, num: 1, message: "DOC DOESN'T EXIST"};
-        return doc.data();
+    TRGExists(unit, num) {
+        return this.unitExists(unit) && this.units.get(unit+"").TRGS.has(num + "");
     }
 
     async userExists(id) {
-        return (await this.base.doc(id).get()).exists
+        return (await this.base.doc(id + "").get()).exists;
     }
 
-    async updateUser(id, info) {
-        await this.base.doc("" + id).update(info);
+    async unitExistsForUser(id,unit){
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).exists;
     }
 
-    async updateUserCollectionDoc(id,collection,id2, info) {
-        await this.base.doc("" + id).collection("" + collection).doc("" + id2).update(info);
+    async TRGExistsForUser(id,unit,num) {
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
+            .collection("TRGS").doc(num+"").get()).exists;
     }
-    async createUserCollectionDoc(id,collection,id2, info) {
-        await this.base.doc("" + id).collection("" + collection).doc("" + id2).set(info);
+
+    /* GETTING */
+
+    async getUser(id) {
+        return (await this.base.doc(id + "").get()).data();
+    }
+
+    async getUserUnit(id, unit) {
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).data();
+    }
+
+    async getUserTRG(id,unit,num) {
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
+            .collection("TRGS").doc(num+"").get()).data();
+    }
+
+    /* MODIFIERS */
+
+    /* LOW LEVEL */
+
+    /* FOR USER */
+
+    async createUser(id) {
+        await this.base.doc("" + id).set({
+            LC: 0,
+            RANK: 0
+        })
+    }
+
+    async createUnitForUser(id, unit) {
+
+        await this.base.doc("" + id).collection("UNITS").doc(unit + "").set({
+            COMPLETE: false
+        })
+
+    }
+
+    async createTRGForUser(id, unit, trgnum) {
+        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("TRGS").doc(trgnum + "").set({
+            SECTIONS: [false,false,false],
+            SECTIONTIMESTAMPS: [this.now(),this.now(),this.now()],
+            COMPLETE: false
+        })
+    }
+
+    async updateTRGForUser(id, unit, trgnum, data) {
+        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("TRGS").doc(trgnum + "").update(data);
+    }
+
+    /* FOR GLOBAL */
+
+    async createUnit(unit) {
+        await this.key.collection("UNITS").doc(""+unit).set({});
+        await this.refreshUnit(unit);
+    }
+
+    async createTRG(unit, trgnum) {
+        await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set({
+
+        })
+        await this.refreshUnit(unit);
+    }
+
+    /* TOP LEVEL */
+
+    async updateTRG(id, unit, trgnum, completedArr) {
+        const pTRG = await this.getUserTRG(id,unit,trgnum);
+        let pSections = pTRG.SECTIONS;
+        let pSectionTimestamps = pTRG.SECTIONTIMESTAMPS;
+        
+        let CHANGEDARRAY = [];
+        let CHANGED = false;
+        for(let i = 0; i < pSections.length; i++) {
+            if(!pSections[i] && completedArr[i]) {
+                CHANGEDARRAY.push(true);
+                pSectionTimestamps[i] = (this.now());
+                pSections[i] = true;
+                CHANGED = true;
+            } else {
+                CHANGEDARRAY.push(false);
+            }
+        }
+
+        let completed = pSections.reduce( (a,n) => a && n);
+
+        if(CHANGED) {
+            this.updateTRGForUser(id,unit,trgnum, {
+                SECTIONS: pSections,
+                SECTIONTIMESTAMPS: pSectionTimestamps,
+                COMPLETE: completed
+            })
+        }
+
+        return {
+            CHANGED,
+            CHANGEDARRAY
+        }
+    }
+
+}
+
+class TonyBot extends TonyBotDB {
+    /**
+     * @constructor
+     * @param {FirebaseFirestore.Firestore} db
+     */
+    constructor(db) {
+        super(db);
+        this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
+    }
+
+    /* ACCESSORS */
+
+    /* LOW LEVEL */
+    embedInfo(message) {
+        return {
+            "color": 1111111,
+            "timestamp": this.now(),
+            "author": {
+                "name": "Mr. Little",
+                "url": "https://pausd.schoology.com/user/52984930/info",
+                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+            },
+            "footer": {
+                "text": `Requested by ${message.author.username}`,
+                "icon_url": message.author.displayAvatarURL()
+            }
+        }
     }
 
     /**
      * 
-     * @param {Discord.Message} message 
-     * @param {string[]} args 
+     * @param {string} str
+     * @returns {number[] | boolean} 
      */
-    async onComplete(message, args) {
+    dashNotationToNums(str) {
+        let splits = str.split("-");
+        if(splits.length !== 2) return false;
 
-        if(args.length >= 3 && args[0].toLowerCase() === "trg" && (["sec", "section", "all"].indexOf( args[2].toLowerCase() ) !== -1)) {
+        let unit = parseInt( splits[0] );
+        if(isNaN(unit)) return false;
 
-            let tochange = [false,false,false];
-            if(args[2].toLowerCase() === 'all') {
-                tochange = [true,true,true];
-            } else {
-                tochange[args[3]-1] = true;
-            }
+        let num = parseInt( splits[1] );
+        if(isNaN(num)) return false;
 
-            let trgnum = this.dashToNum(args[1]);
+        return [unit, num];
+    }
 
-            if(trgnum.error && trgnum.num === 2) {
-                message.channel.send("Invalid TRG number. Try 3-1.");
-                return false;
-            }
+    /* MODIFIERS */
 
-            if(trgnum.error && trgnum.num === 3) {
-                message.channel.send("TRG doesn't exist.");
-                return false;
-            }
+    /* LOW LEVEL */
+    /**
+     * @param {Discord.Message} origmessage
+     */
+    async sendClosableEmbed(origmessage, embed) {
+        let message = await origmessage.channel.send({embed});
+        await message.react("❌");
 
-            let changed = await this.updateTRG(message.author.id, trgnum, tochange);
+        const filter = (reaction, user) => {
+            return ['❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+        };
 
-            if(changed.error && changed.num === 0) {
-                if(!await this.forceCreate(message)) return false;
-                changed = await this.updateTRG(message.author.id, trgnum, tochange);
-            }
+        let collected;
+        try {
+            collected = await message.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
+        } catch(err) {
+            await message.reactions.removeAll();
+            return false;
+        }
+        const reaction = collected.first();
 
-            if(changed.error && changed.num === 1) {
-                await this.createTRGforUser(message.author.id, trgnum);
-                changed = await this.updateTRG(message.author.id, trgnum, tochange);
-            }
-
-            let changedfields = [];
-            for(let i = 0; i < changed.length; i++) {
-                if(changed[i]) changedfields.push({
-                    name: `Section ${i+1}: ${this.sectionTitles[i]}`,
-                    value: "Just completed at " + this.formatTime(this.now())
-                })
-            }
-
-            message.channel.send({
-                "embed": {
-                    "title": `Action: Complete TRG ${args[1]}`,
-                    "description": "The following changes were made:",
-                    ...this.embedInfo(message),
-                    "fields": changedfields,
-                }
-            })
-
-        } else {
-            message.channel.send(`Format: --complete TRG 3-1 SEC 1`);
+        try {
+            await reaction.users.remove(origmessage.author.id);
+        } catch { }
+        finally {
+            await message.delete();
         }
     }
+
+    /* ON BLANK */
 
     /**
      * 
      * @param {Discord.Message} message 
     */
-    async forceCreate(message) {
+    async onCreate(message) {
         let m = await message.channel.send({
             "embed": {
                 "title": "Create a Profile",
@@ -640,13 +717,10 @@ class TonyBot {
         if (reaction.emoji.name === '👍') {
             await this.createUser(message.author.id);
             m.delete();
-            await message.channel.send({
-                "embed": {
-                    "title": "Welcome!",
-                    "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --help`,
-                    ...this.embedInfo(message),
-                    
-                }
+            this.sendClosableEmbed(message, {
+                "title": "Welcome!",
+                "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --help`,
+                ...this.embedInfo(message),
             })
             return true;
         } else{
@@ -657,219 +731,166 @@ class TonyBot {
 
     /**
      * 
-     * @param {Discord.Message} message 
+     * @param {Discord.Message} message
      * @param {string[]} args 
-     */
-    async onGet(message, args) {
+    */
+    async onComplete(message, args) {
         if(args[0].toLowerCase() === "trg"){
-
-            let trgnum = this.dashToNum(args[1]);
-
-            if(trgnum.error && trgnum.num === 2) {
-                message.channel.send("Invalid TRG number. Try 3-1.");
-                return false;
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.onCreate(message))) {
+                    return false;
+                }
             }
 
-            if(trgnum.error && trgnum.num === 3) {
-                message.channel.send("TRG doesn't exist.");
-                return false;
-            }
-
-            let embed = await message.channel.send({
-                 "embed": {
-                    "title": "TRG Status",
-                    "description": `Loading...`,
-                    "color": 1111111
-                 }
-            });
-
-            embed.react("⬅️");
-            embed.react("❌");
-            embed.react("➡️");
-            
-            this.displayGet(embed, trgnum, message);
-
-        }
-    }
-
-    embedInfo(message) {
-        return {
-            "color": 1111111,
-            "timestamp": this.now(),
-            "author": {
-                "name": "Mr. Little",
-                "url": "https://pausd.schoology.com/user/52984930/info",
-                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-            },
-            "footer": {
-                "text": `Requested by ${message.author.username}`,
-                "icon_url": message.author.displayAvatarURL()
-            }
-        }
-    }
-
-    /**
-     * 
-     * @param {Discord.message} message 
-     * @param {*} id 
-     * @param {*} trgnum 
-     */
-    async createTRGforUser(id,trgnum) {
-        await this.base.doc("" + id).collection("TRG").doc("" + trgnum).set({
-            sections: [false,false,false],
-            sectionTimestamps: [this.now(),this.now(),this.now()]
-        })
-    }
-
-    async createTRG(unit, num){
-        await this.setTRGref();
-        let i = 0;
-        while(this.TRGref[i]) {
-            i++;
-        }
-        await this.createUserCollectionDoc("KEY", "TRG", ""+i, {
-            unit,
-            num
-        })
-        await this.setTRGref();
-    }
-
-    /**
-     * 
-     * @param {Discord.Message} message 
-     * @param {boolean} verified 
-     * @param {*} args 
-     */
-    async onCreateTRG(message,verified,str) {
-        if(verified) {
-            let tofind = this.strToTRG(str);
-            if(tofind.error) {
-                message.channel.send({
-                    "embed": {
-                        "title": "Invalid TRG",
-                        "description": `You entered TRG ${str}, which is not a valid TRG number. Try #-#`,
-                        ... this.embedInfo(message)
-                    }
+            // Get TRG numbers, check for errors
+            let nums = this.dashNotationToNums(args[1]);
+            if(nums === false) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Your TRG number, TRG ${args[1]}, was invalid. Try **TRG #-#** instead, e.g. TRG 3-1.`,
+                    ...this.embedInfo(message)
                 })
+                return false;
             }
-            await this.createTRG(tofind.unit, tofind.num);
-            message.channel.send({
-                "embed": {
-                    "title": `TRG ${str} has been creatted!`,
-                    "description": `You created TRG ${str}.`,
-                    ... this.embedInfo(message)
+
+            let [unit, num] = nums;
+
+            // Check if the TRG exists
+            if(!this.TRGExists(unit, num)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `TRG ${args[1]} does not exist.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // If the TRG exists, but the user doesn't have an entry, add it
+            if(!(await this.TRGExistsForUser(message.author.id, unit, num))){
+                await this.createTRGForUser(message.author.id, unit, num)
+            }
+
+            // Parse the last two parameters, either SEC # or ALL
+            let tochange = [false,false,false];
+            if(args[2].toLowerCase() === "sec") {
+                let secnum = parseInt(args[3]);
+                if(isNaN(secnum) || !(secnum <= 3 && secnum >= 1)) {
+                    this.sendClosableEmbed(message,{
+                        title: `Invalid`,
+                        description: `You sent SEC ${args[3]}, but ${args[3]} is not a valid section. Try 1,2, or 3.`,
+                        ...this.embedInfo(message)
+                    })
+                    return false;
                 }
-            })
-        } else {
-            message.channel.send({
-                "embed": {
-                    "title": "Invalid Perms",
-                    "description": "You do not have permissions to create a TRG.",
-                    ... this.embedInfo(message)
-                }
-            })
-        }
-    }
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     * @param {*} trgnum 
-     * @param {Discord.Message} origmessage 
-     */
-    async displayGet(message, trgnum, origmessage, num)  {
-        let data = (await this.TRGdata(origmessage.author.id, trgnum));
-        
-        if(data.error && data.num === 0) {
-            if(!await this.forceCreate(origmessage)) return false;
-            data = (await this.TRGdata(origmessage.author.id, trgnum));
-        }
+                tochange[secnum - 1] = true;
+            } else if(args[2].toLowerCase() === "all") {
+                tochange = [true,true,true];
+            } else {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `You sent ${args[2]}, but only **SEC #** or **ALL** are accepted.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
 
-        let dataunit = this.TRGref["" + trgnum];
+            // Complete!
+            let data = await this.updateTRG(message.author.id, unit, num, tochange);
 
-        let changed = false;
-        if(data.error && data.num === 1 && dataunit) {
-            await this.createTRGforUser(origmessage.author.id, trgnum);
-            data = (await this.TRGdata(origmessage.author.id, trgnum));
-        }
-        if(data.error && data.num === 1 && typeof num !== "number") {
-            message.edit({
-                "embed": {
-                    "title": "TRG Status",
-                    "description": `The TRG does not currently exist.`,
-                    "color": 1111111,
-                    "timestamp": this.now(),
-                    ...this.embedInfo(origmessage)
-                }
-            })
-            return false;
-        } else if(data.error && data.num === 1) {
-            trgnum = num;
-            data = (await this.TRGdata(origmessage.author.id, trgnum));
-            changed = true;
-        }
-
-        let dashnotation = this.TRGref["" + trgnum].unit + "-" + this.TRGref["" + trgnum].num
-        
-        let fields = [];
-
-        if(changed){
-            fields.push({
-                name: "Error",
-                value: "There are no more TRGs in that direction."
-            })
-        }
-
-        for(let i = 0; i < data.sections.length; i++) {
+            if(!data.CHANGED) {
+                this.sendClosableEmbed(message, {
+                    title: `Complete TRG ${unit}-${num}`,
+                    description: `You've already completed that.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
             
-            fields.push({
-                name: `Section ${i+1}: ${this.sectionTitles[i]}`,
-                value: data.sections[i] ? "Complete at " + this.formatTime(data.sectionTimestamps[i]) : "Incomplete"
+            // Parse the data into a Discord embed
+            let fields = [];
+            for(let i = 0; i < data.CHANGEDARRAY.length; i++) {
+                if(data.CHANGEDARRAY[i]){
+                    fields.push({
+                        name: `Section ${i+1}: ${this.sectionTitles[i]}`,
+                        value: "Just completed at " + this.formatTime(this.now())
+                    })
+                }
+            }
+
+            // Send it!
+            this.sendClosableEmbed(message, {
+                fields,
+                title: `Complete TRG ${unit}-${num}`,
+                description: `Completing TRG ${unit}-${num}.`,
+                ...this.embedInfo(message)
             })
         }
-        
-        await message.edit({
-            "embed": {
-                "title": `TRG ${dashnotation} Status`,
-                "description": `Your TRG ${dashnotation} status, as listed in the database.`,
-                ...this.embedInfo(origmessage),
-                "fields": fields,
-                
-            }
-        })
-
-        const filter = (reaction, user) => {
-            return ['⬅️','➡️','❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
-        };
-
-        let collected;
-        try {
-            collected = await message.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
-        } catch(err) {
-            await message.reactions.removeAll();
-            return false;
-        }
-        const reaction = collected.first();
-
-        await reaction.users.remove(origmessage.author.id);
-        if(reaction.emoji.name === "❌"){
-            message.delete();
-        } else if(reaction.emoji.name === "⬅️") {
-            this.displayGet(message,trgnum-1,origmessage, trgnum);
-        } else if(reaction.emoji.name === "➡️") {
-            this.displayGet(message,trgnum+1,origmessage, trgnum);
-        }
-    }
+   }
 
     /**
      * 
      * @param {Discord.Message} message
-     */
-    async onCreate(message) {
-        if( !(await this.userExists(message.author.id)) ) {
-            await this.forceCreate(message);
-        } else {
-            message.channel.send("You've already created an account.");
+     * @param {string[]} args 
+    */
+    async onGet(message, args) {
+        if(args[0].toLowerCase() === "trg"){
+
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.onCreate(message))) {
+                    return false;
+                }
+            }
+
+            // Get TRG numbers, check for errors
+            let nums = this.dashNotationToNums(args[1]);
+            if(nums === false) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Your TRG number, TRG ${args[1]}, was invalid. Try TRG #-# instead, e.g. TRG 3-1.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            let [unit, num] = nums;
+
+            // Check if the TRG exists
+            if(!this.TRGExists(unit, num)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `TRG ${args[1]} does not exist.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            // If the TRG exists, but the user doesn't have an entry, add it
+            if(!(await this.TRGExistsForUser(message.author.id, unit, num))){
+                await this.createTRGForUser(message.author.id, unit, num)
+            }
+
+            // Get data
+            let data = await this.getUserTRG(message.author.id, unit, num);
+            
+            // Parse the data into a Discord embed
+            let fields = [];
+            for(let i = 0; i < data.SECTIONS.length; i++) {
+                fields.push({
+                    name: `Section ${i+1}: ${this.sectionTitles[i]}`,
+                    value: data.SECTIONS[i] ? "Complete at " + this.formatTime(data.SECTIONTIMESTAMPS[i]) : "Incomplete"
+                })
+            }
+
+            // Send it!
+            this.sendClosableEmbed(message, {
+                fields,
+                title: `TRG ${unit}-${num} Status`,
+                description: `Your TRG ${unit}-${num} status, as listed in the database.`,
+                ...this.embedInfo(message)
+            })
         }
     }
 
@@ -1295,7 +1316,7 @@ class ProcessorBot {
 
         if(command === "create") {
             if(args[0] === "TRG"){
-                this.tonyBot.onCreateTRG(message, message.member.hasPermission("ADMINISTRATOR"), args[1]);
+                // this.tonyBot.onCreateTRG(message, message.member.hasPermission("ADMINISTRATOR"), args[1]);
             } else {
                 this.tonyBot.onCreate(message);
             }
