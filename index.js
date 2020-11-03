@@ -407,6 +407,132 @@ class SheetsUser {
     }
 }
 
+const crypto = require('crypto')
+const OAuth = require("oauth-1.0a")
+const fetch = require('node-fetch')
+class SchoologyAccessor {
+    constructor(){
+        this.base = 'https://api.schoology.com/v1'
+        this.token = { key: process.env.schoology_key, secret: process.env.schoology_secret }
+    }
+
+    async get(path){
+        const url = this.base + path;
+        const method = "GET";
+
+        function hash_function_sha1(base_string, key) {
+            return crypto
+                .createHmac('sha1', key)
+                .update(base_string)
+                .digest('base64')
+        }
+
+        const oauth = OAuth({
+            consumer: this.token,
+            signature_method: 'HMAC-SHA1',
+            hash_function: hash_function_sha1,
+        })
+
+        return await fetch(url,
+        {
+            method,
+            headers: oauth.toHeader(oauth.authorize({url, method})),
+        });
+    }
+
+    async methodswithdata(path,data,method) {
+        const url = this.base + path;
+
+        function hash_function_sha1(base_string, key) {
+            return crypto
+                .createHmac('sha1', key)
+                .update(base_string)
+                .digest('base64')
+        }
+
+        const oauth = OAuth({
+            consumer: this.token,
+            signature_method: 'HMAC-SHA1',
+            hash_function: hash_function_sha1,
+        })
+
+        return await fetch(url,
+        {
+            method,
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': "application/json",
+                ...oauth.toHeader(oauth.authorize({url, method}))
+            },
+        });
+    }
+
+    async post(path,data) {
+        return await this.methodswithdata(path,data,"POST");
+    }
+
+    async put(path,data){
+        return await this.methodswithdata(path,data,"PUT");
+    }
+
+    async delete(path,data){
+        return await this.methodswithdata(path,data,"DELETE");
+    }
+}
+
+class BioParser extends SchoologyAccessor {
+    constructor() {
+        super();
+    }
+
+    async getTRGs() {
+        let stuff = await this.get("/sections/2772305484/assignments?limit=1000")
+        let data = await stuff.json();
+
+        let TRGMap = new Map();
+        for(let i = 0; i < data.assignment.length; i++){
+            
+            let title = data.assignment[i].title;
+            if(title.indexOf("TRG") !== -1 && title.indexOf("-") !== -1){
+                let dashindex = title.indexOf("-");
+                let cut = title.slice(dashindex-1,dashindex+2).split("-");
+                let unit = parseInt(cut[0]);
+                let num = parseInt(cut[1]);
+                let pair = JSON.stringify( [unit,num] );
+
+                let {due,allow_dropbox,description} = data.assignment[i];
+
+                title = title.slice(dashindex+2);
+
+                if(!TRGMap.has(pair)) {
+                    TRGMap.set(pair, {
+                        title,
+                        description
+                    })
+                } else {
+                    if(TRGMap.get(pair).description.length < description.length){
+                        TRGMap.set(pair, {
+                            ...TRGMap.get(pair),
+                            description
+                        })
+                    }
+                }
+
+                if(allow_dropbox === "1") {
+                    TRGMap.set(pair, {
+                        ...TRGMap.get(pair),
+                        due
+                    })
+                }
+            }
+
+        }
+
+        return TRGMap;
+
+    }
+}
+
 class TonyBotDB {
     /**
      * @constructor
@@ -568,6 +694,11 @@ class TonyBotDB {
         await this.refreshUnit(unit);
     }
 
+    async setTRGinfo(unit, trgnum, data){
+        await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set(data);
+        await this.refreshUnit(unit);
+    }
+
     /* TOP LEVEL */
 
     async updateTRG(id, unit, trgnum, completedArr) {
@@ -614,12 +745,59 @@ class TonyBot extends TonyBotDB {
     constructor(db) {
         super(db);
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
+        this.BP = new BioParser();
+    }
+    
+    async onConstruct() {
+        await super.onConstruct();
+        return await this.refresh();
+    }
+    
+    async refresh(){
+
+        let updateembeds = [];
+
+        let trgs = await this.BP.getTRGs();
+        for(const key of trgs.keys()) {
+            let [unit, num] = JSON.parse(key);
+            if(!this.unitExists(unit)) {
+                await this.createUnit(unit);
+                updateembeds.push({
+                    title: `ALERT: Unit ${unit}`,
+                    description: `**Unit ${unit} was posted.** Here's to another month of death!`,
+                    ...this.basicEmbedInfo()
+                })
+            }
+            if(!this.TRGExists(unit, num)) {
+                updateembeds.push({
+                    title: `ALERT: TRG ${unit}-${num}`,
+                    description: `TRG ${unit}-${num} was just posted. Yes, there's another one.`,
+                    fields: [
+                        {
+                            name: "Due",
+                            value: this.formatTime(trgs.get(key).due)
+                        },
+                        {
+                            name: "Description",
+                            value: trgs.get(key).description
+                        }
+                    ],
+                    ...this.basicEmbedInfo()
+                })
+            }
+            await this.setTRGinfo(unit,num,trgs.get(key));
+        }
+
+        await super.refreshUnits();
+
+        return updateembeds;
     }
 
     /* ACCESSORS */
 
     /* LOW LEVEL */
-    embedInfo(message) {
+
+    basicEmbedInfo() {
         return {
             "color": 1111111,
             "timestamp": this.now(),
@@ -628,6 +806,12 @@ class TonyBot extends TonyBotDB {
                 "url": "https://pausd.schoology.com/user/52984930/info",
                 "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
             },
+        }
+    }
+
+    embedInfo(message) {
+        return {
+            ...this.basicEmbedInfo(),
             "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
@@ -715,7 +899,7 @@ class TonyBot extends TonyBotDB {
         const reaction = collected.first();
 
         if (reaction.emoji.name === '👍') {
-            await this.createUser(message.author.id);
+            await super.createUser(message.author.id);
             m.delete();
             this.sendClosableEmbed(message, {
                 "title": "Welcome!",
@@ -1070,7 +1254,7 @@ class ProcessorBot {
         ];
 
         this.collectingChannels = ["754912483390652426", "756698378116530266"]
-        this.updateChannels = [];
+        this.updateChannels = ["748669830244073536"];
 
         this.musicBots = ["234395307759108106"]
 
@@ -1082,6 +1266,7 @@ class ProcessorBot {
 
         this.reference = {};
 
+        this.interval = 50000;
     }
 
     /**
@@ -1090,7 +1275,9 @@ class ProcessorBot {
      */
     async onConstruct(client){
 
-        await this.tonyBot.onConstruct();
+        this.client = client;
+
+        let embeds = await this.tonyBot.onConstruct();
         await this.sheetsUser.SetUpSheets();
 
         for (const id of this.collectingChannels) {
@@ -1104,9 +1291,25 @@ class ProcessorBot {
 
         for (const id of this.updateChannels) {
             let channel = await client.channels.fetch(id)
-            await channel.send("**PeepsBot is now online.**")
+            for(const embed of embeds) {
+                await channel.send({embed});
+            }
         }
         
+        let currinterval = setInterval(() => {
+            this.refresh();
+        }, this.interval);
+    }
+
+    async refresh() {
+        console.log("Refreshing...")
+        let embeds = await this.tonyBot.refresh();
+        for (const id of this.updateChannels) {
+            let channel = await this.client.channels.fetch(id);
+            for(const embed of embeds) {
+                await channel.send({embed});
+            }
+        }
     }
 
     RGBtoObj(r, g, b) {
