@@ -1273,7 +1273,7 @@ class ProcessorBot {
 
         this.reference = {};
 
-        this.interval = 50000;
+        this.interval = 150000;
     }
 
     /**
