@@ -485,7 +485,7 @@ class BioParser extends SchoologyAccessor {
         super();
     }
 
-    async getTRGs() {
+    async getTRGandCheckpoints() {
         let stuff = await this.get("/sections/2772305484/assignments?limit=1000")
         let data = await stuff.json();
 
@@ -498,51 +498,73 @@ class BioParser extends SchoologyAccessor {
         }
 
         let TRGMap = new Map();
+        let CheckpointMap = new Map();
+
         for(let i = 0; i < data.assignment.length; i++){
             
             let title = data.assignment[i].title;
-            if(title.indexOf("TRG") !== -1 && title.indexOf("-") !== -1){
+            if( ( title.indexOf("TRG") !== -1 || title.indexOf("Checkpoint") !== -1) && title.indexOf("-") !== -1){
                 let dashindex = title.indexOf("-");
                 let cut = title.slice(dashindex-1,dashindex+2).split("-");
                 let unit = parseInt(cut[0]);
                 let num = parseInt(cut[1]);
                 let pair = JSON.stringify( [unit,num] );
 
-                let {due,allow_dropbox,description,web_url, id, grading_category} = data.assignment[i];
+                if(title.indexOf("TRG") !== -1) {
 
-                web_url = this.appToPAUSD(web_url);
-                title = title.slice(dashindex+4);
+                    let {due,allow_dropbox,description,web_url, id, grading_category, max_points} = data.assignment[i];
 
-                if(!TRGMap.has(pair)) {
-                    TRGMap.set(pair, {
-                        TITLE: title,
-                        DESCRIPTION: description,
-                        GRADED: false
-                    })
-                } else {
-                    if(TRGMap.get(pair).DESCRIPTION.length < description.length){
+                    web_url = this.appToPAUSD(web_url);
+                    title = title.slice(dashindex+4);
+
+                    if(!TRGMap.has(pair)) {
+                        TRGMap.set(pair, {
+                            TITLE: title,
+                            DESCRIPTION: description,
+                            GRADED: false
+                        })
+                    } else {
+                        if(TRGMap.get(pair).DESCRIPTION.length < description.length){
+                            TRGMap.set(pair, {
+                                ...TRGMap.get(pair),
+                                DESCRIPTION: description
+                            })
+                        }
+                    }
+
+                    if(allow_dropbox === "1") {
                         TRGMap.set(pair, {
                             ...TRGMap.get(pair),
-                            DESCRIPTION: description
+                            DUE: due,
+                            SUBMITURL: web_url,
+                            ID: id,
+                            CATEGORY: categories.get(grading_category),
+                            SUMMATIVE: true,
+                            POINTS: parseInt(max_points)
+                        })
+                    } else {
+                        TRGMap.set(pair, {
+                            ...TRGMap.get(pair),
+                            OTHERURL: web_url
                         })
                     }
-                }
+                } else {
+                    let {due, id, grading_category,max_points} = data.assignment[i];
 
-                if(allow_dropbox === "1") {
-                    TRGMap.set(pair, {
-                        ...TRGMap.get(pair),
+                    title = title.slice(dashindex+4);
+
+                    CheckpointMap.set(pair, {
+                        TITLE: title,
+                        GRADED: false,
                         DUE: due,
-                        SUBMITURL: web_url,
                         ID: id,
                         CATEGORY: categories.get(grading_category),
-                        SUMMATIVE: true
-                    })
-                } else {
-                    TRGMap.set(pair, {
-                        ...TRGMap.get(pair),
-                        OTHERURL: web_url
+                        SUMMATIVE: true,
+                        POINTS: parseInt(max_points)
                     })
                 }
+
+                
             }
 
         }
@@ -553,9 +575,14 @@ class BioParser extends SchoologyAccessor {
                     TRGMap.get(key).GRADED = true;
                 }
             }
+            for(const key of CheckpointMap.keys()) {
+                if(CheckpointMap.get(key).ID === entry.assignment_id) {
+                    CheckpointMap.get(key).GRADED = true;
+                }
+            }
         }
 
-        return TRGMap;
+        return { TRGS: TRGMap, CHECKPOINTS: CheckpointMap } ;
 
     }
 
@@ -564,11 +591,16 @@ class BioParser extends SchoologyAccessor {
      * @param {string} url 
      */
     appToPAUSD(url) {
-        let u = new URL(url);
-        if(u.hostname === "app.schoology.com") {
-            url = url.slice(0,8) + "pausd" + url.slice(11);
+        try {
+            let u = new URL(url);
+            if(u.hostname === "app.schoology.com") {
+                url = url.slice(0,8) + "pausd" + url.slice(11);
+            }
+            return url;
+        } catch(err){
+            return "";
         }
-        return url;
+        
     }
 }
 
@@ -603,20 +635,29 @@ class TonyBotDB {
         }
 
         let alltrgs = [];
+        let allcheckpoints = [];
         for(const key of tofind) {
             alltrgs.push(this.key.collection("UNITS").doc(key).collection("TRGS").get());
+            allcheckpoints.push(this.key.collection("UNITS").doc(key).collection("CHECKPOINTS").get())
         }
         
+        allcheckpoints = await Promise.all(allcheckpoints);
         alltrgs = await Promise.all(alltrgs);
 
         for(let i = 0; i < alltrgs.length; i++) {
             let currTRGMap = new Map();
+            let currCheckpointMap = new Map();
 
             for(let j = 0; j < alltrgs[i].docs.length; j++){
                 currTRGMap.set(alltrgs[i].docs[j].id,alltrgs[i].docs[j].data());
             }
 
+            for(let j = 0; j < allcheckpoints[i].docs.length; j++){
+                currCheckpointMap.set(allcheckpoints[i].docs[j].id, allcheckpoints[i].docs[j].data());
+            }
+
             this.units.get(tofind[i]).TRGS = currTRGMap;
+            this.units.get(tofind[i]).CHECKPOINTS = currCheckpointMap;
         }
 
     }
@@ -628,13 +669,18 @@ class TonyBotDB {
         }
 
         let alltrgs = (await this.key.collection("UNITS").doc(unit+"").collection("TRGS").get());
+        let allcheckpoints = (await this.key.collection("UNITS").doc(unit+"").collection("CHECKPOINTS").get());
         let currTRGMap = new Map();
+        let currCheckpointMap = new Map();
         for(let i = 0; i < alltrgs.docs.length; i++) {
             currTRGMap.set(alltrgs.docs[i].id, alltrgs.docs[i].data());
         }
+        for(let i = 0; i < allcheckpoints.docs.length; i++) {
+            currCheckpointMap.set(allcheckpoints.docs[i].id, allcheckpoints.docs[i].data());
+        }
 
         this.units.get(unit+"").TRGS = currTRGMap;
-
+        this.units.get(unit+"").CHECKPOINTS = currCheckpointMap;
     }
 
     now() {
@@ -658,6 +704,10 @@ class TonyBotDB {
         return this.unitExists(unit) && this.units.get(unit+"").TRGS.has(num + "");
     }
 
+    CheckpointExists(unit, num) {
+        return this.unitExists(unit) && this.units.get(unit+"").CHECKPOINTS.has(num + "");
+    }
+
     async userExists(id) {
         return (await this.base.doc(id + "").get()).exists;
     }
@@ -669,6 +719,11 @@ class TonyBotDB {
     async TRGExistsForUser(id,unit,num) {
         return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
             .collection("TRGS").doc(num+"").get()).exists;
+    }
+
+    async checkpointExistsForUser(id,unit,num) {
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
+            .collection("CHECKPOINTS").doc(num+"").get()).exists;
     }
 
     /* GETTING */
@@ -733,6 +788,13 @@ class TonyBotDB {
         await this.refreshUnit(unit);
     }
 
+    async createCheckpoint(unit, num) {
+        await this.key.collection("UNITS").doc(""+unit).collection("CHECKPOINTS").doc(""+num).set({
+        })
+        await this.refreshUnit(unit);
+    }
+
+
     /* TOP LEVEL */
 
     async updateTRG(id, unit, trgnum, completedArr) {
@@ -796,6 +858,36 @@ class TonyBotDB {
         }
 
         return changes;
+
+    }
+
+    async setCheckpointInfo(unit, num, data){
+
+        let currdata = this.units.get(unit+"").CHECKPOINTS.get(num+"");
+
+        let currkeys = Object.keys(currdata);
+        let newkeys = Object.keys(data);
+
+        for(let i = 0; i < newkeys.length; i++) {
+            if(currkeys.indexOf( newkeys[i] ) === -1 ){
+                currkeys.push(newkeys[i]);
+            }
+        }
+
+        const changes = {};
+        for(const key of currkeys) {
+            if(currdata[key] !== data[key]) {
+                changes[key] = [currdata[key], data[key]];
+            }
+        }
+
+        if(Object.keys(changes).length > 0){
+            await this.key.collection("UNITS").doc(""+unit).collection("CHECKPOINTS").doc(""+num).set(data);
+            this.units.get(unit+"").CHECKPOINTS.set(num+"", data) 
+        }
+
+        return changes;
+        
     }
 
 }
@@ -820,7 +912,18 @@ class TonyBot extends TonyBotDB {
 
         let updateembeds = [];
 
-        let trgs = await this.BP.getTRGs();
+        const sassymessages = 
+        [
+            "Yes, there's another one.",
+            "agioasgASDGLASDg asgASGawLIJliu waLJKfaJLEGQWLIJGkjasfd",
+            "Well, Bio is like a firing squad, with 15 TRGs pointed at you as you desperately look the other way.",
+            "Hey, I'm just the messenger.",
+            "Look, I'm failing too, ok?",
+        ]
+
+        let maps = await this.BP.getTRGandCheckpoints();
+        let trgs = maps.TRGS;
+        let checkpoints = maps.CHECKPOINTS;
         for(const key of trgs.keys()) {
             let [unit, num] = JSON.parse(key);
             if(!this.unitExists(unit)) {
@@ -834,7 +937,7 @@ class TonyBot extends TonyBotDB {
             if(!this.TRGExists(unit, num)) {
                 updateembeds.push({
                     title: `ALERT: TRG ${unit}-${num} POSTED`,
-                    description: `TRG ${unit}-${num} was just posted. Yes, there's another one.`,
+                    description: `TRG ${unit}-${num} was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
                     fields: [
                         {
                             name: "Title",
@@ -872,6 +975,63 @@ class TonyBot extends TonyBotDB {
                         {
                             name: "It was Due",
                             value: this.formatTime(trgs.get(key).DUE)
+                        }
+                    ],
+                    ...this.basicEmbedInfo()
+                });
+            }
+        }
+
+        for(const key of checkpoints.keys()) {
+            let [unit, num] = JSON.parse(key);
+            if(!this.unitExists(unit)) {
+                await this.createUnit(unit);
+                updateembeds.push({
+                    title: `ALERT: Unit ${unit}`,
+                    description: `**Unit ${unit} was posted.** Here's to another month of death!`,
+                    ...this.basicEmbedInfo()
+                })
+            }
+            if(!this.CheckpointExists(unit, num)) {
+                updateembeds.push({
+                    title: `ALERT: Checkpoint ${unit}-${num} POSTED`,
+                    description: `Checkpoint ${unit}-${num} was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
+                    fields: [
+                        {
+                            name: "Title",
+                            value: `${checkpoints.get(key).TITLE ? checkpoints.get(key).TITLE : `No title has been provided`}`
+                        },
+                        {
+                            name: "Date",
+                            value: this.formatTime(checkpoints.get(key).DUE)
+                        },
+                        {
+                            name: "Points",
+                            value: checkpoints.get(key).POINTS
+                        }
+                    ],
+                    ...this.basicEmbedInfo()
+                })
+                await this.createCheckpoint(unit,num);
+            }
+            const changes = await this.setCheckpointInfo(unit,num,checkpoints.get(key));
+
+            if(changes.GRADED && changes.GRADED[1] === true) {
+                updateembeds.push({
+                    title: `ALERT: CHECKPOINT ${unit}-${num} GRADED`,
+                    description: `Checkpoint ${unit}-${num} was just graded. Go look.`,
+                    fields: [
+                        {
+                            name: "Title",
+                            value: `${checkpoints.get(key).TITLE ? checkpoints.get(key).TITLE : `No title has been provided`}`
+                        },
+                        {
+                            name: "The Date was",
+                            value: this.formatTime(checkpoints.get(key).DUE)
+                        },
+                        {
+                            name: "Points",
+                            value: checkpoints.get(key).POINTS
                         }
                     ],
                     ...this.basicEmbedInfo()
@@ -1353,7 +1513,8 @@ class ProcessorBot {
         ];
 
         this.collectingChannels = ["754912483390652426", "756698378116530266"]
-        this.updateChannels = ["748669830244073536"];
+        this.updateChannels = ["748669830244073536"]; // Actual
+        // this.updateChannels = ["750804960333135914"] // Redirect
 
         this.musicBots = ["234395307759108106"]
 
