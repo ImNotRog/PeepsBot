@@ -751,7 +751,7 @@ class TonyBot extends TonyBotDB {
         await super.onConstruct();
         return await this.refresh();
     }
-    
+
     async refresh(){
 
         let updateembeds = [];
@@ -783,8 +783,8 @@ class TonyBot extends TonyBotDB {
                     ],
                     ...this.basicEmbedInfo()
                 })
+                await this.setTRGinfo(unit,num,trgs.get(key));
             }
-            await this.setTRGinfo(unit,num,trgs.get(key));
         }
 
         await super.refreshUnits();
