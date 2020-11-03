@@ -696,7 +696,6 @@ class TonyBotDB {
 
     async setTRGinfo(unit, trgnum, data){
         await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set(data);
-        await this.refreshUnit(unit);
     }
 
     /* TOP LEVEL */
