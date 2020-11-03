@@ -950,6 +950,10 @@ class TonyBot extends TonyBotDB {
                 return false;
             }
 
+            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+                await this.createUnitForUser(message.author.id, unit);
+            }
+            
             // If the TRG exists, but the user doesn't have an entry, add it
             if(!(await this.TRGExistsForUser(message.author.id, unit, num))){
                 await this.createTRGForUser(message.author.id, unit, num)
@@ -1049,6 +1053,10 @@ class TonyBot extends TonyBotDB {
                     ...this.embedInfo(message)
                 })
                 return false;
+            }
+
+            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+                await this.createUnitForUser(message.author.id, unit);
             }
 
             // If the TRG exists, but the user doesn't have an entry, add it
