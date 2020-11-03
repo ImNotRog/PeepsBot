@@ -489,6 +489,14 @@ class BioParser extends SchoologyAccessor {
         let stuff = await this.get("/sections/2772305484/assignments?limit=1000")
         let data = await stuff.json();
 
+        let otherstuff = await this.get("/users/2016549/grades?section_id=2772305484");
+        let grades = await otherstuff.json();
+        let categories = new Map();
+
+        for(const cat of grades.section[0].grading_category) {
+            categories.set(""+cat.id,cat.title);
+        }
+
         let TRGMap = new Map();
         for(let i = 0; i < data.assignment.length; i++){
             
@@ -500,20 +508,22 @@ class BioParser extends SchoologyAccessor {
                 let num = parseInt(cut[1]);
                 let pair = JSON.stringify( [unit,num] );
 
-                let {due,allow_dropbox,description} = data.assignment[i];
+                let {due,allow_dropbox,description,web_url, id, grading_category} = data.assignment[i];
 
-                title = title.slice(dashindex+2);
+                web_url = this.appToPAUSD(web_url);
+                title = title.slice(dashindex+4);
 
                 if(!TRGMap.has(pair)) {
                     TRGMap.set(pair, {
-                        title,
-                        description
+                        TITLE: title,
+                        DESCRIPTION: description,
+                        GRADED: false
                     })
                 } else {
-                    if(TRGMap.get(pair).description.length < description.length){
+                    if(TRGMap.get(pair).DESCRIPTION.length < description.length){
                         TRGMap.set(pair, {
                             ...TRGMap.get(pair),
-                            description
+                            DESCRIPTION: description
                         })
                     }
                 }
@@ -521,15 +531,44 @@ class BioParser extends SchoologyAccessor {
                 if(allow_dropbox === "1") {
                     TRGMap.set(pair, {
                         ...TRGMap.get(pair),
-                        due
+                        DUE: due,
+                        SUBMITURL: web_url,
+                        ID: id,
+                        CATEGORY: categories.get(grading_category),
+                        SUMMATIVE: true
+                    })
+                } else {
+                    TRGMap.set(pair, {
+                        ...TRGMap.get(pair),
+                        OTHERURL: web_url
                     })
                 }
             }
 
         }
 
+        for(const entry of grades.section[0].period[0].assignment){
+            for(const key of TRGMap.keys()) {
+                if(TRGMap.get(key).ID === entry.assignment_id) {
+                    TRGMap.get(key).GRADED = true;
+                }
+            }
+        }
+
         return TRGMap;
 
+    }
+
+    /**
+     * 
+     * @param {string} url 
+     */
+    appToPAUSD(url) {
+        let u = new URL(url);
+        if(u.hostname === "app.schoology.com") {
+            url = url.slice(0,8) + "pausd" + url.slice(11);
+        }
+        return url;
     }
 }
 
@@ -694,10 +733,6 @@ class TonyBotDB {
         await this.refreshUnit(unit);
     }
 
-    async setTRGinfo(unit, trgnum, data){
-        await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set(data);
-    }
-
     /* TOP LEVEL */
 
     async updateTRG(id, unit, trgnum, completedArr) {
@@ -732,6 +767,35 @@ class TonyBotDB {
             CHANGED,
             CHANGEDARRAY
         }
+    }
+
+
+    async setTRGinfo(unit, trgnum, data){
+
+        let currdata = this.units.get(unit+"").TRGS.get(trgnum+"");
+
+        let currkeys = Object.keys(currdata);
+        let newkeys = Object.keys(data);
+
+        for(let i = 0; i < newkeys.length; i++) {
+            if(currkeys.indexOf( newkeys[i] ) === -1 ){
+                currkeys.push(newkeys[i]);
+            }
+        }
+
+        const changes = {};
+        for(const key of currkeys) {
+            if(currdata[key] !== data[key]) {
+                changes[key] = [currdata[key], data[key]];
+            }
+        }
+
+        if(Object.keys(changes).length > 0){
+            await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set(data);
+            this.units.get(unit+"").TRGS.set(trgnum+"", data) 
+        }
+
+        return changes;
     }
 
 }
@@ -769,25 +833,51 @@ class TonyBot extends TonyBotDB {
             }
             if(!this.TRGExists(unit, num)) {
                 updateembeds.push({
-                    title: `ALERT: TRG ${unit}-${num}`,
+                    title: `ALERT: TRG ${unit}-${num} POSTED`,
                     description: `TRG ${unit}-${num} was just posted. Yes, there's another one.`,
                     fields: [
                         {
+                            name: "Title",
+                            value: `${trgs.get(key).TITLE ? trgs.get(key).TITLE : `No title has been provided`}`
+                        },
+                        {
                             name: "Due",
-                            value: this.formatTime(trgs.get(key).due)
+                            value: this.formatTime(trgs.get(key).DUE)
                         },
                         {
                             name: "Description",
-                            value: trgs.get(key).description
+                            value: trgs.get(key).DESCRIPTION
+                        },
+                        {
+                            name: "URLs",
+                            value: `${trgs.get(key).OTHERURL ? `[Original Link](${trgs.get(key).OTHERURL}), ` : ""}` +
+                                   `${trgs.get(key).SUBMITURL ? `[Submission Link](${trgs.get(key).SUBMITURL})` : ""}`
                         }
                     ],
                     ...this.basicEmbedInfo()
                 })
-                await this.setTRGinfo(unit,num,trgs.get(key));
+                await this.createTRG(unit,num);
+            }
+            const changes = await this.setTRGinfo(unit,num,trgs.get(key));
+
+            if(changes.GRADED && changes.GRADED[1] === true) {
+                updateembeds.push({
+                    title: `ALERT: TRG ${unit}-${num} GRADED`,
+                    description: `TRG ${unit}-${num} was just graded. Go look.`,
+                    fields: [
+                        {
+                            name: "Title",
+                            value: `${trgs.get(key).TITLE ? trgs.get(key).TITLE : `No title has been provided`}`
+                        },
+                        {
+                            name: "It was Due",
+                            value: this.formatTime(trgs.get(key).DUE)
+                        }
+                    ],
+                    ...this.basicEmbedInfo()
+                });
             }
         }
-
-        await super.refreshUnits();
 
         return updateembeds;
     }
@@ -1074,6 +1164,8 @@ class TonyBot extends TonyBotDB {
                     value: data.SECTIONS[i] ? "Complete at " + this.formatTime(data.SECTIONTIMESTAMPS[i]) : "Incomplete"
                 })
             }
+
+            let infofields = [];
 
             // Send it!
             this.sendClosableEmbed(message, {
