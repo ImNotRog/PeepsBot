@@ -22,13 +22,23 @@ class TonyBotDB {
 
     async refreshUnits() {
         let units = (await this.key.collection("UNITS").get());
-        
+
         let tofind = units.docs.map(doc => doc.id);
 
+        // Create all the units, if they don't exist
         for(const key of tofind) {
             if(!this.units.has(key)) {
                 this.units.set(key, {});
             }
+        }
+
+        // let data = units.docs.map(doc => doc.data());
+        for(const datum of units.docs) {
+            let existing = this.units.get(datum.id);
+            this.units.set(datum.id, {
+                ...existing,
+                DATA: datum.data()
+            })
         }
 
         let alltrgs = [];
@@ -186,7 +196,9 @@ class TonyBotDB {
     /* FOR GLOBAL */
 
     async createUnit(unit) {
-        await this.key.collection("UNITS").doc(""+unit).set({});
+        await this.key.collection("UNITS").doc(""+unit).set({
+            
+        });
         await this.refreshUnit(unit);
     }
 
@@ -240,26 +252,31 @@ class TonyBotDB {
         }
     }
 
+    differences(obj1, obj2) {
+        let keys1 = Object.keys(obj1);
+        let keys2 = Object.keys(obj2);
+
+        for(let i = 0; i < keys2.length; i++) {
+            if(keys1.indexOf( keys2[i] ) === -1 ){
+                keys1.push(keys2[i]);
+            }
+        }
+
+        const changes = {};
+        for(const key of keys1) {
+            if(obj1[key] !== obj2[key]) {
+                changes[key] = [obj1[key], obj2[key]];
+            }
+        }
+
+        return changes;
+    }
 
     async setTRGinfo(unit, trgnum, data){
 
         let currdata = this.units.get(unit+"").TRGS.get(trgnum+"");
 
-        let currkeys = Object.keys(currdata);
-        let newkeys = Object.keys(data);
-
-        for(let i = 0; i < newkeys.length; i++) {
-            if(currkeys.indexOf( newkeys[i] ) === -1 ){
-                currkeys.push(newkeys[i]);
-            }
-        }
-
-        const changes = {};
-        for(const key of currkeys) {
-            if(currdata[key] !== data[key]) {
-                changes[key] = [currdata[key], data[key]];
-            }
-        }
+        const changes = this.differences(currdata,data);
 
         if(Object.keys(changes).length > 0){
             await this.key.collection("UNITS").doc(""+unit).collection("TRGS").doc(""+trgnum).set(data);
@@ -274,21 +291,7 @@ class TonyBotDB {
 
         let currdata = this.units.get(unit+"").CHECKPOINTS.get(num+"");
 
-        let currkeys = Object.keys(currdata);
-        let newkeys = Object.keys(data);
-
-        for(let i = 0; i < newkeys.length; i++) {
-            if(currkeys.indexOf( newkeys[i] ) === -1 ){
-                currkeys.push(newkeys[i]);
-            }
-        }
-
-        const changes = {};
-        for(const key of currkeys) {
-            if(currdata[key] !== data[key]) {
-                changes[key] = [currdata[key], data[key]];
-            }
-        }
+        const changes = this.differences(currdata,data);
 
         if(Object.keys(changes).length > 0){
             await this.key.collection("UNITS").doc(""+unit).collection("CHECKPOINTS").doc(""+num).set(data);
@@ -297,6 +300,19 @@ class TonyBotDB {
 
         return changes;
         
+    }
+
+    async setUnitInfo(unit,data) {
+        let currdata = this.units.get(unit+"").DATA;
+
+        const changes = this.differences(currdata,data);
+
+        if(Object.keys(changes).length > 0){
+            await this.key.collection("UNITS").doc(""+unit).set(data);
+            this.units.get(unit+"").DATA = data; 
+        }
+
+        return changes;
     }
 
 }

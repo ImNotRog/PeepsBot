@@ -5,7 +5,58 @@ class BioParser extends SchoologyAccessor {
         super();
     }
 
-    async getTRGandCheckpoints() {
+    async getTRGandCheckpointsAndUnits() {
+
+        let baseFolder = await (await this.get("/courses/2772305484/folder/")).json();
+        let units = new Map();
+
+        let unitpromises = [];
+        let unitorder = [];
+
+        for(const item of baseFolder["folder-item"]) {
+            if(item.title.indexOf("Unit") !== -1) {
+                let num = ( item.title.slice(5,6) );
+                let title = item.title.slice(8);
+                let folderlink = this.folderToURL(item.id);
+                let apilocation = this.linkToApi( item.location );
+                let unitfolder = this.get(apilocation);
+
+                unitpromises.push(unitfolder)
+                unitorder.push(num);
+
+                units.set(num, { TITLE: title, LINK: folderlink });
+            }
+        }
+
+        unitpromises = await Promise.all(unitpromises);
+
+        let unitjsonpromises = [];
+        for(const p of unitpromises) {
+            unitjsonpromises.push(p.json());
+        }
+
+        unitjsonpromises = await Promise.all(unitjsonpromises);
+
+        for(let i = 0; i < unitjsonpromises.length; i++) {
+            let curr = units.get(unitorder[i]);
+            let info = {};
+            for(const item of unitjsonpromises[i]["folder-item"]) {
+                if(item.title.indexOf("Slides") !== -1) {
+                    info["SLIDES"] = this.pageToURL(item.id);
+                }
+                if(item.title.indexOf("Calendar") !== -1) {
+                    info["CALENDAR"] = this.pageToURL(item.id);
+                }
+                if(item.title.indexOf("Discussion") !== -1) {
+                    info["DISCUSSION"] = this.discussionToURL(item.id);
+                }
+            }
+            units.set(unitorder[i], {
+                ...curr,
+                ...info
+            })
+        }
+
         let stuff = await this.get("/sections/2772305484/assignments?limit=1000")
         let data = await stuff.json();
 
@@ -102,14 +153,41 @@ class BioParser extends SchoologyAccessor {
             }
         }
 
-        return { TRGS: TRGMap, CHECKPOINTS: CheckpointMap } ;
+        const docs = (await (await this.get("/sections/2772305484/documents?limit=100")).json()).document ;
+        for(const doc of docs){
+            if(doc.title.indexOf("TRG") !== -1) {
+                let dashindex = doc.title.indexOf("-")
+                let cut = doc.title.slice(dashindex-1,dashindex+2).split("-");
+                let unit = parseInt(cut[0]);
+                let num = parseInt(cut[1]);
+                let pair = JSON.stringify( [unit,num] );
+
+                if(TRGMap.has(pair)) {
+                    TRGMap.get(pair).DOCURL = doc.attachments.links.link[0].url
+                }
+            }
+        }
+
+        return { TRGS: TRGMap, CHECKPOINTS: CheckpointMap, UNITS: units } ;
 
     }
 
-    /**
-     * 
-     * @param {string} url 
-     */
+    linkToApi(link) {
+        return link.slice(28);
+    }
+
+    folderToURL(folderid){
+        return `https://pausd.schoology.com/course/2772305484/materials?f=${folderid}`
+    }
+
+    pageToURL(id){
+        return `https://pausd.schoology.com/page/${id}`
+    }
+
+    discussionToURL(id){
+        return `https://pausd.schoology.com/course/2772297053/materials/discussion/view/${id}`
+    }
+
     appToPAUSD(url) {
         try {
             let u = new URL(url);

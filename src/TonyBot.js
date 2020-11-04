@@ -34,7 +34,10 @@ class TonyBot extends TonyBotDB {
             "Look, I'm failing too, ok?",
         ]
 
-        let maps = await this.BP.getTRGandCheckpoints();
+        let maps = await this.BP.getTRGandCheckpointsAndUnits();
+
+        let units = maps.UNITS;
+
         let trgs = maps.TRGS;
         let checkpoints = maps.CHECKPOINTS;
         for(const key of trgs.keys()) {
@@ -132,6 +135,19 @@ class TonyBot extends TonyBotDB {
                     ...this.basicEmbedInfo()
                 });
             }
+        }
+
+        for(const key of units.keys()){
+            let unit = parseInt(key);
+            if(!this.unitExists(unit)) {
+                await this.createUnit(unit);
+                updateembeds.push({
+                    title: `ALERT: Unit ${unit}`,
+                    description: `**Unit ${unit} was posted.** Here's to another month of death!`,
+                    ...this.basicEmbedInfo()
+                })
+            }
+            const changes = await this.setUnitInfo(unit, units.get(key));
         }
 
         return updateembeds;
