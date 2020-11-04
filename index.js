@@ -1,4 +1,11 @@
 
+/**
+ * @todo Better Get system
+ * @todo Add updates
+ * @todo Currency
+ */
+
+
 const Discord = require("discord.js");
 
 require("dotenv").config();
@@ -1210,7 +1217,9 @@ class TonyBot extends TonyBotDB {
 
             // Parse the last two parameters, either SEC # or ALL
             let tochange = [false,false,false];
-            if(args[2].toLowerCase() === "sec") {
+            if(!args[2]){
+                tochange = [true,true,true];
+            } else if(args[2].toLowerCase() === "sec") {
                 let secnum = parseInt(args[3]);
                 if(isNaN(secnum) || !(secnum <= 3 && secnum >= 1)) {
                     this.sendClosableEmbed(message,{
