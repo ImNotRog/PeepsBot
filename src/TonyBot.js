@@ -2,6 +2,9 @@ const {TonyBotDB} = require("./TonyBotDB");
 
 const {BioParser} = require("./BP")
 
+// To aid in Intellisense, will comment out when not developing
+const Discord = require("discord.js");
+
 class TonyBot extends TonyBotDB {
     /**
      * @constructor
@@ -48,25 +51,7 @@ class TonyBot extends TonyBotDB {
                 updateembeds.push({
                     title: `ALERT: TRG ${unit}-${num} POSTED`,
                     description: `TRG ${unit}-${num} was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
-                    fields: [
-                        {
-                            name: "Title",
-                            value: `${trgs.get(key).TITLE ? trgs.get(key).TITLE : `No title has been provided`}`
-                        },
-                        {
-                            name: "Due",
-                            value: this.formatTime(trgs.get(key).DUE)
-                        },
-                        {
-                            name: "Description",
-                            value: trgs.get(key).DESCRIPTION
-                        },
-                        {
-                            name: "URLs",
-                            value: `${trgs.get(key).OTHERURL ? `[Original Link](${trgs.get(key).OTHERURL}), ` : ""}` +
-                                   `${trgs.get(key).SUBMITURL ? `[Submission Link](${trgs.get(key).SUBMITURL})` : ""}`
-                        }
-                    ],
+                    fields: this.TRGtoFields(trgs.get(key)),
                     ...this.basicEmbedInfo()
                 })
                 await this.createTRG(unit,num);
@@ -176,6 +161,29 @@ class TonyBot extends TonyBotDB {
                 "icon_url": message.author.displayAvatarURL()
             }
         }
+    }
+
+    /* MORE EMBED STUFF */
+    TRGtoFields(trg){
+        return [
+            {
+                name: "Title",
+                value: `${trg.TITLE ? trg.TITLE : `No title has been provided`}`
+            },
+            {
+                name: "Due",
+                value: this.formatTime(trg.DUE)
+            },
+            {
+                name: "Description",
+                value: trg.DESCRIPTION
+            },
+            {
+                name: "URLs",
+                value: `${trg.OTHERURL ? `[Original Link](${trg.OTHERURL}), ` : ""}` +
+                        `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`
+            }
+        ]
     }
 
     /**
@@ -429,15 +437,19 @@ class TonyBot extends TonyBotDB {
             let data = await this.getUserTRG(message.author.id, unit, num);
             
             // Parse the data into a Discord embed
-            let fields = [];
+            let userfields = [];
             for(let i = 0; i < data.SECTIONS.length; i++) {
-                fields.push({
+                userfields.push({
                     name: `Section ${i+1}: ${this.sectionTitles[i]}`,
                     value: data.SECTIONS[i] ? "Complete at " + this.formatTime(data.SECTIONTIMESTAMPS[i]) : "Incomplete"
                 })
             }
 
-            let infofields = [];
+            let trg = this.units.get(unit+"").TRGS.get(num+"");
+            let infofields = this.TRGtoFields(trg);
+
+            let fields = [];
+            fields = [...infofields, ...userfields]
 
             // Send it!
             this.sendClosableEmbed(message, {

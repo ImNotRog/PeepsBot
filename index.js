@@ -1,6 +1,8 @@
 
 /**
  * @todo Better Get system
+ * @todo Add User Checkpoint System
+ * @todo Add other assignments
  * @todo Add updates
  * @todo Currency
  */
