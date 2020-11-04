@@ -138,6 +138,11 @@ class TonyBotDB {
             .collection("TRGS").doc(num+"").get()).data();
     }
 
+    async getUserCheckpoint(id,unit,num) {
+        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
+            .collection("CHECKPOINTS").doc(num+"").get()).data();
+    }
+
     /* MODIFIERS */
 
     /* LOW LEVEL */
@@ -165,6 +170,13 @@ class TonyBotDB {
             SECTIONTIMESTAMPS: [this.now(),this.now(),this.now()],
             COMPLETE: false
         })
+    }
+
+    async createCheckpointForUser(id,unit,num) {
+        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("CHECKPOINTS").doc(num + "").set({
+            COMPLETE: false,
+            TIMESTAMP: this.now()
+        });
     }
 
     async updateTRGForUser(id, unit, trgnum, data) {

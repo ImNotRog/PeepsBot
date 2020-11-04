@@ -179,10 +179,39 @@ class TonyBot extends TonyBotDB {
                 value: trg.DESCRIPTION
             },
             {
+                name: "Graded",
+                value: trg.GRADED ? "Yes" : "No"
+            },
+            {
+                name: "Points",
+                value: trg.POINTS
+            },
+            {
                 name: "URLs",
                 value: `${trg.OTHERURL ? `[Original Link](${trg.OTHERURL}), ` : ""}` +
                         `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`
             }
+        ]
+    }
+
+    CheckpointToFields(checkpoint) {
+        return [
+            {
+                name: "Title",
+                value: `${checkpoint.TITLE ? checkpoint.TITLE : `No title has been provided`}`
+            },
+            {
+                name: "Due",
+                value: this.formatTime(checkpoint.DUE)
+            },
+            {
+                name: "Graded",
+                value: checkpoint.GRADED ? "Yes" : "No"
+            },
+            {
+                name: "Points",
+                value: checkpoint.POINTS
+            },
         ]
     }
 
@@ -392,7 +421,9 @@ class TonyBot extends TonyBotDB {
      * @param {string[]} args 
     */
     async onGet(message, args) {
-        if(args[0].toLowerCase() === "trg"){
+        if(!args[0]) {
+
+        } else if(args[0].toLowerCase() === "trg"){
 
             // If user doesn't exist, make them exist or resolve
             if(!(await this.userExists(message.author.id))){ 
@@ -450,6 +481,12 @@ class TonyBot extends TonyBotDB {
 
             let fields = [];
             fields = [...infofields, ...userfields]
+            if(!args[2]){}
+            else if(args[2].toLowerCase() === "info") {
+                fields = [...infofields];
+            } else if(args[2].toLowerCase() === "progress") {
+                fields = [...userfields];
+            }
 
             // Send it!
             this.sendClosableEmbed(message, {
@@ -458,8 +495,79 @@ class TonyBot extends TonyBotDB {
                 description: `Your TRG ${unit}-${num} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
+        } else if(args[0].toLowerCase() === "checkpoint"){
+
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.createUser(message))) {
+                    return false;
+                }
+            }
+
+            // Get TRG numbers, check for errors
+            let nums = this.dashNotationToNums(args[1]);
+            if(nums === false) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Your Checkpoint number, Checkpoint ${args[1]}, was invalid. Try Checkpoint #-# instead, e.g. Checkpoint 3-1.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            let [unit, num] = nums;
+
+            // Check if the TRG exists
+            if(!this.CheckpointExists(unit, num)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Checkpoint ${args[1]} does not exist.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+                await this.createUnitForUser(message.author.id, unit);
+            }
+
+            // If the TRG exists, but the user doesn't have an entry, add it
+            if(!(await this.checkpointExistsForUser(message.author.id, unit, num))){
+                await this.createCheckpointForUser(message.author.id, unit, num)
+            }
+
+            // Get data
+            let data = await this.getUserCheckpoint(message.author.id, unit, num);
+
+            let userfields = [{
+                name: "Complete",
+                value: `${data.COMPLETE ? "Completed at " + this.formatTime(data.TIMESTAMP) : "Not completed"}`
+            }]
+
+            let checkpoint = this.units.get(unit+"").CHECKPOINTS.get(num+"");
+            let infofields = this.CheckpointToFields(checkpoint);
+
+            let fields = [];
+            fields = [...infofields, ...userfields]
+            if(!args[2]){}
+            else if(args[2].toLowerCase() === "info") {
+                fields = [...infofields];
+            } else if(args[2].toLowerCase() === "progress") {
+                fields = [...userfields];
+            }
+
+            // Send it!
+            this.sendClosableEmbed(message, {
+                fields,
+                title: `Checkpoint ${unit}-${num} Status`,
+                description: `Your Checkpoint ${unit}-${num} status, as listed in the database.`,
+                ...this.embedInfo(message)
+            })
+
         } else if(args[0].toLowerCase() === "all") {
-            if(args[1].toLowerCase() === "trgs") {
+            if(!args[1]) {
+
+            } else if(args[1].toLowerCase() === "trgs") {
                 let alltrgs = [];
                 for(const unit of this.units.keys()){
                     for(const num of this.units.get(unit).TRGS.keys()){
@@ -469,6 +577,18 @@ class TonyBot extends TonyBotDB {
                 this.sendClosableEmbed(message, {
                     title: "All TRGs",
                     description: alltrgs.join("\n"),
+                    ...this.embedInfo(message)
+                })
+            } if(args[1].toLowerCase() === "checkpoints") {
+                let allcheckpoints = [];
+                for(const unit of this.units.keys()){
+                    for(const num of this.units.get(unit).CHECKPOINTS.keys()){
+                        allcheckpoints.push(`Checkpoint ${unit}-${num}`);
+                    }
+                }
+                this.sendClosableEmbed(message, {
+                    title: "All Checkpoints",
+                    description: allcheckpoints.join("\n"),
                     ...this.embedInfo(message)
                 })
             } else if(args[1].toLowerCase() === "units") {
