@@ -1,10 +1,6 @@
 .env
 node_modules
-nn.js
-.idea
-token.js
-ttt.js
 .vscode
 .DS_Store
-squalol.js
-scales.json
+.data
+.other
