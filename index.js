@@ -10,8 +10,8 @@ const Discord = require("discord.js");
 
 const client = new Discord.Client();
 
-const { sheets, db, config } = require("./Authorize")
-const { ProcessorBot } = require("./ProcessorBot");
+const { sheets, db, config } = require("./src/Authorize")
+const { ProcessorBot } = require("./src/ProcessorBot");
 
 (async () => {
     
