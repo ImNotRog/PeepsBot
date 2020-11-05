@@ -38,6 +38,20 @@ class TonyBot extends TonyBotDB {
 
         let units = maps.UNITS;
 
+        for(const key of units.keys()){
+            let unit = parseInt(key);
+            if(!this.unitExists(unit)) {
+                await this.createUnit(unit);
+                updateembeds.push({
+                    title: `ALERT: Unit ${unit}`,
+                    description: `**Unit ${unit} was posted.** Here's to another month of death!`,
+                    fields: this.UnitToFields(unit),
+                    ...this.basicEmbedInfo()
+                })
+            }
+            const changes = await this.setUnitInfo(unit, units.get(key));
+        }
+
         let trgs = maps.TRGS;
         let checkpoints = maps.CHECKPOINTS;
         for(const key of trgs.keys()) {
@@ -137,19 +151,6 @@ class TonyBot extends TonyBotDB {
             }
         }
 
-        for(const key of units.keys()){
-            let unit = parseInt(key);
-            if(!this.unitExists(unit)) {
-                await this.createUnit(unit);
-                updateembeds.push({
-                    title: `ALERT: Unit ${unit}`,
-                    description: `**Unit ${unit} was posted.** Here's to another month of death!`,
-                    ...this.basicEmbedInfo()
-                })
-            }
-            const changes = await this.setUnitInfo(unit, units.get(key));
-        }
-
         return updateembeds;
     }
 
@@ -239,6 +240,21 @@ class TonyBot extends TonyBotDB {
                 value: checkpoint.POINTS
             },
         ]
+    }
+
+    UnitToFields(unit) {
+        let fields = [{
+            name: "Title",
+            value: `${unit.TITLE}`,
+        }, {
+            name: "Links",
+            value: `${unit.LINK ? `[Folder Link](${unit.LINK}) `: ""}` +
+                    `${unit.CALENDAR ? `[Calendar Link](${unit.CALENDAR}) `: ""}` +
+                    `${unit.SLIDES ? `[Slides Link](${unit.SLIDES}) `: ""}` +
+                    `${unit.DISCUSSION ? `[Discussion Help Link](${unit.DISCUSSION}) `: ""}`,
+        }]
+
+        return fields;
     }
 
     /**
@@ -587,6 +603,33 @@ class TonyBot extends TonyBotDB {
                 fields,
                 title: `Checkpoint ${unit}-${num} Status`,
                 description: `Your Checkpoint ${unit}-${num} status, as listed in the database.`,
+                ...this.embedInfo(message)
+            })
+
+        } else if(args[0].toLowerCase() === "unit"){
+
+            // If user doesn't exist, make them exist or resolve
+            if(!(await this.userExists(message.author.id))){ 
+                if(!(await this.createUser(message))) {
+                    return false;
+                }
+            }
+
+            // Check if Unit Exists
+            let unitnum = args[1];
+            if(!this.unitExists(unitnum)) {
+                this.sendClosableEmbed(message,{
+                    title: `Invalid`,
+                    description: `Unit ${args[1]} does not exist.`,
+                    ...this.embedInfo(message)
+                })
+                return false;
+            }
+
+            let unitinfo = this.units.get(unitnum).DATA;
+            await this.sendClosableEmbed(message, {
+                title: `Unit ${unitnum}`,
+                fields: this.UnitToFields(unitinfo),
                 ...this.embedInfo(message)
             })
 

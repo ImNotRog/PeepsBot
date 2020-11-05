@@ -1,7 +1,7 @@
 
 /**
  * @todo Better Get system
- * @todo Add User Checkpoint System
+ * @todo Add User Checkpoint Complete System 
  * @todo Add units
  * @todo Utilize the folders
  * @todo Add other assignments
