@@ -1,5 +1,5 @@
-const {SheetsUser} = require("./SheetsUser");
-const {TonyBot} = require("./TonyBot");
+const { SheetsUser } = require("./SheetsUser");
+const { TonyBot } = require("./TonyBot");
 const Discord = require("discord.js");
 
 let moment = require("moment-timezone");
@@ -38,8 +38,8 @@ class ProcessorBot {
             this.RGBtoObj(0, 0, 0)
         ];
 
-        this.collectingChannels = ["754912483390652426", "756698378116530266"]
-        this.updateChannels = ["748669830244073536", "750186902879076433","744415364376559746"]; // Actual
+        this.collectingChannels =  ["754912483390652426", "756698378116530266"]
+        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746"]; // Actual
         // this.updateChannels = ["750804960333135914"] // Redirect
 
         this.musicBots = ["234395307759108106"]

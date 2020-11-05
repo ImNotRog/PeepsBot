@@ -12,6 +12,8 @@ class TonyBotDB {
         this.key = this.base.doc("KEY");
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
         this.units = new Map();
+
+        this.users = new Map();
     }
 
     async onConstruct() {
@@ -19,6 +21,10 @@ class TonyBotDB {
     }
 
     /* ACCESSORS */
+
+    async refreshUsers() {
+        
+    }
 
     async refreshUnits() {
         let units = (await this.key.collection("UNITS").get());
@@ -117,6 +123,7 @@ class TonyBotDB {
 
     async userExists(id) {
         return (await this.base.doc(id + "").get()).exists;
+        // return this.users.has(id + "");
     }
 
     async unitExistsForUser(id,unit){

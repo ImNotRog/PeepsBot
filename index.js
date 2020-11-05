@@ -8,7 +8,7 @@
  * @todo Add updates
  * @todo Currency
  */
-
+process.on('warning', e => console.warn(e.stack));
 
 const Discord = require("discord.js");
 

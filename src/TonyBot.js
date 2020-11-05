@@ -43,7 +43,7 @@ class TonyBot extends TonyBotDB {
             if(!this.unitExists(unit)) {
                 await this.createUnit(unit);
                 updateembeds.push({
-                    title: `ALERT: Unit ${unit}`,
+                    title: `ALERT: Unit ${unit}: ${unit.TITLE}`,
                     description: `**Unit ${unit} was posted.** Here's to another month of death!`,
                     fields: this.UnitToFields(unit),
                     ...this.basicEmbedInfo()
@@ -66,8 +66,8 @@ class TonyBot extends TonyBotDB {
             }
             if(!this.TRGExists(unit, num)) {
                 updateembeds.push({
-                    title: `ALERT: TRG ${unit}-${num} POSTED`,
-                    description: `TRG ${unit}-${num} was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
+                    title: `***ALERT:*** **TRG ${unit}-${num}: ${trgs.get(key).TITLE}** POSTED`,
+                    description: `**TRG ${unit}-${num}: ${trgs.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
                     fields: this.TRGtoFields(trgs.get(key)),
                     ...this.basicEmbedInfo()
                 })
@@ -106,22 +106,9 @@ class TonyBot extends TonyBotDB {
             }
             if(!this.CheckpointExists(unit, num)) {
                 updateembeds.push({
-                    title: `ALERT: Checkpoint ${unit}-${num} POSTED`,
-                    description: `Checkpoint ${unit}-${num} was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
-                    fields: [
-                        {
-                            name: "Title",
-                            value: `${checkpoints.get(key).TITLE ? checkpoints.get(key).TITLE : `No title has been provided`}`
-                        },
-                        {
-                            name: "Date",
-                            value: this.formatTime(checkpoints.get(key).DUE)
-                        },
-                        {
-                            name: "Points",
-                            value: checkpoints.get(key).POINTS
-                        }
-                    ],
+                    title: `***ALERT:*** **Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** POSTED`,
+                    description: `**Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
+                    fields: this.CheckpointToFields(checkpoints.get(key)),
                     ...this.basicEmbedInfo()
                 })
                 await this.createCheckpoint(unit,num);
@@ -187,36 +174,37 @@ class TonyBot extends TonyBotDB {
         if(trg.DOCURL) {
             docfield.push({
                 name: "Google Doc URL",
-                value: trg.DOCURL
+                value: `[Google Doc URL](${trg.DOCURL})`,
+                inline: true
             })
         }
 
         return [
             {
-                name: "Title",
-                value: `${trg.TITLE ? trg.TITLE : `No title has been provided`}`
+                name: "Due",
+                value: this.formatTime(trg.DUE),
+                inline: true
             },
             {
-                name: "Due",
-                value: this.formatTime(trg.DUE)
+                name: "Has Been Graded",
+                value: trg.GRADED ? "Yes" : "Not yet",
+                inline: true
+            },
+            {
+                name: "Points",
+                value: trg.POINTS,
+                inline: true
             },
             {
                 name: "Description",
                 value: trg.DESCRIPTION
             },
-            {
-                name: "Has Been Graded",
-                value: trg.GRADED ? "Yes" : "Not yet"
-            },
-            {
-                name: "Points",
-                value: trg.POINTS
-            },
             ...docfield,
             {
-                name: "Other URLs",
+                name: "Schoology URLs",
                 value: `${trg.OTHERURL ? `[Original Link](${trg.OTHERURL}), ` : ""}` +
-                        `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`
+                        `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`,
+                inline: true
             }
         ]
     }
@@ -224,35 +212,56 @@ class TonyBot extends TonyBotDB {
     CheckpointToFields(checkpoint) {
         return [
             {
-                name: "Title",
-                value: `${checkpoint.TITLE ? checkpoint.TITLE : `No title has been provided`}`
-            },
-            {
                 name: "Due",
-                value: this.formatTime(checkpoint.DUE)
+                value: this.formatTime(checkpoint.DUE),
+                inline: true
             },
             {
-                name: "Graded",
-                value: checkpoint.GRADED ? "Yes" : "No"
+                name: "Has Been Graded",
+                value: checkpoint.GRADED ? "Yes" : "Not Yet",
+                inline: true
             },
             {
                 name: "Points",
-                value: checkpoint.POINTS
+                value: checkpoint.POINTS,
+                inline: true
             },
         ]
     }
 
     UnitToFields(unit) {
-        let fields = [{
-            name: "Title",
-            value: `${unit.TITLE}`,
-        }, {
-            name: "Links",
-            value: `${unit.LINK ? `[Folder Link](${unit.LINK}) `: ""}` +
-                    `${unit.CALENDAR ? `[Calendar Link](${unit.CALENDAR}) `: ""}` +
-                    `${unit.SLIDES ? `[Slides Link](${unit.SLIDES}) `: ""}` +
-                    `${unit.DISCUSSION ? `[Discussion Help Link](${unit.DISCUSSION}) `: ""}`,
-        }]
+        let fields = []
+
+        if(unit.LINK) {
+            fields.push({
+                name: "Folder",
+                value: `[Link](${unit.LINK})`,
+                inline: true
+            })
+        }
+
+        if(unit.CALENDAR) {
+            fields.push({
+                name: "Calendar",
+                value: `[Link](${unit.CALENDAR})`,
+                inline: true
+            })
+        }
+
+        if(unit.SLIDES) {
+            fields.push({
+                name: "Slides",
+                value: `[Link](${unit.SLIDES})`,
+                inline: true
+            })
+        }
+
+        if(unit.DISCUSSION) {
+            fields.push({
+                name: "Help Discussion",
+                value: `[Link](${unit.DISCUSSION})`
+            })
+        }
 
         return fields;
     }
@@ -533,8 +542,8 @@ class TonyBot extends TonyBotDB {
             // Send it!
             this.sendClosableEmbed(message, {
                 fields,
-                title: `TRG ${unit}-${num} Status`,
-                description: `Your TRG ${unit}-${num} status, as listed in the database.`,
+                title: `TRG ${unit}-${num}: ${trg.TITLE} Status`,
+                description: `Your TRG ${unit}-${num}: ${trg.TITLE} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
         } else if(args[0].toLowerCase() === "checkpoint"){
@@ -601,8 +610,8 @@ class TonyBot extends TonyBotDB {
             // Send it!
             this.sendClosableEmbed(message, {
                 fields,
-                title: `Checkpoint ${unit}-${num} Status`,
-                description: `Your Checkpoint ${unit}-${num} status, as listed in the database.`,
+                title: `Checkpoint ${unit}-${num}: ${checkpoint.TITLE} Status`,
+                description: `Your Checkpoint ${unit}-${num}: ${checkpoint.TITLE} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
 
@@ -628,7 +637,7 @@ class TonyBot extends TonyBotDB {
 
             let unitinfo = this.units.get(unitnum).DATA;
             await this.sendClosableEmbed(message, {
-                title: `Unit ${unitnum}`,
+                title: `Unit ${unitnum}: ${unitinfo.TITLE}`,
                 fields: this.UnitToFields(unitinfo),
                 ...this.embedInfo(message)
             })
