@@ -42,10 +42,10 @@ class BioParser extends SchoologyAccessor {
             let info = {};
             for(const item of unitjsonpromises[i]["folder-item"]) {
                 if(item.title.indexOf("Slides") !== -1) {
-                    info["SLIDES"] = this.pageToURL(item.id);
+                    info["SLIDES"] = this.embedToURL(item.id);
                 }
                 if(item.title.indexOf("Calendar") !== -1) {
-                    info["CALENDAR"] = this.pageToURL(item.id);
+                    info["CALENDAR"] = this.embedToURL(item.id);
                 }
                 if(item.title.indexOf("Discussion") !== -1) {
                     info["DISCUSSION"] = this.discussionToURL(item.id);
@@ -180,8 +180,8 @@ class BioParser extends SchoologyAccessor {
         return `https://pausd.schoology.com/course/2772305484/materials?f=${folderid}`
     }
 
-    pageToURL(id){
-        return `https://pausd.schoology.com/page/${id}`
+    embedToURL(id){
+        return `https://pausd.schoology.com/course/2772297053/materials/link/view/${id}`
     }
 
     discussionToURL(id){

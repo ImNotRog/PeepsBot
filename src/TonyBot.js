@@ -1,6 +1,10 @@
-const {TonyBotDB} = require("./TonyBotDB");
+const {
+    TonyBotDB
+} = require("./TonyBotDB");
 
-const {BioParser} = require("./BP")
+const {
+    BioParser
+} = require("./BP")
 
 // To aid in Intellisense, will comment out when not developing
 const Discord = require("discord.js");
@@ -15,18 +19,17 @@ class TonyBot extends TonyBotDB {
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
         this.BP = new BioParser();
     }
-    
+
     async onConstruct() {
         await super.onConstruct();
         return await this.refresh();
     }
 
-    async refresh(){
+    async refresh() {
 
         let updateembeds = [];
 
-        const sassymessages = 
-        [
+        const sassymessages = [
             "Yes, there's another one.",
             "agioasgASDGLASDg asgASGawLIJliu waLJKfaJLEGQWLIJGkjasfd",
             "Well, Bio is like a firing squad, with 15 TRGs pointed at you as you desperately look the other way.",
@@ -38,9 +41,9 @@ class TonyBot extends TonyBotDB {
 
         let units = maps.UNITS;
 
-        for(const key of units.keys()){
+        for (const key of units.keys()) {
             let unit = parseInt(key);
-            if(!this.unitExists(unit)) {
+            if (!this.unitExists(unit)) {
                 await this.createUnit(unit);
                 updateembeds.push({
                     title: `ALERT: Unit ${unit}: ${unit.TITLE}`,
@@ -54,9 +57,9 @@ class TonyBot extends TonyBotDB {
 
         let trgs = maps.TRGS;
         let checkpoints = maps.CHECKPOINTS;
-        for(const key of trgs.keys()) {
+        for (const key of trgs.keys()) {
             let [unit, num] = JSON.parse(key);
-            if(!this.unitExists(unit)) {
+            if (!this.unitExists(unit)) {
                 await this.createUnit(unit);
                 updateembeds.push({
                     title: `ALERT: Unit ${unit}`,
@@ -64,23 +67,22 @@ class TonyBot extends TonyBotDB {
                     ...this.basicEmbedInfo()
                 })
             }
-            if(!this.TRGExists(unit, num)) {
+            if (!this.TRGExists(unit, num)) {
                 updateembeds.push({
                     title: `***ALERT:*** **TRG ${unit}-${num}: ${trgs.get(key).TITLE}** POSTED`,
                     description: `**TRG ${unit}-${num}: ${trgs.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
                     fields: this.TRGtoFields(trgs.get(key)),
                     ...this.basicEmbedInfo()
                 })
-                await this.createTRG(unit,num);
+                await this.createTRG(unit, num);
             }
-            const changes = await this.setTRGinfo(unit,num,trgs.get(key));
+            const changes = await this.setTRGinfo(unit, num, trgs.get(key));
 
-            if(changes.GRADED && changes.GRADED[1] === true) {
+            if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
                     title: `ALERT: TRG ${unit}-${num} GRADED`,
                     description: `TRG ${unit}-${num} was just graded. Go look.`,
-                    fields: [
-                        {
+                    fields: [{
                             name: "Title",
                             value: `${trgs.get(key).TITLE ? trgs.get(key).TITLE : `No title has been provided`}`
                         },
@@ -94,9 +96,9 @@ class TonyBot extends TonyBotDB {
             }
         }
 
-        for(const key of checkpoints.keys()) {
+        for (const key of checkpoints.keys()) {
             let [unit, num] = JSON.parse(key);
-            if(!this.unitExists(unit)) {
+            if (!this.unitExists(unit)) {
                 await this.createUnit(unit);
                 updateembeds.push({
                     title: `ALERT: Unit ${unit}`,
@@ -104,23 +106,22 @@ class TonyBot extends TonyBotDB {
                     ...this.basicEmbedInfo()
                 })
             }
-            if(!this.CheckpointExists(unit, num)) {
+            if (!this.CheckpointExists(unit, num)) {
                 updateembeds.push({
                     title: `***ALERT:*** **Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** POSTED`,
                     description: `**Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}.`,
                     fields: this.CheckpointToFields(checkpoints.get(key)),
                     ...this.basicEmbedInfo()
                 })
-                await this.createCheckpoint(unit,num);
+                await this.createCheckpoint(unit, num);
             }
-            const changes = await this.setCheckpointInfo(unit,num,checkpoints.get(key));
+            const changes = await this.setCheckpointInfo(unit, num, checkpoints.get(key));
 
-            if(changes.GRADED && changes.GRADED[1] === true) {
+            if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
                     title: `ALERT: CHECKPOINT ${unit}-${num} GRADED`,
                     description: `Checkpoint ${unit}-${num} was just graded. Go look.`,
-                    fields: [
-                        {
+                    fields: [{
                             name: "Title",
                             value: `${checkpoints.get(key).TITLE ? checkpoints.get(key).TITLE : `No title has been provided`}`
                         },
@@ -168,10 +169,10 @@ class TonyBot extends TonyBotDB {
     }
 
     /* MORE EMBED STUFF */
-    TRGtoFields(trg){
+    TRGtoFields(trg) {
 
         let docfield = [];
-        if(trg.DOCURL) {
+        if (trg.DOCURL) {
             docfield.push({
                 name: "Google Doc URL",
                 value: `[Google Doc URL](${trg.DOCURL})`,
@@ -179,8 +180,7 @@ class TonyBot extends TonyBotDB {
             })
         }
 
-        return [
-            {
+        return [{
                 name: "Due",
                 value: this.formatTime(trg.DUE),
                 inline: true
@@ -203,15 +203,14 @@ class TonyBot extends TonyBotDB {
             {
                 name: "Schoology URLs",
                 value: `${trg.OTHERURL ? `[Original Link](${trg.OTHERURL}), ` : ""}` +
-                        `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`,
+                    `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`,
                 inline: true
             }
         ]
     }
 
     CheckpointToFields(checkpoint) {
-        return [
-            {
+        return [{
                 name: "Due",
                 value: this.formatTime(checkpoint.DUE),
                 inline: true
@@ -232,7 +231,7 @@ class TonyBot extends TonyBotDB {
     UnitToFields(unit) {
         let fields = []
 
-        if(unit.LINK) {
+        if (unit.LINK) {
             fields.push({
                 name: "Folder",
                 value: `[Link](${unit.LINK})`,
@@ -240,7 +239,7 @@ class TonyBot extends TonyBotDB {
             })
         }
 
-        if(unit.CALENDAR) {
+        if (unit.CALENDAR) {
             fields.push({
                 name: "Calendar",
                 value: `[Link](${unit.CALENDAR})`,
@@ -248,7 +247,7 @@ class TonyBot extends TonyBotDB {
             })
         }
 
-        if(unit.SLIDES) {
+        if (unit.SLIDES) {
             fields.push({
                 name: "Slides",
                 value: `[Link](${unit.SLIDES})`,
@@ -256,7 +255,7 @@ class TonyBot extends TonyBotDB {
             })
         }
 
-        if(unit.DISCUSSION) {
+        if (unit.DISCUSSION) {
             fields.push({
                 name: "Help Discussion",
                 value: `[Link](${unit.DISCUSSION})`
@@ -273,13 +272,13 @@ class TonyBot extends TonyBotDB {
      */
     dashNotationToNums(str) {
         let splits = str.split("-");
-        if(splits.length !== 2) return false;
+        if (splits.length !== 2) return false;
 
-        let unit = parseInt( splits[0] );
-        if(isNaN(unit)) return false;
+        let unit = parseInt(splits[0]);
+        if (isNaN(unit)) return false;
 
-        let num = parseInt( splits[1] );
-        if(isNaN(num)) return false;
+        let num = parseInt(splits[1]);
+        if (isNaN(num)) return false;
 
         return [unit, num];
     }
@@ -291,7 +290,9 @@ class TonyBot extends TonyBotDB {
      * @param {Discord.Message} origmessage
      */
     async sendClosableEmbed(origmessage, embed) {
-        let message = await origmessage.channel.send({embed});
+        let message = await origmessage.channel.send({
+            embed
+        });
         await message.react("❌");
 
         const filter = (reaction, user) => {
@@ -300,8 +301,12 @@ class TonyBot extends TonyBotDB {
 
         let collected;
         try {
-            collected = await message.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
-        } catch(err) {
+            collected = await message.awaitReactions(filter, {
+                max: 1,
+                time: 60000,
+                errors: ['time']
+            })
+        } catch (err) {
             await message.reactions.removeAll();
             return false;
         }
@@ -309,8 +314,7 @@ class TonyBot extends TonyBotDB {
 
         try {
             await reaction.users.remove(origmessage.author.id);
-        } catch { }
-        finally {
+        } catch {} finally {
             await message.delete();
         }
     }
@@ -320,7 +324,7 @@ class TonyBot extends TonyBotDB {
     /**
      * 
      * @param {Discord.Message} message 
-    */
+     */
     async createUser(message) {
         let m = await message.channel.send({
             "embed": {
@@ -339,7 +343,11 @@ class TonyBot extends TonyBotDB {
 
         let collected;
         try {
-            collected = await m.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
+            collected = await m.awaitReactions(filter, {
+                max: 1,
+                time: 60000,
+                errors: ['time']
+            })
         } catch {
             return false;
         }
@@ -354,7 +362,7 @@ class TonyBot extends TonyBotDB {
                 ...this.embedInfo(message),
             })
             return true;
-        } else{
+        } else {
             m.delete();
             return false;
         }
@@ -364,20 +372,20 @@ class TonyBot extends TonyBotDB {
      * 
      * @param {Discord.Message} message
      * @param {string[]} args 
-    */
+     */
     async onComplete(message, args) {
-        if(args[0].toLowerCase() === "trg"){
+        if (args[0].toLowerCase() === "trg") {
             // If user doesn't exist, make them exist or resolve
-            if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.createUser(message))) {
+            if (!(await this.userExists(message.author.id))) {
+                if (!(await this.createUser(message))) {
                     return false;
                 }
             }
 
             // Get TRG numbers, check for errors
             let nums = this.dashNotationToNums(args[1]);
-            if(nums === false) {
-                this.sendClosableEmbed(message,{
+            if (nums === false) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `Your TRG number, TRG ${args[1]}, was invalid. Try **TRG #-#** instead, e.g. TRG 3-1.`,
                     ...this.embedInfo(message)
@@ -388,8 +396,8 @@ class TonyBot extends TonyBotDB {
             let [unit, num] = nums;
 
             // Check if the TRG exists
-            if(!this.TRGExists(unit, num)) {
-                this.sendClosableEmbed(message,{
+            if (!this.TRGExists(unit, num)) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `TRG ${args[1]} does not exist.`,
                     ...this.embedInfo(message)
@@ -397,23 +405,23 @@ class TonyBot extends TonyBotDB {
                 return false;
             }
 
-            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+            if (!(await this.unitExistsForUser(message.author.id, unit))) {
                 await this.createUnitForUser(message.author.id, unit);
             }
-            
+
             // If the TRG exists, but the user doesn't have an entry, add it
-            if(!(await this.TRGExistsForUser(message.author.id, unit, num))){
+            if (!(await this.TRGExistsForUser(message.author.id, unit, num))) {
                 await this.createTRGForUser(message.author.id, unit, num)
             }
 
             // Parse the last two parameters, either SEC # or ALL
-            let tochange = [false,false,false];
-            if(!args[2]){
-                tochange = [true,true,true];
-            } else if(args[2].toLowerCase() === "sec") {
+            let tochange = [false, false, false];
+            if (!args[2]) {
+                tochange = [true, true, true];
+            } else if (args[2].toLowerCase() === "sec") {
                 let secnum = parseInt(args[3]);
-                if(isNaN(secnum) || !(secnum <= 3 && secnum >= 1)) {
-                    this.sendClosableEmbed(message,{
+                if (isNaN(secnum) || !(secnum <= 3 && secnum >= 1)) {
+                    this.sendClosableEmbed(message, {
                         title: `Invalid`,
                         description: `You sent SEC ${args[3]}, but ${args[3]} is not a valid section. Try 1,2, or 3.`,
                         ...this.embedInfo(message)
@@ -422,10 +430,10 @@ class TonyBot extends TonyBotDB {
                 }
 
                 tochange[secnum - 1] = true;
-            } else if(args[2].toLowerCase() === "all") {
-                tochange = [true,true,true];
+            } else if (args[2].toLowerCase() === "all") {
+                tochange = [true, true, true];
             } else {
-                this.sendClosableEmbed(message,{
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `You sent ${args[2]}, but only **SEC #** or **ALL** are accepted.`,
                     ...this.embedInfo(message)
@@ -436,7 +444,7 @@ class TonyBot extends TonyBotDB {
             // Complete!
             let data = await this.updateTRG(message.author.id, unit, num, tochange);
 
-            if(!data.CHANGED) {
+            if (!data.CHANGED) {
                 this.sendClosableEmbed(message, {
                     title: `Complete TRG ${unit}-${num}`,
                     description: `You've already completed that.`,
@@ -444,11 +452,11 @@ class TonyBot extends TonyBotDB {
                 })
                 return false;
             }
-            
+
             // Parse the data into a Discord embed
             let fields = [];
-            for(let i = 0; i < data.CHANGEDARRAY.length; i++) {
-                if(data.CHANGEDARRAY[i]){
+            for (let i = 0; i < data.CHANGEDARRAY.length; i++) {
+                if (data.CHANGEDARRAY[i]) {
                     fields.push({
                         name: `Section ${i+1}: ${this.sectionTitles[i]}`,
                         value: "Just completed at " + this.formatTime(this.now())
@@ -464,29 +472,29 @@ class TonyBot extends TonyBotDB {
                 ...this.embedInfo(message)
             })
         }
-   }
+    }
 
     /**
      * 
      * @param {Discord.Message} message
      * @param {string[]} args 
-    */
+     */
     async onGet(message, args) {
-        if(!args[0]) {
+        if (!args[0]) {
 
-        } else if(args[0].toLowerCase() === "trg"){
+        } else if (args[0].toLowerCase() === "trg") {
 
             // If user doesn't exist, make them exist or resolve
-            if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.createUser(message))) {
+            if (!(await this.userExists(message.author.id))) {
+                if (!(await this.createUser(message))) {
                     return false;
                 }
             }
 
             // Get TRG numbers, check for errors
             let nums = this.dashNotationToNums(args[1]);
-            if(nums === false) {
-                this.sendClosableEmbed(message,{
+            if (nums === false) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `Your TRG number, TRG ${args[1]}, was invalid. Try TRG #-# instead, e.g. TRG 3-1.`,
                     ...this.embedInfo(message)
@@ -497,8 +505,8 @@ class TonyBot extends TonyBotDB {
             let [unit, num] = nums;
 
             // Check if the TRG exists
-            if(!this.TRGExists(unit, num)) {
-                this.sendClosableEmbed(message,{
+            if (!this.TRGExists(unit, num)) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `TRG ${args[1]} does not exist.`,
                     ...this.embedInfo(message)
@@ -506,36 +514,35 @@ class TonyBot extends TonyBotDB {
                 return false;
             }
 
-            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+            if (!(await this.unitExistsForUser(message.author.id, unit))) {
                 await this.createUnitForUser(message.author.id, unit);
             }
 
             // If the TRG exists, but the user doesn't have an entry, add it
-            if(!(await this.TRGExistsForUser(message.author.id, unit, num))){
+            if (!(await this.TRGExistsForUser(message.author.id, unit, num))) {
                 await this.createTRGForUser(message.author.id, unit, num)
             }
 
             // Get data
             let data = await this.getUserTRG(message.author.id, unit, num);
-            
+
             // Parse the data into a Discord embed
             let userfields = [];
-            for(let i = 0; i < data.SECTIONS.length; i++) {
+            for (let i = 0; i < data.SECTIONS.length; i++) {
                 userfields.push({
                     name: `Section ${i+1}: ${this.sectionTitles[i]}`,
                     value: data.SECTIONS[i] ? "Complete at " + this.formatTime(data.SECTIONTIMESTAMPS[i]) : "Incomplete"
                 })
             }
 
-            let trg = this.units.get(unit+"").TRGS.get(num+"");
+            let trg = this.units.get(unit + "").TRGS.get(num + "");
             let infofields = this.TRGtoFields(trg);
 
             let fields = [];
             fields = [...infofields, ...userfields]
-            if(!args[2]){}
-            else if(args[2].toLowerCase() === "info") {
+            if (!args[2]) {} else if (args[2].toLowerCase() === "info") {
                 fields = [...infofields];
-            } else if(args[2].toLowerCase() === "progress") {
+            } else if (args[2].toLowerCase() === "progress") {
                 fields = [...userfields];
             }
 
@@ -546,19 +553,19 @@ class TonyBot extends TonyBotDB {
                 description: `Your TRG ${unit}-${num}: ${trg.TITLE} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
-        } else if(args[0].toLowerCase() === "checkpoint"){
+        } else if (args[0].toLowerCase() === "checkpoint") {
 
             // If user doesn't exist, make them exist or resolve
-            if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.createUser(message))) {
+            if (!(await this.userExists(message.author.id))) {
+                if (!(await this.createUser(message))) {
                     return false;
                 }
             }
 
             // Get TRG numbers, check for errors
             let nums = this.dashNotationToNums(args[1]);
-            if(nums === false) {
-                this.sendClosableEmbed(message,{
+            if (nums === false) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `Your Checkpoint number, Checkpoint ${args[1]}, was invalid. Try Checkpoint #-# instead, e.g. Checkpoint 3-1.`,
                     ...this.embedInfo(message)
@@ -569,8 +576,8 @@ class TonyBot extends TonyBotDB {
             let [unit, num] = nums;
 
             // Check if the TRG exists
-            if(!this.CheckpointExists(unit, num)) {
-                this.sendClosableEmbed(message,{
+            if (!this.CheckpointExists(unit, num)) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `Checkpoint ${args[1]} does not exist.`,
                     ...this.embedInfo(message)
@@ -578,12 +585,12 @@ class TonyBot extends TonyBotDB {
                 return false;
             }
 
-            if(!(await this.unitExistsForUser(message.author.id, unit))) {
+            if (!(await this.unitExistsForUser(message.author.id, unit))) {
                 await this.createUnitForUser(message.author.id, unit);
             }
 
             // If the TRG exists, but the user doesn't have an entry, add it
-            if(!(await this.checkpointExistsForUser(message.author.id, unit, num))){
+            if (!(await this.checkpointExistsForUser(message.author.id, unit, num))) {
                 await this.createCheckpointForUser(message.author.id, unit, num)
             }
 
@@ -595,15 +602,14 @@ class TonyBot extends TonyBotDB {
                 value: `${data.COMPLETE ? "Completed at " + this.formatTime(data.TIMESTAMP) : "Not completed"}`
             }]
 
-            let checkpoint = this.units.get(unit+"").CHECKPOINTS.get(num+"");
+            let checkpoint = this.units.get(unit + "").CHECKPOINTS.get(num + "");
             let infofields = this.CheckpointToFields(checkpoint);
 
             let fields = [];
             fields = [...infofields, ...userfields]
-            if(!args[2]){}
-            else if(args[2].toLowerCase() === "info") {
+            if (!args[2]) {} else if (args[2].toLowerCase() === "info") {
                 fields = [...infofields];
-            } else if(args[2].toLowerCase() === "progress") {
+            } else if (args[2].toLowerCase() === "progress") {
                 fields = [...userfields];
             }
 
@@ -615,19 +621,19 @@ class TonyBot extends TonyBotDB {
                 ...this.embedInfo(message)
             })
 
-        } else if(args[0].toLowerCase() === "unit"){
+        } else if (args[0].toLowerCase() === "unit") {
 
             // If user doesn't exist, make them exist or resolve
-            if(!(await this.userExists(message.author.id))){ 
-                if(!(await this.createUser(message))) {
+            if (!(await this.userExists(message.author.id))) {
+                if (!(await this.createUser(message))) {
                     return false;
                 }
             }
 
             // Check if Unit Exists
             let unitnum = args[1];
-            if(!this.unitExists(unitnum)) {
-                this.sendClosableEmbed(message,{
+            if (!this.unitExists(unitnum)) {
+                this.sendClosableEmbed(message, {
                     title: `Invalid`,
                     description: `Unit ${args[1]} does not exist.`,
                     ...this.embedInfo(message)
@@ -642,13 +648,13 @@ class TonyBot extends TonyBotDB {
                 ...this.embedInfo(message)
             })
 
-        } else if(args[0].toLowerCase() === "all") {
-            if(!args[1]) {
+        } else if (args[0].toLowerCase() === "all") {
+            if (!args[1]) {
 
-            } else if(args[1].toLowerCase() === "trgs") {
+            } else if (args[1].toLowerCase() === "trgs") {
                 let alltrgs = [];
-                for(const unit of this.units.keys()){
-                    for(const num of this.units.get(unit).TRGS.keys()){
+                for (const unit of this.units.keys()) {
+                    for (const num of this.units.get(unit).TRGS.keys()) {
                         alltrgs.push(`TRG ${unit}-${num}`);
                     }
                 }
@@ -657,10 +663,11 @@ class TonyBot extends TonyBotDB {
                     description: alltrgs.join("\n"),
                     ...this.embedInfo(message)
                 })
-            } if(args[1].toLowerCase() === "checkpoints") {
+            }
+            if (args[1].toLowerCase() === "checkpoints") {
                 let allcheckpoints = [];
-                for(const unit of this.units.keys()){
-                    for(const num of this.units.get(unit).CHECKPOINTS.keys()){
+                for (const unit of this.units.keys()) {
+                    for (const num of this.units.get(unit).CHECKPOINTS.keys()) {
                         allcheckpoints.push(`Checkpoint ${unit}-${num}`);
                     }
                 }
@@ -669,9 +676,9 @@ class TonyBot extends TonyBotDB {
                     description: allcheckpoints.join("\n"),
                     ...this.embedInfo(message)
                 })
-            } else if(args[1].toLowerCase() === "units") {
+            } else if (args[1].toLowerCase() === "units") {
                 let allunits = [];
-                for(const unit of this.units.keys()){
+                for (const unit of this.units.keys()) {
                     allunits.push(`Unit ${unit}`);
                 }
                 this.sendClosableEmbed(message, {
@@ -687,11 +694,13 @@ class TonyBot extends TonyBotDB {
      * 
      * @param {Discord.Message} message
      * @param {string[]} args 
-    */
-    async onCreate(message,args){
+     */
+    async onCreate(message, args) {
         this.createUser(message);
     }
 
 }
 
-module.exports = {TonyBot};
+module.exports = {
+    TonyBot
+};
