@@ -42,10 +42,10 @@ class BioParser extends SchoologyAccessor {
             let info = {};
             for(const item of unitjsonpromises[i]["folder-item"]) {
                 if(item.title.indexOf("Slides") !== -1) {
-                    info["SLIDES"] = this.embedToURL(item.id);
+                    info["SLIDES"] = this.pageToURL(item.id);
                 }
                 if(item.title.indexOf("Calendar") !== -1) {
-                    info["CALENDAR"] = this.embedToURL(item.id);
+                    info["CALENDAR"] = this.pageToURL(item.id);
                 }
                 if(item.title.indexOf("Discussion") !== -1) {
                     info["DISCUSSION"] = this.discussionToURL(item.id);
@@ -70,6 +70,24 @@ class BioParser extends SchoologyAccessor {
 
         let TRGMap = new Map();
         let CheckpointMap = new Map();
+
+        let events = await (await this.get("/sections/2772305484/events?start_date=20201107")).json();
+        for(const event of events.event) {
+            let title = event.title;
+            if(title.indexOf("Checkpoint") !== -1) {
+                let dashindex = title.indexOf("-");
+                let cut = title.slice(dashindex-1,dashindex+2).split("-");
+                let unit = parseInt(cut[0]);
+                let num = parseInt(cut[1]);
+                let pair = JSON.stringify( [unit,num] );
+                title = title.slice(dashindex+4);
+
+                CheckpointMap.set(pair, {
+                    TITLE: title,
+                    DUE: event.start,
+                })
+            }
+        }
 
         for(let i = 0; i < data.assignment.length; i++){
             
