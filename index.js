@@ -1,12 +1,9 @@
 
 /**
- * @todo Better Get system
+ * @todo Currency
  * @todo Add User Checkpoint Complete System 
- * @todo Add units
- * @todo Utilize the folders
  * @todo Add other assignments
  * @todo Add updates
- * @todo Currency
  */
 process.on('warning', e => console.warn(e.stack));
 

@@ -16,11 +16,11 @@ class UserTRG {
     /**
      * @constructor
      * @param {Object} data
-     * @param {boolean[]} data.COMPLETE
+     * @param {boolean[]} data.SECTIONS
      * @param {string[]} data.SECTIONTIMESTAMPS
      */
     constructor(data) {
-        this.COMPLETE = data.COMPLETE;
+        this.SECTIONS = data.SECTIONS;
         this.SECTIONTIMESTAMPS = data.SECTIONTIMESTAMPS;
     }
 }
@@ -48,9 +48,24 @@ class UserUnitObj {
         this.TRGS = new Map();
     }
 
+    /**
+     * @param {Object} data 
+     * @param {boolean} data.COMPLETE
+     */
+    async update(data) {
+        this.COMPLETE = data.COMPLETE;
+        await this.ref.set(data);
+    }
+
     async onConstruct() {
         let checkpoints = await this.ref.collection("CHECKPOINTS").get();
-        
+        for(const checkpoint of checkpoints.docs) {
+            this.CHECKPOINTS.set(checkpoint.id, new UserCheckpoint(checkpoint.data()));
+        }
+        let TRGS = await this.ref.collection("TRGS").get();
+        for(const trg of TRGS.docs) {
+            this.TRGS.set(trg.id, new UserTRG(trg.data()));
+        }
     }
 }
 
@@ -58,12 +73,12 @@ class UserObj {
     /**
      * @param {Object} data
      * @param {string} data.LC 
-     * @param {string} data.RANK 
+     * @param {string} data.EXP 
      * @param {FirebaseFirestore.DocumentReference} ref
      */
     constructor(data,ref) {
         this.LC = parseInt(data.LC);
-        this.RANK = parseInt(data.RANK);
+        this.EXP = parseInt(data.EXP);
 
         /**
          * @type {Map<string,UserUnitObj>}
@@ -75,12 +90,23 @@ class UserObj {
     }
 
     /**
+     * @param {Object} data
+     * @param {string} data.LC 
+     * @param {string} data.EXP 
+     */
+    async update(data) {
+        this.LC = parseInt(data.LC);
+        this.EXP = parseInt(data.EXP);
+        await this.ref.set(data);
+    }
+
+    /**
      * @async
      */
     async onConstruct(){
         let units = await this.ref.collection("UNITS").get();
         for(const unit of units.docs) {
-            this.UNITS.set(unit.id, new UserUnitObj(unit.data(), this.ref.collection("USERS").doc(unit.id)));
+            this.UNITS.set(unit.id, new UserUnitObj(unit.data(), this.ref.collection("UNITS").doc(unit.id)));
             await this.UNITS.get(unit.id).onConstruct();
         }
         return this;
@@ -222,43 +248,54 @@ class TonyBotDB {
     }
 
     async userExists(id) {
-        // return (await this.base.doc(id + "").get()).exists;
         return this.users.has(id + "");
     }
 
     async unitExistsForUser(id, unit) {
-        // return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).exists;
         return (await this.userExists(id)) && this.users.get(id+"").UNITS.has(""+unit);
     }
 
     async TRGExistsForUser(id, unit, num) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
-            .collection("TRGS").doc(num + "").get()).exists;
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).TRGS.get(num);
     }
 
     async checkpointExistsForUser(id, unit, num) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
-            .collection("CHECKPOINTS").doc(num + "").get()).exists;
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).CHECKPOINTS.get(num);
     }
 
     /* GETTING */
 
     async getUser(id) {
-        return (await this.base.doc(id + "").get()).data();
+        // return (await this.base.doc(id + "").get()).data();
+        id = ""+id;
+        return this.users.get(id);
     }
 
     async getUserUnit(id, unit) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).data();
+        // return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).data();
+        id = ""+id;
+        unit = ""+unit;
+        return this.users.get(id).UNITS.get(unit);
     }
 
     async getUserTRG(id, unit, num) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
-            .collection("TRGS").doc(num + "").get()).data();
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        return this.users.get(id).UNITS.get(unit).TRGS.get(num);
     }
 
     async getUserCheckpoint(id, unit, num) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "")
-            .collection("CHECKPOINTS").doc(num + "").get()).data();
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        return this.users.get(id).UNITS.get(unit).CHECKPOINTS.get(num);
     }
 
     /* MODIFIERS */
@@ -270,35 +307,58 @@ class TonyBotDB {
     async createUser(id) {
         await this.base.doc("" + id).set({
             LC: 0,
-            RANK: 0
+            EXP: 0
         })
+        this.users.set(""+id, new UserObj({
+            LC: 0,
+            EXP: 0
+        }, this.base.doc(""+id)));
+        await this.users.get(""+id).onConstruct();
     }
 
     async createUnitForUser(id, unit) {
 
-        await this.base.doc("" + id).collection("UNITS").doc(unit + "").set({
+        id = ""+id;
+        unit = ""+unit;
+        await this.base.doc(id).collection("UNITS").doc(unit).set({
             COMPLETE: false
         })
+        this.users.get(id).UNITS.set(unit, new UserUnitObj({
+            COMPLETE: false
+        },this.base.doc(id).collection("UNITS").doc(unit)));
+        await this.users.get(id).UNITS.get(unit).onConstruct();
 
     }
 
-    async createTRGForUser(id, unit, trgnum) {
-        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("TRGS").doc(trgnum + "").set({
+    async createTRGForUser(id, unit, num) {
+        await this.setTRGForUser(id,unit,num,{
             SECTIONS: [false, false, false],
             SECTIONTIMESTAMPS: [this.now(), this.now(), this.now()],
             COMPLETE: false
-        })
+        });
     }
 
     async createCheckpointForUser(id, unit, num) {
-        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("CHECKPOINTS").doc(num + "").set({
+        await this.setCheckpointForUser(id,unit,num,{
             COMPLETE: false,
             TIMESTAMP: this.now()
         });
     }
 
-    async updateTRGForUser(id, unit, trgnum, data) {
-        await this.base.doc("" + id).collection("UNITS").doc(unit + "").collection("TRGS").doc(trgnum + "").update(data);
+    async setTRGForUser(id, unit, num, data) {
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        await this.base.doc(id).collection("UNITS").doc(unit).collection("TRGS").doc(num).set(data)
+        this.users.get(id).UNITS.get(unit).TRGS.set(num, new UserTRG(data));
+    }
+
+    async setCheckpointForUser(id, unit, num, data) {
+        id = ""+id;
+        unit = ""+unit;
+        num = ""+num;
+        await this.base.doc(id).collection("UNITS").doc(unit).collection("CHECKPOINTS").doc(num).set(data)
+        this.users.get(id).UNITS.get(unit).CHECKPOINTS.set(num, new UserCheckpoint(data));
     }
 
     /* FOR GLOBAL */
@@ -346,7 +406,7 @@ class TonyBotDB {
         let completed = pSections.reduce((a, n) => a && n);
 
         if (CHANGED) {
-            this.updateTRGForUser(id, unit, trgnum, {
+            this.setTRGForUser(id, unit, trgnum, {
                 SECTIONS: pSections,
                 SECTIONTIMESTAMPS: pSectionTimestamps,
                 COMPLETE: completed

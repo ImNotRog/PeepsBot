@@ -1,3 +1,8 @@
+
+/**
+ * @todo God dang it uses so much repetitive code gotta fix that, like for the error checking
+ */
+
 const {
     TonyBotDB
 } = require("./TonyBotDB");
@@ -18,6 +23,12 @@ class TonyBot extends TonyBotDB {
         super(db);
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
         this.BP = new BioParser();
+
+        this.EXP = [100,35,50]
+        this.expEq = (exp, currexp) => {
+            return exp * Math.pow(currexp, 0.25);
+        }
+        this.mons = [50,20,25];
     }
 
     async onConstruct() {
@@ -452,6 +463,8 @@ class TonyBot extends TonyBotDB {
                 })
                 return false;
             }
+
+            
 
             // Parse the data into a Discord embed
             let fields = [];
