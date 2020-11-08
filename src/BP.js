@@ -198,7 +198,7 @@ class BioParser extends SchoologyAccessor {
         return `https://pausd.schoology.com/course/2772305484/materials?f=${folderid}`
     }
 
-    embedToURL(id){
+    pageToURL(id){
         return `https://pausd.schoology.com/course/2772297053/materials/link/view/${id}`
     }
 
