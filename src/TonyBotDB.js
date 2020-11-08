@@ -1,5 +1,92 @@
 let moment = require("moment-timezone");
 
+class UserCheckpoint {
+    /**
+     * @param {Object} data 
+     * @param {boolean} data.COMPLETE
+     * @param {String} data.TIMESTAMP
+     */
+    constructor(data) {
+        this.COMPLETE = data.COMPLETE;
+        this.TIMESTAMP = data.TIMESTAMP;
+    }
+}
+
+class UserTRG {
+    /**
+     * @constructor
+     * @param {Object} data
+     * @param {boolean[]} data.COMPLETE
+     * @param {string[]} data.SECTIONTIMESTAMPS
+     */
+    constructor(data) {
+        this.COMPLETE = data.COMPLETE;
+        this.SECTIONTIMESTAMPS = data.SECTIONTIMESTAMPS;
+    }
+}
+
+class UserUnitObj {
+    /**
+     * 
+     * @param {Object} data 
+     * @param {boolean} data.COMPLETE
+     * @param {FirebaseFirestore.DocumentReference} ref 
+     */
+    constructor(data,ref){
+        this.COMPLETE = data.COMPLETE;
+        this.ref = ref;
+        this.id = this.ref.id;
+
+        /**
+         * @type {Map<string,UserCheckpoint>}
+         */
+        this.CHECKPOINTS = new Map();
+
+         /**
+         * @type {Map<string,UserTRG>}
+         */
+        this.TRGS = new Map();
+    }
+
+    async onConstruct() {
+        let checkpoints = await this.ref.collection("CHECKPOINTS").get();
+        
+    }
+}
+
+class UserObj {
+    /**
+     * @param {Object} data
+     * @param {string} data.LC 
+     * @param {string} data.RANK 
+     * @param {FirebaseFirestore.DocumentReference} ref
+     */
+    constructor(data,ref) {
+        this.LC = parseInt(data.LC);
+        this.RANK = parseInt(data.RANK);
+
+        /**
+         * @type {Map<string,UserUnitObj>}
+         */
+        this.UNITS = new Map();
+
+        this.ref = ref;
+        this.id = this.ref.id;
+    }
+
+    /**
+     * @async
+     */
+    async onConstruct(){
+        let units = await this.ref.collection("UNITS").get();
+        for(const unit of units.docs) {
+            this.UNITS.set(unit.id, new UserUnitObj(unit.data(), this.ref.collection("USERS").doc(unit.id)));
+            await this.UNITS.get(unit.id).onConstruct();
+        }
+        return this;
+    }
+}
+
 class TonyBotDB {
     /**
      * @constructor
@@ -12,17 +99,31 @@ class TonyBotDB {
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
         this.units = new Map();
 
+        /**
+         * @type {Map<string,UserObj>}
+         */
         this.users = new Map();
     }
 
     async onConstruct() {
         await this.refreshUnits();
+        await this.refreshUsers();
     }
 
     /* ACCESSORS */
 
+    /**
+     * @async
+     * @todo Make it faster using Promise.all
+     */
     async refreshUsers() {
-
+        this.users = new Map();
+        let allusers = await this.base.get();
+        for(const user of allusers.docs) {
+            if(user.id === "KEY") continue;
+            this.users.set(user.id, new UserObj(user.data(), this.base.doc(user.id)));
+            await this.users.get(user.id).onConstruct();
+        }
     }
 
     async refreshUnits() {
@@ -121,12 +222,13 @@ class TonyBotDB {
     }
 
     async userExists(id) {
-        return (await this.base.doc(id + "").get()).exists;
-        // return this.users.has(id + "");
+        // return (await this.base.doc(id + "").get()).exists;
+        return this.users.has(id + "");
     }
 
     async unitExistsForUser(id, unit) {
-        return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).exists;
+        // return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).exists;
+        return (await this.userExists(id)) && this.users.get(id+"").UNITS.has(""+unit);
     }
 
     async TRGExistsForUser(id, unit, num) {
