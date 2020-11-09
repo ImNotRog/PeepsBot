@@ -2,6 +2,8 @@ const { SheetsUser } = require("./SheetsUser");
 const { TonyBot } = require("./TonyBot");
 const Discord = require("discord.js");
 
+const cron = require("node-cron");
+
 let moment = require("moment-timezone");
 
 class ProcessorBot {
@@ -48,7 +50,7 @@ class ProcessorBot {
 
         this.approvedTonyServers = ["748669830244073533"]
 
-        this.tonyBot = new TonyBot(db);
+        this.tonyBot = new TonyBot(db,client);
 
         this.reference = {};
 
@@ -58,20 +60,18 @@ class ProcessorBot {
         this.client.on("messageReactionAdd", (reaction,user) => { this.onReaction(reaction,user) });
         this.client.on("messageReactionRemove", (reaction,user) => { this.onReaction(reaction,user) });
 
+        
     }
 
-    /**
-     * 
-     * @param {Discord.Client} client 
-     */
-    async onConstruct(client){
+    async onConstruct(){
 
         let embeds = await this.tonyBot.onConstruct();
+
         await this.sheetsUser.SetUpSheets();
 
         for (const id of this.collectingChannels) {
 
-            let channel = await client.channels.fetch(id)
+            let channel = await this.client.channels.fetch(id)
             channel.messages.fetch({
                 limit: 90
             })
@@ -79,15 +79,25 @@ class ProcessorBot {
         }
 
         for (const id of this.updateChannels) {
-            let channel = await client.channels.fetch(id)
+            let channel = await this.client.channels.fetch(id)
             for(const embed of embeds) {
                 await channel.send({embed});
             }
         }
         
+
         let currinterval = setInterval(() => {
             this.refresh();
         }, this.interval);
+    }
+
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     */
+    async reqDailyDose(message) {
+        this.tonyBot.dailyDose(message.channel);
     }
 
     async refresh() {
@@ -450,8 +460,11 @@ class ProcessorBot {
 
         if(command === "create") {
             this.tonyBot.onCreate(message,args);
-            
         }
+
+        if(command === "up" || command === "upcoming" || command === "daily") {
+            this.reqDailyDose(message);
+        } 
 
         if(command === "little") {
             message.channel.send(await this.randomLittleQuote());

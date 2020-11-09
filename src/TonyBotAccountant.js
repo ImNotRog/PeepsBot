@@ -1,10 +1,16 @@
 const { 
-    TonyBotDB,
+    TonyBotDB
+} = require("./TonyBotDB");
+
+const {
     UserObj,
     UserUnitObj,
     UserTRG,
-    UserCheckpoint
-} = require("./TonyBotDB");
+    UserCheckpoint,
+    TRG,
+    Checkpoint,
+    UnitObj
+} = require("./tonyclasses");
 
 let moment = require("moment-timezone");
 

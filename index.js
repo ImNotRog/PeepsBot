@@ -1,6 +1,7 @@
 
 /**
- * @todo Currency
+ * @todo Use Nodecron to add daily dose system
+ * @todo Autocomplete system
  * @todo Add User Checkpoint Complete System 
  * @todo Add other assignments
  * @todo Add updates
@@ -19,7 +20,7 @@ const { ProcessorBot } = require("./src/ProcessorBot");
     let processorbot = new ProcessorBot(sheets, db, client);
 
     await client.login(config);
-    await processorbot.onConstruct(client);
+    await processorbot.onConstruct();
 
     console.log("Up now!")
 

@@ -24,7 +24,7 @@ class BioParser extends SchoologyAccessor {
                 unitpromises.push(unitfolder)
                 unitorder.push(num);
 
-                units.set(num, { TITLE: title, LINK: folderlink });
+                units.set(num, { TITLE: title, LINK: folderlink, NUM: parseInt(num) });
             }
         }
 
@@ -85,6 +85,8 @@ class BioParser extends SchoologyAccessor {
                 CheckpointMap.set(pair, {
                     TITLE: title,
                     DUE: event.start,
+                    UNIT: unit,
+                    NUM: num
                 })
             }
         }
@@ -110,7 +112,9 @@ class BioParser extends SchoologyAccessor {
                         TRGMap.set(pair, {
                             TITLE: title,
                             DESCRIPTION: description,
-                            GRADED: false
+                            GRADED: false,
+                            UNIT: unit,
+                            NUM: num
                         })
                     } else {
                         if(TRGMap.get(pair).DESCRIPTION.length < description.length){
@@ -149,7 +153,9 @@ class BioParser extends SchoologyAccessor {
                         ID: id,
                         CATEGORY: categories.get(grading_category),
                         SUMMATIVE: true,
-                        POINTS: parseInt(max_points)
+                        POINTS: parseInt(max_points),
+                        UNIT: unit,
+                        NUM: num
                     })
                 }
 

@@ -8,8 +8,25 @@ const {
 } = require("./TonyBotAccountant");
 
 const {
+    UserObj,
+    UserUnitObj,
+    UserTRG,
+    UserCheckpoint,
+    TRG,
+    Checkpoint,
+    UnitObj,
+    DUE
+} = require("./tonyclasses");
+
+let moment = require("moment-timezone");
+
+const {
     BioParser
 } = require("./BP")
+
+
+const cron = require("node-cron");
+const schedule = require("node-schedule");
 
 // To aid in Intellisense, will comment out when not developing
 const Discord = require("discord.js");
@@ -18,13 +35,24 @@ class TonyBot extends TonyBotAccountant {
     /**
      * @constructor
      * @param {FirebaseFirestore.Firestore} db
+     * @param {Discord.Client} client
      */
-    constructor(db) {
+    constructor(db,client) {
 
         super(db);
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
         this.BP = new BioParser();
-        
+        this.client = client;
+
+        this.dailyChannels = ["748669830244073536"];
+        // this.dailyChannels = ["750804960333135914"] // Redirect
+
+        cron.schedule(`5 15 * * 1-5`, 
+        () => {this.sendDailyDose()}, 
+        {
+            timezone: `America/Los_Angeles`
+        })
+
     }
 
     async onConstruct() {
@@ -83,6 +111,7 @@ class TonyBot extends TonyBotAccountant {
                 await this.setTRG(unit, num, trgs.get(key));
             }
             const changes = await this.setTRGinfo(unit, num, trgs.get(key));
+            this.scheduleTRG(this.units.get(""+unit).TRGS.get(""+num));
 
             if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
@@ -122,6 +151,7 @@ class TonyBot extends TonyBotAccountant {
                 await this.setCheckpoint(unit, num, checkpoints.get(key));
             }
             const changes = await this.setCheckpointInfo(unit, num, checkpoints.get(key));
+            this.scheduleCheckpoint(this.units.get(""+unit).CHECKPOINTS.get(""+num));
 
             if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
@@ -289,6 +319,105 @@ class TonyBot extends TonyBotAccountant {
         return [unit, num];
     }
 
+    /* ALERT */
+    /**
+     * 
+     * @param {Discord.TextChannel} channel 
+     */
+    dailyDose(channel) {
+        // diff > 0 => due soon
+        /**
+         * @type {DUE[]}
+         */
+        let all = []
+        for(const unit of this.units.keys()) {
+            for(const trgkey of this.units.get(unit).TRGS.keys()) {
+                const trg = this.units.get(unit).TRGS.get(trgkey);
+                if(trg.diff("milliseconds") > 0 && trg.diff("days") < 21) {
+                    all.push(trg);
+                }
+            }
+            for(const checkpointkey of this.units.get(unit).CHECKPOINTS.keys()) {
+                const checkpoint = this.units.get(unit).CHECKPOINTS.get(checkpointkey);
+                if(checkpoint.diff("milliseconds") > 0 && checkpoint.diff("days") < 21) {
+                    all.push(checkpoint);
+                }
+            }
+        }
+
+        all.sort((a, b) => {
+            return a.diff("milliseconds") - b.diff("milliseconds");
+        })
+
+        const fields = all.map( (due) => {
+            return { 
+                name: `**${due.full()}**`,
+                value: `Due in *${this.longFormatTime(due.DUE)}*`
+            }
+        })
+
+        fields.push({
+            name: `Well, get cracking.`,
+            value: `Your time is running out.`
+        })
+
+        channel.send({
+            embed: {
+                title: `Daily Dose of Bio H`,
+                description: `This is *your* daily dose of Biology Honors. Don't forget to like and subscribe!`,
+                fields,
+                ...this.basicEmbedInfo()
+            }
+        })
+    }
+
+    async sendDailyDose() {
+        for (const id of this.dailyChannels) {
+            let channel = await this.client.channels.fetch(id)
+            this.tonyBot.dailyDose(channel)
+        }
+    }
+
+    /**
+     * 
+     * @param {TRG} trg 
+     */
+    scheduleTRG(trg) {
+        schedule.scheduleJob(moment.tz(trg.DUE, "America/Los_Angeles").toDate(), async () => {
+            for (const id of this.dailyChannels) {
+                const channel = await this.client.channels.fetch(id)
+                channel.send({
+                    embed: {
+                        title: `**${trg.full()} DUE NOW**`,
+                        description: `<:TRG:753777853266526309> <:gunn2:765261683362627635> <:fperbio:774026168072142889>`,
+                        fields: this.TRGtoFields(trg), 
+                        ...this.basicEmbedInfo()
+                    }
+                })
+            }
+        }) 
+    }
+
+    /**
+     * 
+     * @param {Checkpoint} checkpoint 
+     */
+    scheduleCheckpoint(checkpoint) {
+        schedule.scheduleJob(moment.tz(checkpoint.DUE, "America/Los_Angeles").toDate(), async () => {
+            for (const id of this.dailyChannels) {
+                const channel = await this.client.channels.fetch(id)
+                channel.send({
+                    embed: {
+                        title: `**${checkpoint.full()} DUE NOW**`,
+                        description: `<:checkpoint:754059847326236705> <:gunn2:765261683362627635> <:fperbio:774026168072142889>`,
+                        fields: this.CheckpointToFields(checkpoint), 
+                        ...this.basicEmbedInfo()
+                    }
+                })
+            }
+        }) 
+    }
+    
     /* MODIFIERS */
 
     /* LOW LEVEL */
