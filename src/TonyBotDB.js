@@ -135,14 +135,14 @@ class TonyBotDB {
         id = ""+id;
         unit = ""+unit;
         num = ""+num;
-        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).TRGS.get(num);
+        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).TRGS.has(num);
     }
 
     async checkpointExistsForUser(id, unit, num) {
         id = ""+id;
         unit = ""+unit;
         num = ""+num;
-        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).CHECKPOINTS.get(num);
+        return this.users.has(id) && this.users.get(id).UNITS.has(unit) && this.users.get(id).UNITS.get(unit).CHECKPOINTS.has(num);
     }
 
     /* GETTING */

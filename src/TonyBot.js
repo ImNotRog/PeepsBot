@@ -175,6 +175,8 @@ class TonyBot extends TonyBotAccountant {
             }
         }
 
+        await this.completeUsers();
+
         return updateembeds;
     }
 
