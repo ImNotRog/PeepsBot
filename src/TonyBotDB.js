@@ -18,10 +18,12 @@ class UserTRG {
      * @param {Object} data
      * @param {boolean[]} data.SECTIONS
      * @param {string[]} data.SECTIONTIMESTAMPS
+     * @param {boolean} data.COMPLETE
      */
     constructor(data) {
         this.SECTIONS = data.SECTIONS;
         this.SECTIONTIMESTAMPS = data.SECTIONTIMESTAMPS;
+        this.COMPLETE = data.COMPLETE;
     }
 }
 
@@ -87,6 +89,11 @@ class UserObj {
 
         this.ref = ref;
         this.id = this.ref.id;
+
+        this.rankEq = (exp) => {
+            return Math.ceil(Math.sqrt(exp/50));
+        }
+        this.RANK = this.rankEq(this.EXP);
     }
 
     /**
@@ -97,7 +104,20 @@ class UserObj {
     async update(data) {
         this.LC = parseInt(data.LC);
         this.EXP = parseInt(data.EXP);
+        this.RANK = this.rankEq(this.EXP);
         await this.ref.set(data);
+    }
+
+    /**
+     * 
+     * @param {number} LC 
+     * @param {number} EXP 
+     */
+    async increment(LC,EXP) {
+        this.update({
+            LC: this.LC + LC,
+            EXP: this.EXP + EXP
+        })
     }
 
     /**
@@ -113,6 +133,117 @@ class UserObj {
     }
 }
 
+class TRG {
+    /**
+     * 
+     * @param {Object} data 
+     * @param {string} data.TITLE
+     * @param {string} data.DUE
+     * @param {string} data.DESCRIPTION
+     * @param {string} data.CATEGORY
+     * @param {boolean} data.GRADED
+     * @param {?string} data.SUBMITURL
+     * @param {?string} data.OTHERURL
+     * @param {?string} data.DOCURL
+     * @param {?number} data.POINTS
+     */
+    constructor(data){
+
+        const { TITLE, DUE, DESCRIPTION, CATEGORY, GRADED, SUBMITURL, OTHERURL, DOCURL, POINTS } = data;
+        this.TITLE = TITLE;
+        this.DUE = DUE;
+        this.DESCRIPTION = DESCRIPTION;
+        this.GRADED = GRADED;
+        this.CATEGORY = CATEGORY;
+        this.SUBMITURL = SUBMITURL;
+        this.OTHERURL = OTHERURL;
+        this.DOCURL = DOCURL;
+        this.POINTS = POINTS;
+
+    }
+}
+
+class Checkpoint {
+    /**
+     * 
+     * @param {Object} data 
+     * @param {string} data.TITLE
+     * @param {string} data.DUE
+     * @param {string} data.CATEGORY
+     * @param {boolean} data.GRADED
+     * @param {?string} data.SUBMITURL
+     * @param {?number} data.POINTS
+     */
+    constructor(data){
+
+        const { TITLE, DUE, CATEGORY, GRADED, POINTS } = data;
+        this.TITLE = TITLE;
+        this.DUE = DUE;
+        this.GRADED = GRADED;
+        this.CATEGORY = CATEGORY;
+        this.POINTS = POINTS;
+
+    }
+}
+
+class UnitObj {
+    /**
+     * 
+     * @param {Object} data 
+     * @param {string} data.TITLE
+     * @param {string} data.LINK
+     * @param {?string} data.CALENDAR
+     * @param {?string} data.DISCUSSION
+     * @param {?string} data.SLIDES
+     * @param {FirebaseFirestore.DocumentReference} ref 
+     */
+    constructor(data,ref){
+        this.ref = ref;
+        this.id = this.ref.id;
+
+        const { TITLE, LINK, CALENDAR, DISCUSSION, SLIDES } = data;
+        this.TITLE = TITLE;
+        this.LINK = LINK;
+        this.CALENDAR = CALENDAR;
+        this.DISCUSSION = DISCUSSION;
+        this.SLIDES = SLIDES;
+
+        /**
+         * @type {Map<string,TRG>}
+         */
+        this.TRGS = new Map();
+
+        /**
+         * @type {Map<string,Checkpoint>}
+         */
+        this.CHECKPOINTS = new Map();
+    }
+
+    DATA() {
+        return {
+            TITLE: this.TITLE,
+            LINK: this.LINK,
+            CALENDAR: this.CALENDAR,
+            DISCUSSION: this.DISCUSSION,
+            SLIDES: this.SLIDES
+        }
+    }
+
+    /**
+     * @async
+     */
+    async onConstruct(){
+        let checkpoints = await this.ref.collection("CHECKPOINTS").get();
+        for(const checkpoint of checkpoints.docs) {
+            this.CHECKPOINTS.set(checkpoint.id, new Checkpoint(checkpoint.data()));
+        }
+        let TRGS = await this.ref.collection("TRGS").get();
+        for(const trg of TRGS.docs) {
+            this.TRGS.set(trg.id, new TRG(trg.data()));
+        }
+    }
+}
+
 class TonyBotDB {
     /**
      * @constructor
@@ -123,6 +254,10 @@ class TonyBotDB {
         this.base = this.db.collection("PeepsBot");
         this.key = this.base.doc("KEY");
         this.sectionTitles = ["Take Notes", "Applying the Concepts", "Summary"]
+
+        /**
+         * @type {Map<string,UnitObj>}
+         */
         this.units = new Map();
 
         /**
@@ -153,73 +288,15 @@ class TonyBotDB {
     }
 
     async refreshUnits() {
-        let units = (await this.key.collection("UNITS").get());
 
-        let tofind = units.docs.map(doc => doc.id);
+        this.units = new Map();
 
-        // Create all the units, if they don't exist
-        for (const key of tofind) {
-            if (!this.units.has(key)) {
-                this.units.set(key, {});
-            }
+        let units = await this.key.collection("UNITS").get();
+        for(const unit of units.docs) {
+            this.units.set(unit.id, new UnitObj(unit.data(), this.key.collection("UNITS").doc(unit.id)));
+            await this.units.get(unit.id).onConstruct();
         }
 
-        // let data = units.docs.map(doc => doc.data());
-        for (const datum of units.docs) {
-            let existing = this.units.get(datum.id);
-            this.units.set(datum.id, {
-                ...existing,
-                DATA: datum.data()
-            })
-        }
-
-        let alltrgs = [];
-        let allcheckpoints = [];
-        for (const key of tofind) {
-            alltrgs.push(this.key.collection("UNITS").doc(key).collection("TRGS").get());
-            allcheckpoints.push(this.key.collection("UNITS").doc(key).collection("CHECKPOINTS").get())
-        }
-
-        allcheckpoints = await Promise.all(allcheckpoints);
-        alltrgs = await Promise.all(alltrgs);
-
-        for (let i = 0; i < alltrgs.length; i++) {
-            let currTRGMap = new Map();
-            let currCheckpointMap = new Map();
-
-            for (let j = 0; j < alltrgs[i].docs.length; j++) {
-                currTRGMap.set(alltrgs[i].docs[j].id, alltrgs[i].docs[j].data());
-            }
-
-            for (let j = 0; j < allcheckpoints[i].docs.length; j++) {
-                currCheckpointMap.set(allcheckpoints[i].docs[j].id, allcheckpoints[i].docs[j].data());
-            }
-
-            this.units.get(tofind[i]).TRGS = currTRGMap;
-            this.units.get(tofind[i]).CHECKPOINTS = currCheckpointMap;
-        }
-
-    }
-
-    async refreshUnit(unit) {
-
-        if (!this.units.has(unit + "")) {
-            this.units.set(unit + "", {});
-        }
-
-        let alltrgs = (await this.key.collection("UNITS").doc(unit + "").collection("TRGS").get());
-        let allcheckpoints = (await this.key.collection("UNITS").doc(unit + "").collection("CHECKPOINTS").get());
-        let currTRGMap = new Map();
-        let currCheckpointMap = new Map();
-        for (let i = 0; i < alltrgs.docs.length; i++) {
-            currTRGMap.set(alltrgs.docs[i].id, alltrgs.docs[i].data());
-        }
-        for (let i = 0; i < allcheckpoints.docs.length; i++) {
-            currCheckpointMap.set(allcheckpoints.docs[i].id, allcheckpoints.docs[i].data());
-        }
-
-        this.units.get(unit + "").TRGS = currTRGMap;
-        this.units.get(unit + "").CHECKPOINTS = currCheckpointMap;
     }
 
     now() {
@@ -232,21 +309,25 @@ class TonyBotDB {
 
     /* EXISTENCE */
 
+    /* GLOBAL */
     unitExists(unit) {
-        if (this.units.get(unit + "")) {
-            return true;
-        }
-        return false;
+        unit = "" + unit;
+        return this.units.has(unit);
     }
 
     TRGExists(unit, num) {
-        return this.unitExists(unit) && this.units.get(unit + "").TRGS.has(num + "");
+        unit = "" + unit;
+        num = "" + num;
+        return this.unitExists(unit) && this.units.get(unit).TRGS.has(num);
     }
 
     CheckpointExists(unit, num) {
-        return this.unitExists(unit) && this.units.get(unit + "").CHECKPOINTS.has(num + "");
+        unit = "" + unit;
+        num = "" + num;
+        return this.unitExists(unit) && this.units.get(unit).CHECKPOINTS.has(num);
     }
 
+    /* USERS */
     async userExists(id) {
         return this.users.has(id + "");
     }
@@ -272,13 +353,11 @@ class TonyBotDB {
     /* GETTING */
 
     async getUser(id) {
-        // return (await this.base.doc(id + "").get()).data();
         id = ""+id;
         return this.users.get(id);
     }
 
     async getUserUnit(id, unit) {
-        // return (await this.base.doc("" + id).collection("UNITS").doc(unit + "").get()).data();
         id = ""+id;
         unit = ""+unit;
         return this.users.get(id).UNITS.get(unit);
@@ -363,61 +442,28 @@ class TonyBotDB {
 
     /* FOR GLOBAL */
 
-    async createUnit(unit) {
-        await this.key.collection("UNITS").doc("" + unit).set({
-
-        });
-        await this.refreshUnit(unit);
+    async setUnit(unit,data) {
+        unit = "" + unit
+        await this.key.collection("UNITS").doc(unit).set(data);
+        this.units.set(unit, new UnitObj(data, this.key.collection("UNITS").doc(unit)));
     }
 
-    async createTRG(unit, trgnum) {
-        await this.key.collection("UNITS").doc("" + unit).collection("TRGS").doc("" + trgnum).set({
-
-        })
-        await this.refreshUnit(unit);
+    async setTRG(unit, num, data) {
+        unit = "" + unit;
+        num = "" + num;
+        await this.key.collection("UNITS").doc(unit).collection("TRGS").doc(num).set(data);
+        this.units.get(unit).TRGS.set(num, new TRG(data));
     }
 
-    async createCheckpoint(unit, num) {
-        await this.key.collection("UNITS").doc("" + unit).collection("CHECKPOINTS").doc("" + num).set({})
-        await this.refreshUnit(unit);
+    async setCheckpoint(unit, num, data) {
+        unit = "" + unit;
+        num = "" + num;
+        await this.key.collection("UNITS").doc(unit).collection("CHECKPOINTS").doc(num).set(data);
+        this.units.get(unit).CHECKPOINTS.set(num, new Checkpoint(data));
     }
 
 
     /* TOP LEVEL */
-
-    async updateTRG(id, unit, trgnum, completedArr) {
-        const pTRG = await this.getUserTRG(id, unit, trgnum);
-        let pSections = pTRG.SECTIONS;
-        let pSectionTimestamps = pTRG.SECTIONTIMESTAMPS;
-
-        let CHANGEDARRAY = [];
-        let CHANGED = false;
-        for (let i = 0; i < pSections.length; i++) {
-            if (!pSections[i] && completedArr[i]) {
-                CHANGEDARRAY.push(true);
-                pSectionTimestamps[i] = (this.now());
-                pSections[i] = true;
-                CHANGED = true;
-            } else {
-                CHANGEDARRAY.push(false);
-            }
-        }
-
-        let completed = pSections.reduce((a, n) => a && n);
-
-        if (CHANGED) {
-            this.setTRGForUser(id, unit, trgnum, {
-                SECTIONS: pSections,
-                SECTIONTIMESTAMPS: pSectionTimestamps,
-                COMPLETE: completed
-            })
-        }
-
-        return {
-            CHANGED,
-            CHANGEDARRAY
-        }
-    }
 
     differences(obj1, obj2) {
         let keys1 = Object.keys(obj1);
@@ -446,8 +492,7 @@ class TonyBotDB {
         const changes = this.differences(currdata, data);
 
         if (Object.keys(changes).length > 0) {
-            await this.key.collection("UNITS").doc("" + unit).collection("TRGS").doc("" + trgnum).set(data);
-            this.units.get(unit + "").TRGS.set(trgnum + "", data)
+            await this.setTRG(unit,trgnum,data);
         }
 
         return changes;
@@ -461,8 +506,7 @@ class TonyBotDB {
         const changes = this.differences(currdata, data);
 
         if (Object.keys(changes).length > 0) {
-            await this.key.collection("UNITS").doc("" + unit).collection("CHECKPOINTS").doc("" + num).set(data);
-            this.units.get(unit + "").CHECKPOINTS.set(num + "", data)
+            await this.setCheckpoint(unit,num,data);
         }
 
         return changes;
@@ -470,13 +514,12 @@ class TonyBotDB {
     }
 
     async setUnitInfo(unit, data) {
-        let currdata = this.units.get(unit + "").DATA;
+        let currdata = this.units.get(unit + "").DATA();
 
         const changes = this.differences(currdata, data);
 
         if (Object.keys(changes).length > 0) {
-            await this.key.collection("UNITS").doc("" + unit).set(data);
-            this.units.get(unit + "").DATA = data;
+            await this.setUnit(unit, data);
         }
 
         return changes;
@@ -485,5 +528,9 @@ class TonyBotDB {
 }
 
 module.exports = {
-    TonyBotDB
+    TonyBotDB,
+    UserObj,
+    UserUnitObj,
+    UserTRG,
+    UserCheckpoint
 };
