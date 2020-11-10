@@ -415,45 +415,14 @@ class TonyBot extends TonyBotAccountant {
      */
     async createUser(message) {
         let m = await message.channel.send({
-            "embed": {
-                "title": "Create a Profile",
-                "description": `You haven't created a profile yet.\nBy creating a profile, you get access to PeepsBot's other features. React with :thumbsup: to continue.`,
-                ...this.embedInfo(message),
+            embed: {
+                title: `Creating a User`,
+                description: `It might take a while to auto-complete all the past TRGs and Checkpoints.`,
+                ...this.embedInfo(message)
             }
         })
-
-        await m.react("👍");
-        await m.react("❌");
-
-        const filter = (reaction, user) => {
-            return ['👍', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
-        };
-
-        let collected;
-        try {
-            collected = await m.awaitReactions(filter, {
-                max: 1,
-                time: 60000,
-                errors: ['time']
-            })
-        } catch {
-            return false;
-        }
-        const reaction = collected.first();
-
-        if (reaction.emoji.name === '👍') {
-            await super.createUser(message.author.id);
-            m.delete();
-            this.sendClosableEmbed(message, {
-                "title": "Welcome!",
-                "description": `Welcome to the underground TRG society. Trade in your TRGs for in game currency. For help, do --help`,
-                ...this.embedInfo(message),
-            })
-            return true;
-        } else {
-            m.delete();
-            return false;
-        }
+        await super.createUser(message.author.id);
+        await m.delete();
     }
 
     /**
