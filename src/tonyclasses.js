@@ -169,6 +169,11 @@ class TRG extends DUE {
     constructor(data){
 
         super();
+
+        for(const key in data) {
+            this[key] = data[key];
+        }
+
         const { TITLE, DUE, DESCRIPTION, CATEGORY, GRADED, SUBMITURL, OTHERURL, DOCURL, POINTS, UNIT, NUM } = data;
         this.TITLE = TITLE;
         this.DUE = DUE;
@@ -206,6 +211,11 @@ class Checkpoint extends DUE {
     constructor(data){
 
         super();
+
+        for(const key in data) {
+            this[key] = data[key];
+        }
+
         const { TITLE, DUE, CATEGORY, GRADED, POINTS, UNIT, NUM  } = data;
         this.TITLE = TITLE;
         this.DUE = DUE;
@@ -237,6 +247,10 @@ class UnitObj {
         this.ref = ref;
         this.id = this.ref.id;
 
+        for(const key in data) {
+            this[key] = data[key];
+        }
+
         const { TITLE, LINK, CALENDAR, DISCUSSION, SLIDES } = data;
         this.TITLE = TITLE;
         this.LINK = LINK;
@@ -256,22 +270,13 @@ class UnitObj {
     }
 
     setData(data){
-        const { TITLE, LINK, CALENDAR, DISCUSSION, SLIDES } = data;
-        this.TITLE = TITLE;
-        this.LINK = LINK;
-        this.CALENDAR = CALENDAR;
-        this.DISCUSSION = DISCUSSION;
-        this.SLIDES = SLIDES;
+        for(const key in data) {
+            this[key] = data[key];
+        }
     }
 
     DATA() {
-        return {
-            TITLE: this.TITLE,
-            LINK: this.LINK,
-            CALENDAR: this.CALENDAR,
-            DISCUSSION: this.DISCUSSION,
-            SLIDES: this.SLIDES
-        }
+        return this;
     }
 
     /**

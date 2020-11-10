@@ -251,7 +251,7 @@ class TonyBotDB extends Utilities {
 
         const changes = {};
         for (const key of keys1) {
-            if (obj1[key] !== obj2[key]) {
+            if (obj1[key] !== obj2[key] && obj2[key]) {
                 changes[key] = [obj1[key], obj2[key]];
             }
         }
