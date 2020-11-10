@@ -1,5 +1,7 @@
 
 let moment = require("moment-timezone");
+
+// For Intellisense
 const Discord = require("discord.js");
 
 class Utilities {
@@ -127,6 +129,86 @@ class Utilities {
             
         }
         
+    }
+
+    /**
+     * @param {Discord.Message} origmessage
+     * @param {{embed: Object}[]} embeds
+     */
+    async sendCarousel(origmessage, embeds) {
+
+        // Remap embeds
+        embeds = embeds.map( (e) => {
+            if(e.embed) {
+                return { 
+                    ...e,
+                    ...this.embedInfo(origmessage)
+                };
+            } else {
+                return {
+                    embed: {
+                        ...e,
+                        ...this.embedInfo(origmessage)
+                    }
+                }
+            }
+        })
+
+        const message = await origmessage.channel.send(embeds[0]);
+        // ⬅️ ❌ ➡️
+        await message.react("⬅️")
+        await message.react("❌")
+        await message.react("➡️")
+
+        this.carouselPage(message, embeds, 0, origmessage);
+    }
+
+    /**
+     * @param {Discord.Message} message
+     * @param {{embed: Object}[]} embeds
+     * @param {number} curr
+     * @param {Discord.Message} origmessage
+     */
+    async carouselPage(message, embeds, curr, origmessage) {
+
+        const filter = (reaction, user) => {
+            return ['❌','⬅️','➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+        };
+
+        let collected;
+        try {
+            collected = await message.awaitReactions(filter, {
+                max: 1,
+                time: 60000,
+                errors: ['time']
+            })
+        } catch (err) {
+            await message.reactions.removeAll();
+            return false;
+        }
+        const reaction = collected.first();
+
+        await reaction.users.remove(origmessage.author.id);
+        
+        if(reaction.emoji.name === '❌') {
+            await message.delete();
+            return true;
+        } else if(reaction.emoji.name === '⬅️') {
+            curr--;
+            while(curr < 0) {
+                curr += embeds.length;
+            }
+            await message.edit(embeds[curr]);
+            this.carouselPage(message, embeds, curr, origmessage);
+        } else if(reaction.emoji.name === '➡️') {
+            curr++;
+            while(curr >= embeds.length) {
+                curr -= embeds.length;
+            }
+            await message.edit(embeds[curr]);
+            this.carouselPage(message, embeds, curr, origmessage);
+        }
+
     }
 
     basicEmbedInfo() {

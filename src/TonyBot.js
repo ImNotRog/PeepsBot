@@ -63,6 +63,96 @@ class TonyBot extends TonyBotAccountant {
             this.refresh();
         }, this.interval);
 
+        this.prefix = "--";
+
+        this.helpCommandsEmbed = {
+            title: `Help - Tony Bot Commands`,
+            description: `Commands List for Tony Bot`,
+            fields: [
+                {
+                    name: `${this.prefix}create`,
+                    value: `Creates an account in the database! This is done implicitly whenever you first use another command too.`
+                },
+                {
+                    name: `${this.prefix}get`,
+                    value: [
+                        `Gets your user information, such as your LitCoins and EXP, as listed in the database.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `${this.prefix}get all [trgs or checkpoints]`,
+                    value: [
+                        `Gets all the trgs or checkpoints currently listed on Schoology.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `${this.prefix}get TRG #-# [*optional*: info or progress]`,
+                    value: [
+                        `Gets the info for TRG #-#.`,
+                        `If you specify info, you only get information about the TRG.`,
+                        `If you specify progress, you only get information about your progress on the TRG, as listed in PeepsBot's database.`,
+                        `If you don't specify either and only state "${this.prefix}get TRG #-#", it gives you both the info and your progress.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `${this.prefix}complete TRG #-# [*optional*: ALL or SEC #]`,
+                    value: [
+                        `Completes TRG #-#`,
+                        `If you specify ALL, it completes all the sections for that TRG. If you don't specify anything, it also completes the entire thing.`,
+                        `If you specify SEC #, where the number is 1, 2, or 3, it will complete that TRG section only.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `${this.prefix}[DAILY UP or UPCOMING]`,
+                    value: [
+                        `Gets *your* daily dose of Biology by showing what assignments are due soon.`
+                    ].join(`\n`)
+                }
+            ]
+        }
+
+        this.helpEmbed = {
+            title: `Help - Tony Bot General Info`,
+            description: [
+                `Tony is a fictional character who supposedly lives in the sewers,`,
+                `Through flawless and entirely legitimate deduction, FPERBIO has concluded `,
+                `Tony is none other than our lord and savior Mr.Little. `,
+                `Through his good graces, you can exchange your IRL TRGs for in-game LitCoin, `,
+                `which you can then spend to get more LitCoin, which is the point of most games, `,
+                `if you really think about it. `,
+                `Tony Bot will also provide alerts for quality of life of all period bio gangers.`
+            ].join(``),
+            fields: [
+                {
+                    name: `Alerts`,
+                    value: [
+                        `Whenever a TRG or Checkpoint is posted or graded, TonyBot will alert select channels.`,
+                        `Want your channel to be alerted? Contact Rog#7499.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `Daily Dose of Bio`,
+                    value: [
+                        `A select set of channels will also receive Tony's Daily Dose of Bio H, `,
+                        `which includes upcoming TRGs and Checkpoints.`
+                    ].join(``)
+                },
+                {
+                    name: `Information`,
+                    value: [
+                        `Tony Bot can give information about all sorts of TRGs and Checkpoints.`,
+                        `Go to the next help slides to figure out how.`
+                    ].join(`\n`)
+                },
+                {
+                    name: `How?`,
+                    value: [
+                        `Tony says his source is the Schoology API, but we're pretty sure he uses black magic.`
+                    ].join(`\n`)
+                },
+            ]
+        }
+
     }
 
     async onConstruct() {

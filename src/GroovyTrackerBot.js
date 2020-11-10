@@ -25,6 +25,21 @@ class TrackerBot extends Utilities {
         this.sheetsUser = new SheetsUser(auth, currmap);
         
         this.musicBots = ["234395307759108106"]
+
+        this.prefix = "--"
+        this.helpEmbed = {
+            title: `Help - Groovy Tracker Bot`,
+            description: [
+                `Keeps track of all the Groovy songs we've ever played on the FPERBIO server exclusively.`,
+                `Why? Unsure, just because I feel like it.`
+            ].join(` `),
+            fields: [
+                {
+                    name: `${this.prefix}groovy`,
+                    value: `Provides the Google spreadsheet where the data is stored.`
+                },
+            ]
+        }
     }
 
     RGBtoObj(r, g, b) {

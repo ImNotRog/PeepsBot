@@ -7,6 +7,7 @@ let moment = require("moment-timezone");
 const { LittleBot } = require("./LittleBot");
 const { TrackerBot } = require("./GroovyTrackerBot");
 const { TonyBot } = require("./TonyBot");
+const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
 
@@ -24,12 +25,51 @@ class ProcessorBot {
         this.prefix = "--"
 
         this.approvedMusicServers = ["748669830244073533"]
-
         this.approvedTonyServers = ["748669830244073533"]
 
         this.tonyBot = new TonyBot(db,client);
         this.littleBot = new LittleBot(auth, client);
         this.trackerBot = new TrackerBot(auth);
+
+        this.helpEmbed = {
+            title: `Help - General`,
+            description: [ 
+                `This is a very long help section, much like the girthy substance of a complete TRG.`,
+                `I do a lot of things, from quotes to alerts. You can use those arrows down there to scroll around,`,
+                `which I don't think I really have to say, but the brick to human ratio is surprisingly high.`,
+                `Alright, go read and exercise that 3 second attention span. GLHF`
+            ].join(` `)
+        }
+
+        this.helpTechnicalEmbed = {
+            title: `Help - Details for Nerds`,
+            description: `If you're a CS nerd, here's all you need to know.`,
+            fields: [
+                {
+                    name: `Contact Me!`,
+                    value: `Rog#7499 is the owner of this bot. Contact him to add to your server or sign channels up for alerts.`
+                },
+                {
+                    name: `Invite Link`,
+                    value: `Not available, ask Rog#7499 for one. This is a mainly private bot.`
+                },
+                {
+                    name: `Github`,
+                    value: `All my code is on Github: https://github.com/BubbyBabur/PeepsBot`
+                },
+                {
+                    name: `NodeJS`,
+                    value: [
+                        `Built using NodeJS, and if you use any other language, I *will* block you.`,
+                        `Node Packages can be found in the Github.`,
+                        `I use Heroku to host the bot and use Firebase's Firestore service to store data. It's a straight pain in the butt, but it gets the job done.`,
+                        `I also use Google API to store some data in Google spreadsheets, which is sick.`
+                    ].join(`\n`)
+                },
+            ]
+        }
+
+        this.utils = new Utilities();
 
         this.client.on("message", (message) => { this.onMessage(message) });
 
@@ -41,6 +81,21 @@ class ProcessorBot {
         await this.littleBot.onConstruct();
         await this.trackerBot.onConstruct();
 
+    }
+
+    getHelpEmbeds(serverid) {
+        const embeds = [];
+        embeds.push(this.helpEmbed)
+        embeds.push(this.littleBot.helpEmbed);
+        if(this.approvedMusicServers.indexOf(serverid) !== -1) {
+            embeds.push(this.trackerBot.helpEmbed)
+        }
+        if(this.approvedTonyServers.indexOf(serverid) !== -1) {
+            embeds.push(this.tonyBot.helpEmbed)
+            embeds.push(this.tonyBot.helpCommandsEmbed)
+        }
+        embeds.push(this.helpTechnicalEmbed)
+        return embeds;
     }
 
     /**
@@ -112,7 +167,8 @@ class ProcessorBot {
         }
 
         if(command === "help") {
-            message.channel.send(`Under construction D:`);
+            // message.channel.send(`Under construction D:`);
+            this.utils.sendCarousel(message,this.getHelpEmbeds(message.guild.id));
         }
         
     }

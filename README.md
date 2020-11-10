@@ -10,4 +10,4 @@ Finally, I've also been trying to make it gameify our Biology TRGs, just to make
 
 The bot is usually hosted on Heroku, but I haven't taken the time to add more Dyno hours, so in the last few days of the month, the bot is hosted by my personal computer.
 
-Here's the invite link: http://bit.ly/peepsbot. Run --help for commands.
+The bot is private, so ask Rog#7499 on Discord if you want the bot on your server.

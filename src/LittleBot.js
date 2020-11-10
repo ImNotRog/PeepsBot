@@ -21,6 +21,29 @@ class LittleBot {
 
         this.client.on("messageReactionAdd", (reaction,user) => { this.onReaction(reaction,user) });
         this.client.on("messageReactionRemove", (reaction,user) => { this.onReaction(reaction,user) });
+
+        this.prefix = "--"
+        this.helpEmbed = {
+            title: `Help - Little Quotes Bot`,
+            description: [
+                `Little Bot keeps track of all sorts of quotes from Mr.Little.`,
+                `Want advice? Mr.Little's got you covered.`
+            ].join(` `),
+            fields: [
+                {
+                    name: `${this.prefix}little`,
+                    value: `Provides an entirely random little quote. It's often surprisingly accurate.`
+                },
+                {
+                    name: `${this.prefix}littler [a sentence]`,
+                    value: `Provides a not entirely random little quote, based off of word similarities.`
+                },
+                {
+                    name: `${this.prefix}spreadsheets`,
+                    value: `Provides the Google spreadsheet where the Little Quotes live.`
+                },
+            ]
+        }
     }
 
     async onConstruct(){
