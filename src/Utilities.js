@@ -15,6 +15,14 @@ class Utilities {
         return moment.tz("America/Los_Angeles");
     }
 
+    getDay() {
+        return moment.tz("America/Los_Angeles").day();
+    }
+
+    getTodayStr(){
+        return moment.tz("America/Los_Angeles").format("ddd MM/DD/YYYY");
+    }
+
     formatTime(t) {
         let time = moment.tz(t, "America/Los_Angeles")
         let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
@@ -59,7 +67,7 @@ class Utilities {
 
 
     /* Discord Utilities */
-    
+
     /**
      * @param {Discord.Message|Discord.TextChannel} origmessage
      */

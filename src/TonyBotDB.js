@@ -67,7 +67,7 @@ class TonyBotDB extends Utilities {
         }
 
     }
-    
+
     /* EXISTENCE */
 
     /* GLOBAL */
@@ -208,6 +208,13 @@ class TonyBotDB extends Utilities {
     }
 
     /* FOR GLOBAL */
+
+    async createUnit(unit, data) {
+        unit = "" + unit
+        await this.key.collection("UNITS").doc(unit).set(data);
+        this.units.set(unit, new UnitObj(data,this.key.collection("UNITS").doc(unit)));
+        await this.units.get(unit).onConstruct();
+    }
 
     async setUnit(unit,data) {
         unit = "" + unit

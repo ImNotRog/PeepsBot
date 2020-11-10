@@ -47,6 +47,9 @@ class TonyBot extends TonyBotAccountant {
         this.dailyChannels = ["748669830244073536"];
         // this.dailyChannels = ["750804960333135914"] // Redirect
 
+        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746"]; // Actual
+        // this.updateChannels = ["750804960333135914"] // Redirect
+
         cron.schedule(`5 15 * * 1-5`,
         () => {this.sendDailyDose()}, 
         {
@@ -57,7 +60,8 @@ class TonyBot extends TonyBotAccountant {
 
     async onConstruct() {
         await super.onConstruct();
-        return await this.refresh();
+        await this.refresh();
+        
     }
 
     async refresh() {
@@ -78,7 +82,7 @@ class TonyBot extends TonyBotAccountant {
         for (const key of units.keys()) {
             let unit = parseInt(key);
             if (!this.unitExists(unit)) {
-                await this.setUnit(unit, units.get(key));
+                await this.createUnit(unit, units.get(key));
                 updateembeds.push({
                     title: `ALERT: Unit ${unit}: ${units.get(key).TITLE}`,
                     description: `**Unit ${unit} was posted.** Here's to another month of death!`,
@@ -177,7 +181,13 @@ class TonyBot extends TonyBotAccountant {
 
         await this.completeUsers();
 
-        return updateembeds;
+        let embeds = updateembeds;
+        for (const id of this.updateChannels) {
+            let channel = await this.client.channels.fetch(id)
+            for(const embed of embeds) {
+                await channel.send({embed});
+            }
+        }
     }
 
     /* ACCESSORS */

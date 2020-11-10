@@ -41,8 +41,6 @@ class ProcessorBot {
         ];
 
         this.collectingChannels =  ["754912483390652426", "756698378116530266"]
-        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746"]; // Actual
-        // this.updateChannels = ["750804960333135914"] // Redirect
 
         this.musicBots = ["234395307759108106"]
 
@@ -52,20 +50,17 @@ class ProcessorBot {
 
         this.tonyBot = new TonyBot(db,client);
 
-        this.reference = {};
-
         this.interval = 150000;
 
         this.client.on("message", (message) => { this.onMessage(message) });
         this.client.on("messageReactionAdd", (reaction,user) => { this.onReaction(reaction,user) });
         this.client.on("messageReactionRemove", (reaction,user) => { this.onReaction(reaction,user) });
 
-        
     }
 
     async onConstruct(){
 
-        let embeds = await this.tonyBot.onConstruct();
+        await this.tonyBot.onConstruct();
 
         await this.sheetsUser.SetUpSheets();
 
@@ -77,13 +72,6 @@ class ProcessorBot {
             })
 
         }
-
-        for (const id of this.updateChannels) {
-            let channel = await this.client.channels.fetch(id)
-            for(const embed of embeds) {
-                await channel.send({embed});
-            }
-        }
         
 
         let currinterval = setInterval(() => {
@@ -92,23 +80,9 @@ class ProcessorBot {
     }
 
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     */
-    async reqDailyDose(message) {
-        this.tonyBot.dailyDose(message.channel);
-    }
-
     async refresh() {
         console.log("Refreshing...")
-        let embeds = await this.tonyBot.refresh();
-        for (const id of this.updateChannels) {
-            let channel = await this.client.channels.fetch(id);
-            for(const embed of embeds) {
-                await channel.send({embed});
-            }
-        }
+        await this.tonyBot.refresh();
     }
 
     RGBtoObj(r, g, b) {
@@ -233,125 +207,6 @@ class ProcessorBot {
 
     /**
      * 
-     * @param {Discord.Message} message 
-     */
-    async help(message) {
-        let m = await message.channel.send(this.helpEmbed(message,0))
-
-        if(this.approvedTonyServers.indexOf( message.guild.id ) === -1) {
-            await m.react("❌");
-
-            const filter = (reaction, user) => {
-                return ['❌'].includes(reaction.emoji.name) && user.id === message.author.id;
-            };
-
-            try {
-                await m.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] });
-            } catch(err) {}
-
-            m.delete();
-
-            return true;
-            
-        }
-
-        await m.react("❌")
-        await m.react("➡")
-        this.helpMenu(m, 0, message)
-        
-    }
-
-    /**
-     * 
-     * @param {Discord.message} message 
-     * @param {*} num 
-     */
-    helpEmbed(message,num) {
-        if(num === 0){
-            return {
-                "embed": {
-                    "title": "Help",
-                    "description": "I'm a bot that spews out random tidbits of Mr.Little's wisdom.",
-                    ...this.tonyBot.embedInfo(message),
-                    "fields": [
-                        {
-                            "name": this.prefix+"little",
-                            "value": "A completely random Mr.Little quote."
-                        },
-                        {
-                            "name": this.prefix+"littler [sentence]",
-                            "value": "A less random Mr.Little quote that has the most words in common with your sentence."
-                        },
-                        {
-                            "name": this.prefix+"spreadsheets",
-                            "value": "Gives the spreadsheet where all the Mr.Little quotes live."
-                        }
-                    ]
-                    
-                }
-            }
-        } else if(num === 1) {
-            return {
-                "embed": {
-                    "title": "Help",
-                    "description": "I'm also a bot that keeps track of your TRGs and converts them to currency.",
-                    "fields": [
-                        {
-                            "name": this.prefix+"create",
-                            "value": "Create a profile."
-                        },
-                        {
-                            "name": this.prefix+"get TRG #-#",
-                            "value": "Returns the status on your TRG, as stored in the database."
-                        },
-                        {
-                            "name": this.prefix+"complete TRG #-# ['SEC 1' or 'ALL']",
-                            "value": "Completes the given TRG."
-                        }
-                    ],
-                    ...this.tonyBot.embedInfo(message),
-                    
-                }
-            }
-        }
-    }
-
-    /**
-     * 
-     * @param {Discord.Message} helpmessage 
-     * @param {Discord.Message} origmessage
-     */
-    async helpMenu(helpmessage,state,origmessage){
-        
-        const filter = (reaction, user) => {
-            return ['➡','❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
-        };
-
-        let collected;
-        try {
-            collected = await helpmessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] });
-        } catch(err) {
-            helpmessage.delete();
-            return true;
-        }
-        
-        const reaction = collected.first();
-        if(reaction.emoji.name === '❌') {
-            helpmessage.delete();
-        } else {
-            await reaction.users.remove(origmessage.author.id);
-            if(state === 1){
-                await helpmessage.edit(this.helpEmbed(origmessage,0));
-                this.helpMenu(helpmessage, 0, origmessage);
-            } else {
-                await helpmessage.edit(this.helpEmbed(origmessage,1));
-                this.helpMenu(helpmessage,1,origmessage)
-            }
-        }
-    }
-
-    /**
-     * 
      * @param {Discord.Message} message
      */
     async onMessage(message) {
@@ -443,7 +298,7 @@ class ProcessorBot {
         }
 
         if(command === "up" || command === "upcoming" || command === "daily") {
-            this.reqDailyDose(message);
+            this.tonyBot.dailyDose(message.channel);
         } 
 
         if(command === "little") {
@@ -459,7 +314,7 @@ class ProcessorBot {
         }
 
         if(command === "help") {
-            this.help(message);
+            message.channel.send(`Under construction D:`);
         }
         
     }
@@ -483,14 +338,9 @@ class ProcessorBot {
                 return;
             }
         }
-
-        // // Now the message has been cached and is fully available
-        // // The reaction is now also fully available and the properties will be reflected accurately:
-        // console.log(`${reaction.count} user(s) have given the same reaction to this message!`);
         
         if (reaction.emoji.name === "👍") {
             this.addLittleQuote(reaction.message.content, reaction.count)
-            console.log(`"${reaction.message.content}" has ${reaction.count} thumbs ups!`);
         }
 
         
