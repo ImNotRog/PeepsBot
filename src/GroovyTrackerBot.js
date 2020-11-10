@@ -4,10 +4,10 @@ const { Utilities } = require("./Utilities")
 class TrackerBot extends Utilities {
     /**
      * @constructor
-     * @param {google.auth.OAuth2} auth 
-     * @param {Discord.Client} client
+     * @param {google.auth.OAuth2} auth
      */
-    constructor(){
+    constructor(auth){
+        super();
         this.colors = 
         [
             this.RGBtoObj(255, 0, 0), 
@@ -23,8 +23,9 @@ class TrackerBot extends Utilities {
         let currmap = new Map();
         currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
         this.sheetsUser = new SheetsUser(auth, currmap);
+        
+        this.musicBots = ["234395307759108106"]
     }
-
 
     RGBtoObj(r, g, b) {
         return {
@@ -64,7 +65,7 @@ class TrackerBot extends Utilities {
     }
     
     async process(message) {
-        if(message.embeds[0]){
+        if(message.embeds[0] && this.musicBots.indexOf( message.author.id ) !== -1){
             let prevmsg = await message.channel.messages.fetch({
                 limit: 2
             })
@@ -78,6 +79,27 @@ class TrackerBot extends Utilities {
             }
         }
         
+    }
+
+    /**
+     * 
+     * @param {Discord.Message} message 
+     */
+    async sendSpreadsheets(message){
+        message.channel.send({
+            embed: {
+                "title": "– Groovy Spreadsheet –",
+                "description": "F Period Bio Gang Groovy",
+                "fields": [
+                    {
+                        "name": "Our Groovy History",
+                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
+                    }
+                ],
+                ...this.embedInfo(message)
+            }
+            
+        });
     }
 }
 

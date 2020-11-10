@@ -1,11 +1,12 @@
-const { SheetsUser } = require("./SheetsUser");
-const { TonyBot } = require("./TonyBot");
+
 const Discord = require("discord.js");
 
 const cron = require("node-cron");
 
 let moment = require("moment-timezone");
 const { LittleBot } = require("./LittleBot");
+const { TrackerBot } = require("./GroovyTrackerBot");
+const { TonyBot } = require("./TonyBot");
 
 class ProcessorBot {
 
@@ -22,32 +23,13 @@ class ProcessorBot {
         this.destroyUsers = [];
         this.prefix = "--"
 
-        this.daysmap = new Map();
-
-        let currmap = new Map();
-        currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
-        this.sheetsUser = new SheetsUser(auth, currmap);
-
-        this.colors = 
-        [
-            this.RGBtoObj(255, 0, 0), 
-            this.RGBtoObj(255, 255, 0), 
-            this.RGBtoObj(0, 255, 0), 
-            this.RGBtoObj(0, 255, 255), 
-            this.RGBtoObj(0, 0, 255), 
-            this.RGBtoObj(255, 0, 255), 
-            this.RGBtoObj(255, 150, 0), 
-            this.RGBtoObj(0, 0, 0)
-        ];
-
-        this.musicBots = ["234395307759108106"]
-
         this.approvedMusicServers = ["748669830244073533"]
 
         this.approvedTonyServers = ["748669830244073533"]
 
         this.tonyBot = new TonyBot(db,client);
         this.littleBot = new LittleBot(auth, client);
+        this.trackerBot = new TrackerBot(auth);
 
         this.interval = 150000;
 
@@ -59,8 +41,7 @@ class ProcessorBot {
 
         await this.tonyBot.onConstruct();
         await this.littleBot.onConstruct();
-
-        await this.sheetsUser.SetUpSheets();
+        await this.trackerBot.onConstruct();
 
         let currinterval = setInterval(() => {
             this.refresh();
@@ -70,51 +51,6 @@ class ProcessorBot {
     async refresh() {
         console.log("Refreshing...")
         await this.tonyBot.refresh();
-    }
-
-    RGBtoObj(r, g, b) {
-        return {
-            red: r / 255,
-            green: g / 255,
-            blue: b / 255
-        }
-    }
-
-    getDay() {
-        return moment.tz("America/Los_Angeles").day();
-    }
-
-    getTodayStr(){
-        return moment.tz("America/Los_Angeles").format("ddd MM/DD/YYYY");
-    }
-
-    async readList() {
-        return this.sheetsUser.readSheet("music", "Groovy");
-    }
-
-    async addGroovyEntry(title,link) {
-        this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title,link,1,this.getTodayStr()], [true,true, (x) => parseInt(x)+1, "CHANGE"]);
-    }
-
-    /**
-     * @param {String} txt 
-     */
-    async processPlayMessage(txt){
-        if (txt && txt.startsWith("[")) {
-            let endtitle = txt.indexOf("](");
-            let title = txt.slice(1, endtitle);
-
-            let startlink = endtitle + 2;
-            let endlink = txt.indexOf(") [<@")
-            let link = txt.slice(startlink, endlink);
-
-            await this.addGroovyEntry(title, link)
-        }
-        
-    }
-    
-    now() {
-        return moment.tz("America/Los_Angeles").format();
     }
 
     /**
@@ -130,20 +66,8 @@ class ProcessorBot {
         }
 
         if (message.author.bot) {
-            if(this.approvedMusicServers.indexOf(message.guild.id) !== -1 && this.musicBots.indexOf( message.author.id ) !== -1 && message.embeds[0]){
-
-                let prevmsg = await message.channel.messages.fetch({
-                    limit: 2
-                })
-                let keys = prevmsg.keys()
-                keys.next();
-                let prevmsgkey = keys.next().value;
-                let content = prevmsg.get(prevmsgkey).content
-
-                if(!content.startsWith("-np")){
-                    (this.processPlayMessage(message.embeds[0].description))
-                }
-
+            if(this.approvedMusicServers.indexOf(message.guild.id) !== -1){
+                this.trackerBot.process(message);
             }
             
             return;
@@ -166,21 +90,7 @@ class ProcessorBot {
         }
 
         if(command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-            message.channel.send(new Discord.MessageEmbed({
-                "title": "– Groovy Spreadsheet –",
-                "description": "F Period Bio Gang Groovy",
-                "color": "#00ffff",
-                "fields": [
-                    {
-                        "name": "Our Groovy History",
-                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
-                    }
-                ],
-                "footer": {
-                    "text": `Requested by ${message.author.username}`,
-                    "icon_url": message.author.displayAvatarURL()
-                }
-            }));
+            this.trackerBot.sendSpreadsheets(message);
         }
         
         if(command === "complete") {
