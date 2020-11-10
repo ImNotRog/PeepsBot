@@ -423,6 +423,7 @@ class TonyBot extends TonyBotAccountant {
         })
         await super.createUser(message.author.id);
         await m.delete();
+        return true;
     }
 
     /**
