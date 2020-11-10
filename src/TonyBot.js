@@ -157,10 +157,10 @@ class TonyBot extends TonyBotAccountant {
 
     async onConstruct() {
         await super.onConstruct();
-        await this.refresh();
+        await this.refresh(true);
     }
 
-    async refresh() {
+    async refresh(construct) {
 
         let updateembeds = [];
 
@@ -211,7 +211,11 @@ class TonyBot extends TonyBotAccountant {
                 await this.setTRG(unit, num, trgs.get(key));
             }
             const changes = await this.setTRGinfo(unit, num, trgs.get(key));
-            this.scheduleTRG(this.units.get(""+unit).TRGS.get(""+num));
+
+            if(construct) {
+                this.scheduleTRG(this.units.get(""+unit).TRGS.get(""+num));
+            }
+            
 
             if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
@@ -251,7 +255,11 @@ class TonyBot extends TonyBotAccountant {
                 await this.setCheckpoint(unit, num, checkpoints.get(key));
             }
             const changes = await this.setCheckpointInfo(unit, num, checkpoints.get(key));
-            this.scheduleCheckpoint(this.units.get(""+unit).CHECKPOINTS.get(""+num));
+            
+
+            if(construct) {
+                this.scheduleCheckpoint(this.units.get(""+unit).CHECKPOINTS.get(""+num));
+            }
 
             if (changes.GRADED && changes.GRADED[1] === true) {
                 updateembeds.push({
