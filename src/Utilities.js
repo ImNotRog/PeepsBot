@@ -20,7 +20,7 @@ class Utilities {
     }
 
     getTodayStr(){
-        return moment.tz("America/Los_Angeles").format("ddd MM/DD/YYYY");
+        return moment.tz("America/Los_Angeles").format("MM/DD/YYYY");
     }
 
     formatTime(t) {

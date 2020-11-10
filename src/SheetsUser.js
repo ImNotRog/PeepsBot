@@ -159,6 +159,56 @@ class SheetsUser {
         await this.executeRequest(sheetname, requests);
     }
 
+    /**
+     * 
+     * @param {string} sheetname 
+     * @param {string} subsheetname 
+     * @param {{row: string[], num: number}[]} data 
+     */
+    async bulkUpdateRows(sheetname, subsheetname, data) {
+        let requests = [];
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+
+        for(const obj of data){
+
+            let row = obj.row;
+            let num = obj.num;
+
+            let mappedrow = row.map((x) => {
+                if(typeof x === "string") {
+                    return {
+                        userEnteredValue: {
+                            stringValue: x
+                        }
+                    }
+                } else if(typeof x === "number") {
+                    return {
+                        userEnteredValue: {
+                            numberValue: x
+                        }
+                    }
+                }
+            })
+
+            requests.push({
+                updateCells: {
+                    rows: [{values: mappedrow }],
+                    fields: "*",
+                    range: {
+                        "sheetId": subsheetid,
+                        "startRowIndex": num,
+                        "endRowIndex": num+1,
+                        "startColumnIndex": 0,
+                        "endColumnIndex": row.length
+                    },
+                }
+            })
+
+        }       
+        
+        await this.executeRequest(sheetname, requests);
+    }
+
     newRow(oldrow,newrow,rowcheck) {
         for(let i = 0; i < rowcheck.length; i++) {
             if(rowcheck[i] === true) { // It matters!

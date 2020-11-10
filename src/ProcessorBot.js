@@ -31,8 +31,6 @@ class ProcessorBot {
         this.littleBot = new LittleBot(auth, client);
         this.trackerBot = new TrackerBot(auth);
 
-        this.interval = 150000;
-
         this.client.on("message", (message) => { this.onMessage(message) });
 
     }
@@ -43,14 +41,6 @@ class ProcessorBot {
         await this.littleBot.onConstruct();
         await this.trackerBot.onConstruct();
 
-        let currinterval = setInterval(() => {
-            this.refresh();
-        }, this.interval);
-    }
-
-    async refresh() {
-        console.log("Refreshing...")
-        await this.tonyBot.refresh();
     }
 
     /**

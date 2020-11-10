@@ -56,6 +56,13 @@ class TonyBot extends TonyBotAccountant {
             timezone: `America/Los_Angeles`
         })
 
+        this.interval = 150000;
+
+        let currinterval = setInterval(() => {
+            console.log("Refreshing...");
+            this.refresh();
+        }, this.interval);
+
     }
 
     async onConstruct() {
