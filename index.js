@@ -1,7 +1,7 @@
 
 /**
- * @todo Use Nodecron to add daily dose system
- * @todo Autocomplete system
+ * @todo Add help
+ * @todo Add shop
  * @todo Add User Checkpoint Complete System 
  * @todo Add other assignments
  * @todo Add updates

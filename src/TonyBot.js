@@ -68,7 +68,6 @@ class TonyBot extends TonyBotAccountant {
     async onConstruct() {
         await super.onConstruct();
         await this.refresh();
-        
     }
 
     async refresh() {
