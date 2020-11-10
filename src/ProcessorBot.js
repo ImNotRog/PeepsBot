@@ -272,13 +272,7 @@ class ProcessorBot {
                 "embed": {
                     "title": "Help",
                     "description": "I'm a bot that spews out random tidbits of Mr.Little's wisdom.",
-                    "color": 1111111,
-                    "timestamp": this.now(),
-                    "author": {
-                    "name": "Mr. Little",
-                    "url": "https://pausd.schoology.com/user/52984930/info",
-                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                    },
+                    ...this.tonyBot.embedInfo(message),
                     "fields": [
                         {
                             "name": this.prefix+"little",
@@ -292,11 +286,7 @@ class ProcessorBot {
                             "name": this.prefix+"spreadsheets",
                             "value": "Gives the spreadsheet where all the Mr.Little quotes live."
                         }
-                    ],
-                    "footer": {
-                        "text": `Requested by ${message.author.username}`,
-                        "icon_url": message.author.displayAvatarURL()
-                    }
+                    ]
                     
                 }
             }
@@ -305,13 +295,6 @@ class ProcessorBot {
                 "embed": {
                     "title": "Help",
                     "description": "I'm also a bot that keeps track of your TRGs and converts them to currency.",
-                    "color": 1111111,
-                    "timestamp": this.now(),
-                    "author": {
-                    "name": "Mr. Little",
-                    "url": "https://pausd.schoology.com/user/52984930/info",
-                    "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-                    },
                     "fields": [
                         {
                             "name": this.prefix+"create",
@@ -326,10 +309,7 @@ class ProcessorBot {
                             "value": "Completes the given TRG."
                         }
                     ],
-                    "footer": {
-                        "text": `Requested by ${message.author.username}`,
-                        "icon_url": message.author.displayAvatarURL()
-                    }
+                    ...this.tonyBot.embedInfo(message),
                     
                 }
             }

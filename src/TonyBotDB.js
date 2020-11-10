@@ -10,12 +10,15 @@ const {
     UnitObj
 } = require("./tonyclasses");
 
-class TonyBotDB {
+const {Utilities} = require("./Utilities");
+
+class TonyBotDB extends Utilities {
     /**
      * @constructor
      * @param {FirebaseFirestore.Firestore} db
      */
     constructor(db) {
+        super();
         this.db = db;
         this.base = this.db.collection("PeepsBot");
         this.key = this.base.doc("KEY");
@@ -64,44 +67,7 @@ class TonyBotDB {
         }
 
     }
-
-    now() {
-        return moment.tz("America/Los_Angeles").format();
-    }
-
-    formatTime(t) {
-        let time = moment.tz(t, "America/Los_Angeles")
-        let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
-        if(diff < 0) {
-            return time.format("MM/DD h:mm:ss a")
-        } else {
-            let days = time.diff(moment.tz("America/Los_Angeles"), "days");
-            let hrs = time.diff(moment.tz("America/Los_Angeles"), "hours") % 24;
-            let mins = time.diff(moment.tz("America/Los_Angeles"), "minutes") % 60;
-
-            if(days > 3) {
-                return `${time.format("MM/DD h:mm:ss a")}`;
-            } else {
-                return `${days} days, ${hrs} hrs, ${mins} mins`
-            }
-        }
-    }
-
-    longFormatTime(t) {
-        let time = moment.tz(t, "America/Los_Angeles")
-        let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
-        if(diff < 0) {
-            return time.format("MM/DD h:mm:ss a")
-        } else {
-            let days = time.diff(moment.tz("America/Los_Angeles"), "days");
-            let hrs = time.diff(moment.tz("America/Los_Angeles"), "hours") % 24;
-            let mins = time.diff(moment.tz("America/Los_Angeles"), "minutes") % 60;
-
-            return `${days} days, ${hrs} hrs, ${mins} mins, at ${time.format("MM/DD h:mm:ss a")}`;
-            
-        }
-    }
-
+    
     /* EXISTENCE */
 
     /* GLOBAL */
