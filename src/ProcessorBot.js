@@ -5,6 +5,7 @@ const Discord = require("discord.js");
 const cron = require("node-cron");
 
 let moment = require("moment-timezone");
+const { LittleBot } = require("./LittleBot");
 
 class ProcessorBot {
 
@@ -24,7 +25,6 @@ class ProcessorBot {
         this.daysmap = new Map();
 
         let currmap = new Map();
-        currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
         currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
         this.sheetsUser = new SheetsUser(auth, currmap);
 
@@ -40,8 +40,6 @@ class ProcessorBot {
             this.RGBtoObj(0, 0, 0)
         ];
 
-        this.collectingChannels =  ["754912483390652426", "756698378116530266"]
-
         this.musicBots = ["234395307759108106"]
 
         this.approvedMusicServers = ["748669830244073533"]
@@ -49,36 +47,25 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533"]
 
         this.tonyBot = new TonyBot(db,client);
+        this.littleBot = new LittleBot(auth, client);
 
         this.interval = 150000;
 
         this.client.on("message", (message) => { this.onMessage(message) });
-        this.client.on("messageReactionAdd", (reaction,user) => { this.onReaction(reaction,user) });
-        this.client.on("messageReactionRemove", (reaction,user) => { this.onReaction(reaction,user) });
 
     }
 
     async onConstruct(){
 
         await this.tonyBot.onConstruct();
+        await this.littleBot.onConstruct();
 
         await this.sheetsUser.SetUpSheets();
-
-        for (const id of this.collectingChannels) {
-
-            let channel = await this.client.channels.fetch(id)
-            channel.messages.fetch({
-                limit: 90
-            })
-
-        }
-        
 
         let currinterval = setInterval(() => {
             this.refresh();
         }, this.interval);
     }
-
 
     async refresh() {
         console.log("Refreshing...")
@@ -124,81 +111,6 @@ class ProcessorBot {
             await this.addGroovyEntry(title, link)
         }
         
-    }
-
-    stripQuotes(txt) {
-        if(txt.startsWith('"')) {
-            txt = txt.slice(1,txt.length - 1)
-        }
-        return txt;
-    }
-
-    async readLittleQuotes() {
-
-        let rows = (await this.sheetsUser.readSheet("quotes", "Quotes")).slice(1);
-        for (const row of rows) {
-            row[0] = this.stripQuotes(row[0])
-        }
-        return rows;
-    
-    }
-
-    async addLittleQuote(quote,stars) {
-        quote = this.stripQuotes(quote);
-        this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote,stars], [true, "CHANGE"])
-    }
-
-    async randomLittleQuote() {
-        let quotes = await this.readLittleQuotes();
-
-        let total = 0;
-        for (const row of quotes) {
-            total += parseInt(row[1]);
-        }
-        let randomnum = Math.random() * total;
-
-        for(const row of quotes) {
-            randomnum -= parseInt(row[1])
-            if(randomnum <= 0) {
-
-                let quote = this.stripQuotes(row[0])
-                console.log(`My wisdom was summoned, and I responded with ${quote}.`)
-                return quote;
-            }
-        }
-    }
-
-    similarities(txt1, txt2) {
-
-        txt1 = txt1.replace(/[\.?!',"]/g, "");
-        txt2 = txt2.replace(/[\.?!',"]/g, "");
-
-        let words1 = txt1.toLowerCase().split(" ");
-        let words2 = txt2.toLowerCase().split(" ");
-
-        let similarities = 0;
-
-        for(const word of words1) {
-            if(words2.indexOf(word) !== -1) similarities ++;
-        }
-        return similarities
-    }
-
-    async notRandomLittleQuote(messagecontent) {
-        let quotes = await this.readLittleQuotes();
-
-        let max = -1;
-        let maxmsg = "";
-        for (let i = 0; i < quotes.length; i++) {
-            const row = quotes[i];
-            if (this.similarities(row[0],messagecontent) > max) {
-                max = this.similarities(row[0],messagecontent);
-                maxmsg = row[0];
-            }
-            
-        }
-        max > 0 ? console.log(`My brilliant wisdom was summoned, and I responded with ${maxmsg}.`) : "";
-        return max > 0 ? maxmsg : "Sorry, I'm not sure what to think about that.";
     }
     
     now() {
@@ -250,21 +162,7 @@ class ProcessorBot {
         const command = args.shift().toLowerCase();
 
         if(command === "spreadsheets") {
-            message.channel.send(new Discord.MessageEmbed({
-                "title": "– Spreadsheets –",
-                "description": "A list of PeepsBot's spreadsheets.",
-                "color": "#00ffff",
-                "fields": [
-                    {
-                        "name": "Little Quotes",
-                        "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
-                    },
-                ],
-                "footer": {
-                    "text": `Requested by ${message.author.username}`,
-                    "icon_url": message.author.displayAvatarURL()
-                }
-            }));
+            await this.littleBot.sendSpreadsheets(message);
         }
 
         if(command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
@@ -302,11 +200,11 @@ class ProcessorBot {
         } 
 
         if(command === "little") {
-            message.channel.send(await this.randomLittleQuote());
+            message.channel.send(await this.littleBot.randomLittleQuote());
         }
 
         if(command === "littler") {
-            message.channel.send(await this.notRandomLittleQuote(args.join(" ")))
+            message.channel.send(await this.littleBot.notRandomLittleQuote(args.join(" ")))
         }
         
         if (command === "profile") {
@@ -316,33 +214,6 @@ class ProcessorBot {
         if(command === "help") {
             message.channel.send(`Under construction D:`);
         }
-        
-    }
-
-    /**
-     * 
-     * @param {Discord.MessageReaction} reaction 
-     * @param {*} user 
-     */
-    async onReaction(reaction, user) {
-        
-        if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
-
-        // When we receive a reaction we check if the reaction is partial or not
-        if (reaction.partial) {
-            // If the message this reaction belongs to was removed the fetching might result in an API error, which we need to handle
-            try {
-                await reaction.fetch();
-            } catch (error) {
-                console.error('Something went wrong when fetching the message: ', error);
-                return;
-            }
-        }
-        
-        if (reaction.emoji.name === "👍") {
-            this.addLittleQuote(reaction.message.content, reaction.count)
-        }
-
         
     }
 }

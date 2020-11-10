@@ -25,6 +25,15 @@ class LittleBot {
 
     async onConstruct(){
         await this.sheetsUser.SetUpSheets();
+
+        for (const id of this.collectingChannels) {
+
+            let channel = await this.client.channels.fetch(id)
+            channel.messages.fetch({
+                limit: 90
+            })
+
+        }
     }
 
     stripQuotes(txt) {
@@ -98,7 +107,6 @@ class LittleBot {
             }
             
         }
-        max > 0 ? console.log(`My brilliant wisdom was summoned, and I responded with ${maxmsg}.`) : "";
         return max > 0 ? maxmsg : "Sorry, I'm not sure what to think about that.";
     }
 
@@ -121,6 +129,31 @@ class LittleBot {
             }
             
         });
+    }
+
+    /**
+     * 
+     * @param {Discord.MessageReaction} reaction 
+     * @param {*} user 
+     */
+    async onReaction(reaction, user) {
+        
+        if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
+
+        if (reaction.partial) {
+            try {
+                await reaction.fetch();
+            } catch (error) {
+                console.error('Something went wrong when fetching the message: ', error);
+                return;
+            }
+        }
+        
+        if (reaction.emoji.name === "👍") {
+            this.addLittleQuote(reaction.message.content, reaction.count)
+        }
+
+        
     }
 
 }
