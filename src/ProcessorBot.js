@@ -25,7 +25,7 @@ class ProcessorBot {
         this.prefix = "--"
 
         this.approvedMusicServers = ["748669830244073533"]
-        this.approvedTonyServers = ["748669830244073533"]
+        this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
 
         this.tonyBot = new TonyBot(db,client);
         this.littleBot = new LittleBot(auth, client);
