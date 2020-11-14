@@ -175,14 +175,13 @@ class LittleBot {
         
         if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
 
-        if (reaction.partial) {
-            try {
-                await reaction.fetch();
-            } catch (error) {
-                console.error('Something went wrong when fetching the message: ', error);
-                return;
-            }
+        try {
+            await reaction.fetch();
+        } catch (error) {
+            console.error('Something went wrong when fetching the message: ', error);
+            return;
         }
+        
         
         if (reaction.emoji.name === "👍") {
             console.log(`${reaction.message.content} has ${reaction.count}`);
