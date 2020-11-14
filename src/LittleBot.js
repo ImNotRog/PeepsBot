@@ -1,6 +1,8 @@
 const { SheetsUser } = require("./SheetsUser");
 const { Utilities } = require("./Utilities")
 
+const Discord = require("discord.js");
+
 class LittleBot {
 
     /**
@@ -52,9 +54,19 @@ class LittleBot {
         for (const id of this.collectingChannels) {
 
             let channel = await this.client.channels.fetch(id)
-            channel.messages.fetch({
+            /**
+             * @type {Map<string, Discord.Message>}
+             */
+            const test = await channel.messages.fetch({
                 limit: 90
             })
+            // for(const key of test.keys()) {
+            //     const msg = test.get(key);
+            //     if (msg.reactions.cache.has('👍')) {
+            //         console.log(`${msg.content} has ${msg.reactions.cache.get('👍').count} thumbs.`)
+            //     }
+            // }
+        
 
         }
     }
@@ -173,6 +185,7 @@ class LittleBot {
         }
         
         if (reaction.emoji.name === "👍") {
+            console.log(`${reaction.message.content} has ${reaction.count}`);
             this.addLittleQuote(reaction.message.content, reaction.count)
         }
 
