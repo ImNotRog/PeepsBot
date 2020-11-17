@@ -223,6 +223,17 @@ class Utilities {
         }
     }
 
+    basicEmbedInfoForCal() {
+        return {
+            "color": 111111,
+            "timestamp": this.now(),
+            "author": {
+                "name": "F Period Bio",
+                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
+            },
+        }
+    }
+
     embedInfo(message) {
         return {
             ...this.basicEmbedInfo(),

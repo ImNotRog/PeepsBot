@@ -50,18 +50,7 @@ class TonyBot extends TonyBotAccountant {
         this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746"]; // Actual
         // this.updateChannels = ["750804960333135914"] // Redirect
 
-        cron.schedule(`5 15 * * 1-5`,
-        () => {this.sendDailyDose()}, 
-        {
-            timezone: `America/Los_Angeles`
-        })
-
         this.interval = 150000;
-
-        let currinterval = setInterval(() => {
-            console.log("Refreshing...");
-            this.refresh();
-        }, this.interval);
 
         this.prefix = "--";
 
@@ -158,6 +147,17 @@ class TonyBot extends TonyBotAccountant {
     async onConstruct() {
         await super.onConstruct();
         await this.refresh(true);
+
+        cron.schedule(`5 15 * * 1-5`,
+            () => { this.sendDailyDose() },
+            {
+                timezone: `America/Los_Angeles`
+            })
+
+        let currinterval = setInterval(() => {
+            console.log("Refreshing...");
+            this.refresh();
+        }, this.interval);
     }
 
     async refresh(construct) {
