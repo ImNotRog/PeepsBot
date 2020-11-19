@@ -8,6 +8,7 @@ const { LittleBot } = require("./LittleBot");
 const { TrackerBot } = require("./GroovyTrackerBot");
 const { TonyBot } = require("./TonyBot");
 const { CalendarBot } = require("./CalBot");
+const { ReactBot } = require("./ReactBot");
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -31,12 +32,14 @@ class ProcessorBot {
         this.littleActive = true;
         this.trackerActive = true;
         this.bdayActive = true;
+        this.reactActive = true;
         this.helpActive = true;
 
         this.tonyBot = new TonyBot(db,client);
         this.littleBot = new LittleBot(auth, client);
         this.trackerBot = new TrackerBot(auth);
         this.calBot = new CalendarBot(auth, client);
+        this.reactBot = new ReactBot();
 
         this.client = client;
 
@@ -132,6 +135,10 @@ class ProcessorBot {
             message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
         } else if(message.content.includes("<@!750573267026182185>") && this.littleActive) {
             message.channel.send(await this.randomLittleQuote());
+        }
+
+        if (this.reactActive) {
+            this.reactBot.onMessage(message);
         }
 
         if (!message.content.startsWith(this.prefix)) return;

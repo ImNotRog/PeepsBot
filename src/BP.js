@@ -131,6 +131,8 @@ class BioParser extends SchoologyAccessor {
                             ID: id,
                             CATEGORY: categories.get(grading_category),
                             SUMMATIVE: true,
+                            UNIT: unit,
+                            NUM: num,
                             POINTS: parseInt(max_points)
                         })
                     } else {
@@ -151,7 +153,9 @@ class BioParser extends SchoologyAccessor {
                         ID: id,
                         CATEGORY: categories.get(grading_category),
                         SUMMATIVE: true,
-                        POINTS: parseInt(max_points)
+                        POINTS: parseInt(max_points),
+                        UNIT: unit,
+                        NUM: num,
                     })
                 }
 
