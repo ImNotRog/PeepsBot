@@ -49,8 +49,12 @@ class LittleBot {
     }
 
     async onConstruct(){
+
+        console.log(`Setting up Little Bot.`)
+        console.log(`Setting up sheets`)
         await this.sheetsUser.SetUpSheets();
 
+        console.log(`Fetching messages from Discord channels`)
         for (const id of this.collectingChannels) {
 
             let channel = await this.client.channels.fetch(id)
@@ -60,6 +64,8 @@ class LittleBot {
             const test = await channel.messages.fetch({
                 limit: 90
             })
+
+            // Testing why it didn't work
             // for(const key of test.keys()) {
             //     const msg = test.get(key);
             //     if (msg.reactions.cache.has('👍')) {
@@ -69,6 +75,8 @@ class LittleBot {
         
 
         }
+
+        console.log(`Little Bot Construction Complete!`)
     }
 
     stripQuotes(txt) {

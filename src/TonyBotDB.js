@@ -7,7 +7,8 @@ const {
     UserCheckpoint,
     TRG,
     Checkpoint,
-    UnitObj
+    UnitObj,
+    Assignment
 } = require("./tonyclasses");
 
 const {Utilities} = require("./Utilities");
@@ -33,11 +34,21 @@ class TonyBotDB extends Utilities {
          * @type {Map<string,UserObj>}
          */
         this.users = new Map();
+
+        /**
+         * @type {Map<string,Assignment>}
+         */
+        this.assignments = new Map();
     }
 
     async onConstruct() {
+        console.log(`Pulling Users from Firestore`);
         await this.refreshUnits();
+        console.log(`Pulling Assignments from Firestore`);
+        await this.refreshAssignments();
+        console.log(`Pulling Units from Firestore`);
         await this.refreshUsers();
+        console.log(`Finished reading from Firestore!`)
     }
 
     /* ACCESSORS */
@@ -53,6 +64,14 @@ class TonyBotDB extends Utilities {
             if(user.id === "KEY") continue;
             this.users.set(user.id, new UserObj(user.data(), this.base.doc(user.id)));
             await this.users.get(user.id).onConstruct();
+        }
+    }
+
+    async refreshAssignments() {
+        this.assignments = new Map();
+        let allassignments = await this.key.collection("OTHER").get();
+        for (const assignment of allassignments.docs) {
+            this.assignments.set(assignment.id, new Assignment(assignment.data()));
         }
     }
 
@@ -86,6 +105,11 @@ class TonyBotDB extends Utilities {
         unit = "" + unit;
         num = "" + num;
         return this.unitExists(unit) && this.units.get(unit).CHECKPOINTS.has(num);
+    }
+
+    AssignmentExists(id) {
+        id = "" + id;
+        return this.assignments.has(id);
     }
 
     /* USERS */
@@ -236,6 +260,12 @@ class TonyBotDB extends Utilities {
         this.units.get(unit).CHECKPOINTS.set(num, new Checkpoint(data));
     }
 
+    async setAssignment(id, data) {
+        id = "" + id;
+        await this.key.collection("OTHER").doc(id).set(data);
+        this.assignments.set(id, new Assignment(data));
+    }
+
 
     /* TOP LEVEL */
 
@@ -285,6 +315,18 @@ class TonyBotDB extends Utilities {
 
         return changes;
 
+    }
+
+    async setAssignmentInfo(id, data) {
+        id = id + "";
+        let currdata = this.assignments.get(id);
+        const changes = this.differences(currdata, data);
+
+        if (Object.keys(changes).length > 0) {
+            await this.setAssignment(id, data);
+        }
+
+        return changes;
     }
 
     async setUnitInfo(unit, data) {

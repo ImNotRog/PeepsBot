@@ -71,8 +71,13 @@ class CalendarBot {
     }
 
     async onConstruct() {
+
+        console.log(`Setting up Calendar Bot`);
+
+        console.log(`Setting up Google Sheets.`)
         await this.sheetsUser.SetUpSheets();
 
+        console.log(`Fetching data, setting up Birthdays.`)
         let rows = (await this.sheetsUser.readSheet("peeps", "Birthdays"));
 
         for(let i = 2; i < rows.length; i++) {
@@ -103,6 +108,8 @@ class CalendarBot {
                 })
             }
         }
+
+        console.log(`Calendar Bot construction complete!`)
     }
 
 }

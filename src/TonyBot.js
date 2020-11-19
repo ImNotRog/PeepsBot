@@ -145,6 +145,8 @@ class TonyBot extends TonyBotAccountant {
     }
 
     async onConstruct() {
+
+        console.log(`Setting up Tony Bot, awaiting TonyBotDB construction`)
         await super.onConstruct();
         await this.refresh(true);
 
@@ -155,22 +157,24 @@ class TonyBot extends TonyBotAccountant {
             })
 
         let currinterval = setInterval(() => {
-            console.log("Refreshing...");
             this.refresh();
         }, this.interval);
+
+        console.log(`Tony Bot Construction Complete!`)
     }
 
     async refresh(construct) {
 
         let updateembeds = [];
 
-        const sassymessages = [
+        const hahabrr = [
             "Yes, there's another one.",
             "agioasgASDGLASDg asgASGawLIJliu waLJKfaJLEGQWLIJGkjasfd",
             "Hey, I'm just the messenger.",
             "Look, I'm failing too, ok?",
         ]
 
+        console.log(`Fetching from Schoology API`)
         let maps = await this.BP.getTRGandCheckpointsAndUnits();
 
         let units = maps.UNITS;
@@ -191,6 +195,9 @@ class TonyBot extends TonyBotAccountant {
 
         let trgs = maps.TRGS;
         let checkpoints = maps.CHECKPOINTS;
+        let assignments = maps.ASSIGNMENTS;
+
+        console.log(`Writing TRGs`)
         for (const key of trgs.keys()) {
             let [unit, num] = JSON.parse(key);
             if (!this.unitExists(unit)) {
@@ -204,7 +211,7 @@ class TonyBot extends TonyBotAccountant {
             if (!this.TRGExists(unit, num)) {
                 updateembeds.push({
                     title: `***ALERT:*** **TRG ${unit}-${num}: ${trgs.get(key).TITLE}** POSTED`,
-                    description: `**TRG ${unit}-${num}: ${trgs.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}`,
+                    description: `**TRG ${unit}-${num}: ${trgs.get(key).TITLE}** was just posted. ${hahabrr[Math.floor(Math.random() * hahabrr.length)]}`,
                     fields: this.TRGtoFields(trgs.get(key)),
                     ...this.basicEmbedInfo()
                 })
@@ -235,6 +242,7 @@ class TonyBot extends TonyBotAccountant {
             }
         }
 
+        console.log(`Writing Checkpoints`)
         for (const key of checkpoints.keys()) {
             let [unit, num] = JSON.parse(key);
             if (!this.unitExists(unit)) {
@@ -248,7 +256,7 @@ class TonyBot extends TonyBotAccountant {
             if (!this.CheckpointExists(unit, num)) {
                 updateembeds.push({
                     title: `***ALERT:*** **Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** POSTED`,
-                    description: `**Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** was just posted. ${sassymessages[Math.floor(Math.random() * sassymessages.length)]}`,
+                    description: `**Checkpoint ${unit}-${num}: ${checkpoints.get(key).TITLE}** was just posted. ${hahabrr[Math.floor(Math.random() * hahabrr.length)]}`,
                     fields: this.CheckpointToFields(checkpoints.get(key)),
                     ...this.basicEmbedInfo()
                 })
@@ -256,7 +264,6 @@ class TonyBot extends TonyBotAccountant {
             }
             const changes = await this.setCheckpointInfo(unit, num, checkpoints.get(key));
             
-
             if(construct) {
                 this.scheduleCheckpoint(this.units.get(""+unit).CHECKPOINTS.get(""+num));
             }
@@ -283,8 +290,20 @@ class TonyBot extends TonyBotAccountant {
             }
         }
 
+        console.log(`Writing Assignments`)
+        for(const id of assignments.keys()) {
+
+            if(!this.AssignmentExists(id)) {
+                await this.setAssignment(id, assignments.get(id));
+            }
+
+            await this.setAssignmentInfo(id, assignments.get(id));
+        }
+
+        console.log(`Autocompleting for Users`)
         await this.completeUsers();
 
+        console.log(`Sending Embeds...`)
         let embeds = updateembeds;
         for (const id of this.updateChannels) {
             let channel = await this.client.channels.fetch(id)
@@ -340,14 +359,28 @@ class TonyBot extends TonyBotAccountant {
             }
         }
 
+        for(const key of this.assignments.keys()) {
+            const assign = this.assignments.get(key);
+            if (assign.NODATE || ( assign.diff("milliseconds") > 0 && assign.diff("days") < 21 )) {
+                all.push(assign);
+            }
+        }
+
         all.sort((a, b) => {
             return a.diff("milliseconds") - b.diff("milliseconds");
         })
 
         const fields = all.map( (due) => {
-            return { 
-                name: `**${due.full()}**`,
-                value: `Due in *${this.longFormatTime(due.DUE)}*`
+            if(due.NODATE) {
+                return {
+                    name: `**${due.full()}**`,
+                    value: `No date.`
+                }
+            } else {
+                return {
+                    name: `**${due.full()}**`,
+                    value: `Due in *${this.longFormatTime(due.DUE)}*`
+                }
             }
         })
 

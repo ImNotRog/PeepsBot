@@ -51,7 +51,9 @@ class TrackerBot extends Utilities {
     }
 
     async onConstruct(){
+        console.log(`Groovy Tracker Bot constructing...`)
         await this.sheetsUser.SetUpSheets();
+        console.log(`Groovy Tracker Bot complete.`)
     }
 
     async readList() {

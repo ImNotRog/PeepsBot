@@ -137,6 +137,7 @@ class DUE {
     constructor() {
         this.TITLE = "";
         this.DUE = "";
+        this.NODATE = false;
     };
     
     full() {
@@ -232,6 +233,43 @@ class Checkpoint extends DUE {
     }
 }
 
+class Assignment extends DUE {
+    /**
+     *
+     * @param {Object} data
+     * @param {string} data.TITLE
+     * @param {string} data.DUE
+     * @param {string} data.CATEGORY
+     * @param {boolean} data.GRADED
+     * @param {?string} data.SUBMITURL
+     * @param {?number} data.POINTS
+     * @param {?number} data.ID
+     * @param {?boolean} data.NODATE
+     */
+    constructor(data) {
+
+        super();
+
+        for (const key in data) {
+            this[key] = data[key];
+        }
+
+        const { TITLE, DUE, CATEGORY, GRADED, POINTS, ID, NODATE } = data;
+        this.TITLE = TITLE;
+        this.DUE = DUE;
+        this.GRADED = GRADED;
+        this.CATEGORY = CATEGORY;
+        this.POINTS = POINTS;
+        this.ID = ID;
+        this.NODATE = NODATE;
+
+    }
+
+    full() {
+        return `${this.TITLE}`
+    }
+}
+
 class UnitObj {
     /**
      * 
@@ -303,5 +341,6 @@ module.exports = {
     TRG,
     Checkpoint,
     UnitObj,
+    Assignment,
     DUE
 };
