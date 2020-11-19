@@ -47,8 +47,8 @@ class TonyBot extends TonyBotAccountant {
         this.dailyChannels = ["748669830244073536", "778845866786160651"];
         // this.dailyChannels = ["750804960333135914"] // Redirect
 
-        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
-        // this.updateChannels = ["750804960333135914"] // Redirect
+        // this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
+        this.updateChannels = ["750804960333135914"] // Redirect
 
         this.interval = 150000;
 
@@ -175,7 +175,7 @@ class TonyBot extends TonyBotAccountant {
         ]
 
         console.log(`Fetching from Schoology API`)
-        let maps = await this.BP.getTRGandCheckpointsAndUnits();
+        let maps = await this.BP.fetchFromSqualol();
 
         let units = maps.UNITS;
 

@@ -22,6 +22,7 @@ class SheetsUser {
     async SetUpSheets() {
         for(const key of this.map.keys()) {
 
+            console.log(`Setting up ${key}`);
             let info = await this.getSpreadsheetInfo(key);
             let newmap = new Map();
 

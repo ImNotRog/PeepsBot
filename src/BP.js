@@ -5,16 +5,17 @@ class BioParser extends SchoologyAccessor {
         super();
     }
 
-    async getTRGandCheckpointsAndUnits() {
+    async fetchFromSqualol() {
 
         let baseFolder = await (await this.get("/courses/2772305484/folder/")).json();
+        let pastUnitFolders = await (await this.get(`/courses/2772305484/folder/348404361`)).json();
         let units = new Map();
 
         let unitpromises = [];
         let unitorder = [];
 
-        for (const item of baseFolder["folder-item"]) {
-            if (item.title.indexOf("Unit") !== -1) {
+        for (const item of [...baseFolder["folder-item"], ...pastUnitFolders["folder-item"]]) {
+            if (item.title.indexOf("Unit") !== -1 && item.title.indexOf("Past") === -1) {
                 let num = (item.title.slice(5, 6));
                 let title = item.title.slice(8);
                 let folderlink = this.folderToURL(item.id);
@@ -160,7 +161,7 @@ class BioParser extends SchoologyAccessor {
                 AssignmentMap.set(id, {
                     TITLE: title,
                     DUE: due,
-                    NODATE: due==="",
+                    NODATE: due === "",
                     ID: id,
                     CATEGORY: categories.get(grading_category) || "Unknown",
                     POINTS: parseInt(max_points),
