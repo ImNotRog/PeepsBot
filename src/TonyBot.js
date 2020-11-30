@@ -361,7 +361,7 @@ class TonyBot extends TonyBotAccountant {
 
         for(const key of this.assignments.keys()) {
             const assign = this.assignments.get(key);
-            if (assign.NODATE || ( assign.diff("milliseconds") > 0 && assign.diff("days") < 21 )) {
+            if (!assign.NODATE && ( assign.diff("milliseconds") > 0 && assign.diff("days") < 21 )) {
                 all.push(assign);
             }
         }
