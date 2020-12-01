@@ -137,11 +137,13 @@ class ProcessorBot {
             message.channel.send(await this.randomLittleQuote());
         }
 
-        if (this.reactActive) {
-            this.reactBot.onMessage(message);
-        }
 
-        if (!message.content.startsWith(this.prefix)) return;
+        if (!message.content.startsWith(this.prefix)) {
+            if (this.reactActive) {
+                this.reactBot.onMessage(message);
+            }
+            return;
+        };
 
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');

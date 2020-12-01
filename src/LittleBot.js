@@ -1,6 +1,11 @@
 const { SheetsUser } = require("./SheetsUser");
 const { Utilities } = require("./Utilities")
 
+/**
+ * @todo Actually add a functional cache, instead of fetching every time it saves, b/c that is cringe
+ */
+
+
 const Discord = require("discord.js");
 
 class LittleBot {
@@ -16,6 +21,8 @@ class LittleBot {
         this.sheetsUser = new SheetsUser(auth, currmap);
 
         this.client = client;
+
+        this.cache = [];
 
         this.utils = new Utilities();
 
@@ -53,6 +60,8 @@ class LittleBot {
         console.log(`Setting up Little Bot.`)
         console.log(`Setting up sheets`)
         await this.sheetsUser.SetUpSheets();
+
+        this.cache = await this.fetchLittleQuotes();
 
         console.log(`Fetching messages from Discord channels`)
         for (const id of this.collectingChannels) {
@@ -102,7 +111,7 @@ class LittleBot {
         return similarities
     }
 
-    async readLittleQuotes() {
+    async fetchLittleQuotes() {
 
         let rows = (await this.sheetsUser.readSheet("quotes", "Quotes")).slice(1);
         for (const row of rows) {
@@ -112,9 +121,14 @@ class LittleBot {
     
     }
 
+    async readLittleQuotes() {
+        return this.cache;
+    }
+
     async addLittleQuote(quote,stars) {
         quote = this.stripQuotes(quote);
         this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote,stars], [true, "CHANGE"])
+        this.cache = await this.fetchLittleQuotes();
     }
 
     async randomLittleQuote() {
