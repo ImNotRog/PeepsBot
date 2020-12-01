@@ -11,12 +11,8 @@ class ReactBot {
         this.reactmap.set("pain", "776522384642932766");
         this.reactmap.set("fperbio", "776522302669062154");
         this.reactmap.set("hw", "755144784083026101");
-
-        this.carrot = "🥕"
-
-        this.fs = ["f", "<:bfruh:776525118330503189>"]
-        this.f = "776525118330503189"
-
+        this.reactmap.set("jack", "783125462045032498");
+        this.reactmap.set("tired", "783452754625429504");
 
         this.chainmap = new Map();
         this.chainmap.set("🥕",
@@ -37,7 +33,8 @@ class ReactBot {
                     method: "ONLY"
                 }
             ]);
-        // brr
+
+        // More code here
 
     }
 
@@ -72,7 +69,7 @@ class ReactBot {
      */
     async onMessage(msg) {
         for(const key of this.reactmap.keys()) {
-            if( msg.content.toLowerCase().includes(key) ){
+            if( msg.content.toLowerCase().split(" ").includes(key) ){
                 msg.react(this.reactmap.get(key));
             }
         }
