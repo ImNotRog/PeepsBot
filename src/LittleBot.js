@@ -127,7 +127,7 @@ class LittleBot {
 
     async addLittleQuote(quote,stars) {
         quote = this.stripQuotes(quote);
-        this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote,stars], [true, "CHANGE"])
+        await this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote,stars], [true, "CHANGE"])
         this.cache = await this.fetchLittleQuotes();
     }
 
