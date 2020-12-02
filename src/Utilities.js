@@ -71,6 +71,76 @@ class Utilities {
     /* Discord Utilities */
 
     /**
+     * 
+     * @param {Discord.Message} origmessage 
+     * @param {function} embed 
+     * @param {number} num 
+     * @param {number} millis
+     */
+    async sendEmoteCollector(origmessage,embed,num,millis) {
+
+        const emote = "👍"
+        const downemote = "👎"
+
+        let message = await origmessage.channel.send({
+            embed: embed(false)
+        });
+        await message.react(emote);
+        await message.react(downemote);
+        await message.react("❌");
+
+        const filter = (reaction, user) => {
+            let gmember = (message.guild.member(user));
+            return ([emote,downemote].includes(reaction.emoji.name)) || 
+                (["❌"].includes(reaction.emoji.name) && gmember.hasPermission("ADMINISTRATOR"));
+        };
+
+
+        while(true) {
+
+            try {
+                await message.awaitReactions(filter, {
+                    max: 1,
+                    time: millis,
+                    errors: ['time']
+                })
+            } catch (err) {
+                await message.reactions.removeAll();
+                message.delete();
+                return false;
+            }
+
+            let count = message.reactions.cache;
+
+            if (count.has("❌")) {
+                let xppl = count.get("❌").users.cache;
+
+                let adminxed = 0;
+                for (const id of xppl.keyArray()) {
+                    const gmember = (message.guild.member(xppl.get(id)));
+                    adminxed += !xppl.get(id).bot && gmember.hasPermission("ADMINISTRATOR");
+                }
+
+                if (adminxed) {
+                    await message.delete();
+                    return false;
+                }
+
+            }
+            
+            let votestrue = count.has(emote) ? count.get(emote).count : 0;
+            let votesfalse = count.has(downemote) ? count.get(downemote).count : 0;
+            if(votestrue - votesfalse + 1 > num) {
+                await message.reactions.removeAll();
+                await message.edit({embed: embed(true) });
+                return true;
+            }
+
+        }
+
+    }
+
+    /**
      * @param {Discord.Message|Discord.TextChannel} origmessage
      */
     async sendClosableEmbed(origmessage, embed) {

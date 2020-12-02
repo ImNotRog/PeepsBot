@@ -1,14 +1,12 @@
 
 const Discord = require("discord.js");
 
-const cron = require("node-cron");
-
-let moment = require("moment-timezone");
 const { LittleBot } = require("./LittleBot");
 const { TrackerBot } = require("./GroovyTrackerBot");
 const { TonyBot } = require("./TonyBot");
 const { CalendarBot } = require("./CalBot");
 const { ReactBot } = require("./ReactBot");
+const { NameChangerBot } = require("./NameChanger")
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -27,19 +25,22 @@ class ProcessorBot {
         this.approvedMusicServers = ["748669830244073533"]
 
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
+        this.FPERBIO = "748669830244073533";
 
         this.tonyActive = true;
         this.littleActive = true;
         this.trackerActive = true;
         this.bdayActive = true;
         this.reactActive = true;
+        this.nameChangerActive = true;
         this.helpActive = true;
 
-        this.tonyBot = new TonyBot(db,client);
-        this.littleBot = new LittleBot(auth, client);
-        this.trackerBot = new TrackerBot(auth);
-        this.calBot = new CalendarBot(auth, client);
-        this.reactBot = new ReactBot();
+        if(this.tonyActive) this.tonyBot = new TonyBot(db,client);
+        if(this.littleActive) this.littleBot = new LittleBot(auth, client);
+        if(this.trackerActive) this.trackerBot = new TrackerBot(auth);
+        if(this.bdayActive) this.calBot = new CalendarBot(auth, client);
+        if(this.reactActive) this.reactBot = new ReactBot();
+        if(this.nameChangerActive) this.nameChangerBot = new NameChangerBot(auth, client);
 
         this.client = client;
 
@@ -93,6 +94,7 @@ class ProcessorBot {
         if(this.littleActive) await this.littleBot.onConstruct();
         if(this.trackerActive) await this.trackerBot.onConstruct();
         if(this.bdayActive) await this.calBot.onConstruct();
+        if(this.nameChangerActive) await this.nameChangerBot.onConstruct();
 
     }
 
@@ -106,6 +108,9 @@ class ProcessorBot {
         if(this.approvedTonyServers.indexOf(serverid) !== -1) {
             embeds.push(this.tonyBot.helpEmbed)
             embeds.push(this.tonyBot.helpCommandsEmbed)
+        }
+        if(serverid === this.FPERBIO) {
+            embeds.push(this.nameChangerBot.helpEmbed);
         }
         embeds.push(this.helpTechnicalEmbed)
         return embeds;
@@ -131,9 +136,9 @@ class ProcessorBot {
             return;
         };
 
-        if(message.content === "!little") {
+        if(message.content.startsWith( "!little" )) {
             message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
-        } else if(message.content.includes("<@!750573267026182185>") && this.littleActive) {
+        } else if (message.content.includes("<@!750573267026182185>") && this.littleActive) {
             message.channel.send(await this.randomLittleQuote());
         }
 
@@ -185,6 +190,18 @@ class ProcessorBot {
             if (command === "up" || command === "upcoming" || command === "daily") {
                 this.tonyBot.dailyDose(message.channel);
             } 
+        }
+
+        if(this.nameChangerActive ) {
+            if(command === "rename") {
+                this.nameChangerBot.onChange(message, args);
+            }
+            if(command === "themesheet") {
+                this.nameChangerBot.sendSpreadsheets(message);
+            }
+            if(command === "themes") {
+                this.nameChangerBot.sendThemes(message);
+            }
         }
 
         if(this.helpActive) {
