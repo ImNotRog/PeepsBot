@@ -8,6 +8,7 @@ const { CalendarBot } = require("./CalBot");
 const { ReactBot } = require("./ReactBot");
 const { NameChangerBot } = require("./NameChanger")
 const { RoleManagerBot } = require("./RoleManager")
+const { ScremBot } = require("./screm");
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -28,14 +29,15 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        this.tonyActive = false;
-        this.littleActive = false;
-        this.trackerActive = false;
-        this.bdayActive = false;
-        this.reactActive = false;
-        this.nameChangerActive = false;
+        this.tonyActive = true;
+        this.littleActive = true;
+        this.trackerActive = true;
+        this.bdayActive = true;
+        this.reactActive = true;
+        this.nameChangerActive = true;
         this.roleManagerActive = true;
-        this.helpActive = false;
+        this.scremActive = true;
+        this.helpActive = true;
 
         if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
         if (this.littleActive) this.littleBot = new LittleBot(auth, client);
@@ -44,6 +46,7 @@ class ProcessorBot {
         if (this.reactActive) this.reactBot = new ReactBot();
         if (this.nameChangerActive) this.nameChangerBot = new NameChangerBot(auth, client);
         if (this.roleManagerActive) this.roleManagerBot = new RoleManagerBot(client);
+        if (this.scremActive) this.scremBot = new ScremBot();
 
         this.client = client;
 
@@ -211,6 +214,18 @@ class ProcessorBot {
         if(this.roleManagerActive) {
             if(command === "role" || command === "roles") {
                 this.roleManagerBot.onRole(message);
+            }
+        }
+
+        if(this.scremActive) {
+            if(command === "scream" || command === "screm") {
+                this.scremBot.scream(message,args);
+            }
+            if(command === "cursedscrem") {
+                this.scremBot.scream(message,args,true);
+            }
+            if(command === "void" || command === "screamintothevoid" || command === "scremintothevoid") {
+                this.scremBot.void(message);
             }
         }
 
