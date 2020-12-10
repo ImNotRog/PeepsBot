@@ -7,6 +7,7 @@ const { TonyBot } = require("./TonyBot");
 const { CalendarBot } = require("./CalBot");
 const { ReactBot } = require("./ReactBot");
 const { NameChangerBot } = require("./NameChanger")
+const { RoleManagerBot } = require("./RoleManager")
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -17,7 +18,7 @@ class ProcessorBot {
      * @param {FirebaseFirestore.Firestore} db
      * @param {Discord.Client} client
      */
-    constructor(auth,db,client) {
+    constructor(auth, db, client) {
 
         this.destroyUsers = [];
         this.prefix = "--"
@@ -27,26 +28,28 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        this.tonyActive = true;
-        this.littleActive = true;
-        this.trackerActive = true;
-        this.bdayActive = true;
-        this.reactActive = true;
-        this.nameChangerActive = true;
-        this.helpActive = true;
+        this.tonyActive = false;
+        this.littleActive = false;
+        this.trackerActive = false;
+        this.bdayActive = false;
+        this.reactActive = false;
+        this.nameChangerActive = false;
+        this.roleManagerActive = true;
+        this.helpActive = false;
 
-        if(this.tonyActive) this.tonyBot = new TonyBot(db,client);
-        if(this.littleActive) this.littleBot = new LittleBot(auth, client);
-        if(this.trackerActive) this.trackerBot = new TrackerBot(auth);
-        if(this.bdayActive) this.calBot = new CalendarBot(auth, client);
-        if(this.reactActive) this.reactBot = new ReactBot();
-        if(this.nameChangerActive) this.nameChangerBot = new NameChangerBot(auth, client);
+        if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
+        if (this.littleActive) this.littleBot = new LittleBot(auth, client);
+        if (this.trackerActive) this.trackerBot = new TrackerBot(auth);
+        if (this.bdayActive) this.calBot = new CalendarBot(auth, client);
+        if (this.reactActive) this.reactBot = new ReactBot();
+        if (this.nameChangerActive) this.nameChangerBot = new NameChangerBot(auth, client);
+        if (this.roleManagerActive) this.roleManagerBot = new RoleManagerBot(client);
 
         this.client = client;
 
         this.helpEmbed = {
             title: `Help - General`,
-            description: [ 
+            description: [
                 `This is a very long help section, much like the girthy substance of a complete TRG.`,
                 `I do a lot of things, from quotes to alerts. You can use those arrows down there to scroll around,`,
                 `which I don't think I really have to say, but the brick to human ratio is surprisingly high.`,
@@ -88,13 +91,14 @@ class ProcessorBot {
 
     }
 
-    async onConstruct(){
+    async onConstruct() {
 
-        if(this.tonyActive) await this.tonyBot.onConstruct();
-        if(this.littleActive) await this.littleBot.onConstruct();
-        if(this.trackerActive) await this.trackerBot.onConstruct();
-        if(this.bdayActive) await this.calBot.onConstruct();
-        if(this.nameChangerActive) await this.nameChangerBot.onConstruct();
+        if (this.tonyActive) await this.tonyBot.onConstruct();
+        if (this.littleActive) await this.littleBot.onConstruct();
+        if (this.trackerActive) await this.trackerBot.onConstruct();
+        if (this.bdayActive) await this.calBot.onConstruct();
+        if (this.nameChangerActive) await this.nameChangerBot.onConstruct();
+        if (this.roleManagerActive) await this.roleManagerBot.onConstruct();
 
     }
 
@@ -102,14 +106,14 @@ class ProcessorBot {
         const embeds = [];
         embeds.push(this.helpEmbed)
         embeds.push(this.littleBot.helpEmbed);
-        if(this.approvedMusicServers.indexOf(serverid) !== -1) {
+        if (this.approvedMusicServers.indexOf(serverid) !== -1) {
             embeds.push(this.trackerBot.helpEmbed)
         }
-        if(this.approvedTonyServers.indexOf(serverid) !== -1) {
+        if (this.approvedTonyServers.indexOf(serverid) !== -1) {
             embeds.push(this.tonyBot.helpEmbed)
             embeds.push(this.tonyBot.helpCommandsEmbed)
         }
-        if(serverid === this.FPERBIO) {
+        if (serverid === this.FPERBIO) {
             embeds.push(this.nameChangerBot.helpEmbed);
         }
         embeds.push(this.helpTechnicalEmbed)
@@ -122,21 +126,21 @@ class ProcessorBot {
      */
     async onMessage(message) {
 
-        for(const id of this.destroyUsers) {
-            if(message.author.id === id) {
+        for (const id of this.destroyUsers) {
+            if (message.author.id === id) {
                 message.delete();
             }
         }
 
         if (message.author.bot) {
-            if(this.trackerActive && this.approvedMusicServers.indexOf(message.guild.id) !== -1){
+            if (this.trackerActive && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
                 this.trackerBot.process(message);
             }
-            
+
             return;
         };
 
-        if(message.content.startsWith( "!little" )) {
+        if (message.content.startsWith("!little")) {
             message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
         } else if (message.content.includes("<@!750573267026182185>") && this.littleActive) {
             message.channel.send(await this.randomLittleQuote());
@@ -154,7 +158,7 @@ class ProcessorBot {
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
 
-        if(this.littleActive) {
+        if (this.littleActive) {
             if (command === "spreadsheets") {
                 await this.littleBot.sendSpreadsheets(message);
             }
@@ -167,14 +171,14 @@ class ProcessorBot {
                 message.channel.send(await this.littleBot.notRandomLittleQuote(args.join(" ")))
             }
         }
-        
-        if(this.trackerActive) {
+
+        if (this.trackerActive) {
             if (command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
                 this.trackerBot.sendSpreadsheets(message);
             }
         }
-        
-        if(this.tonyActive) {
+
+        if (this.tonyActive) {
             if (command === "complete") {
                 this.tonyBot.onComplete(message, args);
             }
@@ -189,30 +193,36 @@ class ProcessorBot {
 
             if (command === "up" || command === "upcoming" || command === "daily") {
                 this.tonyBot.dailyDose(message.channel);
-            } 
+            }
         }
 
-        if(this.nameChangerActive ) {
-            if(command === "rename") {
+        if (this.nameChangerActive) {
+            if (command === "rename") {
                 this.nameChangerBot.onChange(message, args);
             }
-            if(command === "themesheet") {
+            if (command === "themesheet") {
                 this.nameChangerBot.sendSpreadsheets(message);
             }
-            if(command === "themes") {
+            if (command === "themes") {
                 this.nameChangerBot.sendThemes(message);
             }
         }
 
-        if(this.helpActive) {
+        if(this.roleManagerActive) {
+            if(command === "role" || command === "roles") {
+                this.roleManagerBot.onRole(message);
+            }
+        }
+
+        if (this.helpActive) {
             if (command === "help") {
                 this.utils.sendCarousel(message, this.getHelpEmbeds(message.guild.id));
             }
         }
-        
-        
-        
+
+
+
     }
 }
 
-module.exports = {ProcessorBot};
+module.exports = { ProcessorBot };

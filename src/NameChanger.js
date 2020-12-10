@@ -19,7 +19,7 @@ class NameChangerBot {
 
         this.utilities = new Utilities();
         this.prefix = "--";
-        
+
         this.helpEmbed = {
             title: `Help - Themes Bot`,
             description: [
