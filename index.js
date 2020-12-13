@@ -12,12 +12,12 @@ const Discord = require("discord.js");
 
 const client = new Discord.Client();
 
-const { sheets, db, config } = require("./src/Authorize")
+const { sheets, db, config, MW } = require("./src/Authorize")
 const { ProcessorBot } = require("./src/ProcessorBot");
 
 (async () => {
     
-    let processorbot = new ProcessorBot(sheets, db, client);
+    let processorbot = new ProcessorBot(sheets, db, client, MW);
 
     await client.login(config);
     await processorbot.onConstruct();

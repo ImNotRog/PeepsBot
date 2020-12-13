@@ -9,6 +9,7 @@ const { ReactBot } = require("./ReactBot");
 const { NameChangerBot } = require("./NameChanger")
 const { RoleManagerBot } = require("./RoleManager")
 const { ScremBot } = require("./screm");
+const { SynonymBot } = require("./SynonymBot")
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -18,8 +19,9 @@ class ProcessorBot {
      * @param {google.auth.OAuth2} auth 
      * @param {FirebaseFirestore.Firestore} db
      * @param {Discord.Client} client
+     * @param {string} MW
      */
-    constructor(auth, db, client) {
+    constructor(auth, db, client, MW) {
 
         this.destroyUsers = [];
         this.prefix = "--"
@@ -37,6 +39,7 @@ class ProcessorBot {
         this.nameChangerActive = true;
         this.roleManagerActive = true;
         this.scremActive = true;
+        this.synonymActive = true;
         this.helpActive = true;
 
         if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
@@ -47,6 +50,7 @@ class ProcessorBot {
         if (this.nameChangerActive) this.nameChangerBot = new NameChangerBot(auth, client);
         if (this.roleManagerActive) this.roleManagerBot = new RoleManagerBot(client);
         if (this.scremActive) this.scremBot = new ScremBot();
+        if (this.synonymActive) this.synonymBot = new SynonymBot(MW, client);
 
         this.client = client;
 
@@ -102,6 +106,7 @@ class ProcessorBot {
         if (this.bdayActive) await this.calBot.onConstruct();
         if (this.nameChangerActive) await this.nameChangerBot.onConstruct();
         if (this.roleManagerActive) await this.roleManagerBot.onConstruct();
+        if (this.synonymActive) await this.synonymBot.onConstruct();
 
     }
 
@@ -226,6 +231,12 @@ class ProcessorBot {
             }
             if(command === "void" || command === "screamintothevoid" || command === "scremintothevoid") {
                 this.scremBot.void(message);
+            }
+        }
+
+        if(this.synonymActive) {
+            if (command === "wfbo") {
+                message.channel.send(await this.synonymBot.wfbo());
             }
         }
 

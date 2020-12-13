@@ -45,5 +45,7 @@ const db = admin.firestore();
 
 const config = process.env.BOT_TOKEN
 
-module.exports = {sheets, db, config};
+const MW = process.env.MW_api_key
+
+module.exports = {sheets, db, config, MW};
 
