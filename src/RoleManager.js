@@ -27,6 +27,11 @@ class RoleManagerBot {
         this.client.on("messageReactionRemove", (reaction, user) => {
             this.onReactRemove(reaction, user)
         })
+
+        this.fperbio = "748669830244073533";
+        this.entrancechannel = "750186607352479755";
+        this.firstmessage = "786059131806023742";
+        this.secondmessage = "786061717108293714";
     }
 
     capitalize(str) {
@@ -38,7 +43,7 @@ class RoleManagerBot {
     }
 
     async onConstruct() {
-        let server = this.client.guilds.cache.get("748669830244073533");
+        let server = this.client.guilds.cache.get(this.fperbio);
         this.server = server;
         await (server.roles.fetch());
         this.roles = server.roles.cache;
@@ -52,10 +57,9 @@ class RoleManagerBot {
         this.colorroles1 = [ ...this.colorroles ].slice(0, this.colorroles.keyArray().length - 6).map((stuff) => stuff[1]);
         this.colorroles2 = [ ...this.colorroles].slice(this.colorroles.keyArray().length - 6).map((stuff) => stuff[1]);
 
-
-        let channel = await this.client.channels.fetch("750186607352479755");
-        await channel.messages.fetch("786059131806023742");
-        await channel.messages.fetch("786061717108293714")
+        let channel = await this.client.channels.fetch(this.entrancechannel);
+        await channel.messages.fetch(this.firstmessage);
+        await channel.messages.fetch(this.secondmessage)
     }
 
     /**
@@ -65,11 +69,11 @@ class RoleManagerBot {
      */
     async onReactAdd(reaction,user) {
 
-        if (reaction.message.id === "786059131806023742") {
+        if (reaction.message.id === this.firstmessage) {
             let num = this.alpha.indexOf(reaction.emoji.name);
             let member = await this.server.members.fetch( user );
             member.roles.add(this.colorroles1[num]);
-        } else if (reaction.message.id === "786061717108293714") {
+        } else if (reaction.message.id === this.secondmessage) {
             let num = this.alpha.indexOf(reaction.emoji.name);
             let member = await this.server.members.fetch(user);
             member.roles.add(this.colorroles2[num]);
