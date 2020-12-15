@@ -1,5 +1,5 @@
 
-const { timingSafeEqual } = require("crypto");
+
 const Discord = require("discord.js");
 const { Utilities } = require("./Utilities")
 
@@ -44,14 +44,6 @@ class RoleManagerBot {
     async onConstruct() {
         let server = this.client.guilds.cache.get(this.fperbio);
         this.server = server;
-        await (server.roles.fetch());
-        this.roles = server.roles.cache;
-
-        this.roles.sort( (a,b) => b.position - a.position );
-
-        this.colorroles = this.roles.filter((role) => role.color !== 0).array();
-
-        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
 
         /**
          * @type {Discord.TextChannel}
@@ -59,9 +51,23 @@ class RoleManagerBot {
         let channel = await this.client.channels.fetch(this.entrancechannel);
 
         this.messages = [];
-        for(const messageid of this.messageids) {
+        for (const messageid of this.messageids) {
             this.messages.push(await channel.messages.fetch(messageid));
         }
+
+        await this.cacheRoles();
+    }
+
+    async cacheRoles() {
+
+        await (this.server.roles.fetch());
+        this.roles = this.server.roles.cache;
+
+        this.roles.sort((a, b) => b.position - a.position);
+
+        this.colorroles = this.roles.filter((role) => role.color !== 0).array();
+
+        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
 
         let i = 0;
 
@@ -69,12 +75,12 @@ class RoleManagerBot {
          * @type {Discord.Role[][]}
          */
         this.roledivs = [];
-        while(i < this.colorroles.length) {
+        while (i < this.colorroles.length) {
             this.roledivs.push(this.colorroles.slice(i, i + this.alpha.length));
             i += this.alpha.length;
         }
 
-        for(let i = 0; i < this.roledivs.length; i++) {
+        for (let i = 0; i < this.roledivs.length; i++) {
             let currroles = this.roledivs[i].map((role, index) => ` ${this.alpha[index]}: <@&${role.id}>`);
             let length = currroles.length;
 
@@ -187,7 +193,7 @@ class RoleManagerBot {
             return;
         };
 
-        if (num > keys.length) {
+        if (num > this.colorroles.length) {
             return;
         }
         let role = this.colorroles[num-1];
