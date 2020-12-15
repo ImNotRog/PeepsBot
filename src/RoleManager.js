@@ -31,6 +31,8 @@ class RoleManagerBot {
         this.fperbio = "748669830244073533";
         this.entrancechannel = "750186607352479755";
         this.messageids = ["786059131806023742","786061717108293714"];
+
+        this.numvotes = 3;
     }
 
     capitalize(str) {
@@ -91,12 +93,139 @@ class RoleManagerBot {
             this.messages[i].edit({
                 embed: {
                     title: `React for Roles`,
-                    color: 111111,
+                    color: '#fffffe',
                     fields: parts
                 }
             })
         }
 
+    }
+    
+    /**
+     * 
+     * @param {Discord.Message} message 
+     * @param {string[]} args 
+     */
+    async addRole(message,args) {
+        if(args.length >= 2) {
+
+            let rolemanager = this.server.roles;
+
+            let accepted = `abcdef0123456789`;
+            if( args[1].startsWith("#") && [...args[1].slice(1)].every((char) => accepted.includes(char))) {
+
+                let created = await this.utilities.sendEmoteCollector(message, (bool) => {
+                    return {
+                        title: `Create${bool ? 'd' : ''} Role ${args[0]}`,
+                        description: `Vote down below. You need net 3 votes to create this role.`,
+                        color: args[1]
+                    }
+                },this.numvotes,60*1000*2)
+
+                if(created) {
+                    //valid color
+                    await rolemanager.create({
+                        data: {
+                            name: args[0],
+                            color: args[1],
+                            position: this.colorroles[this.colorroles.length - 1].position
+                        }
+                    })
+
+                    await this.cacheRoles();
+                }
+            }
+        }
+    }
+
+    async deleteRole(message,args) {
+        if (args.length >= 1) { 
+
+            let name = args[0];
+            let todelete = false;
+            for(const role of this.colorroles) {
+                if( role.name === name ) {
+                    todelete = role;
+                }
+            }
+
+            if(todelete instanceof Discord.Role) {
+                let deleted = await this.utilities.sendEmoteCollector(message, (bool) => {
+                    return {
+                        title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
+                        description: `Vote down below. You need net 3 votes to delete this role.`,
+                        color: todelete.color
+                    }
+                }, this.numvotes, 60 * 1000 * 2)
+
+                if(deleted) {
+                    await todelete.delete();
+
+                    await this.cacheRoles();
+                }
+
+            }
+        }
+    }
+
+    async editRole(message,args) {
+        if (args.length >= 3) {
+
+
+            let name = args[0];
+            let toedit = false;
+            for (const role of this.colorroles) {
+                if (role.name === name) {
+                    toedit = role;
+                }
+            }
+
+            if (toedit instanceof Discord.Role) {
+
+
+                if (args[1] === "color") {
+
+                    let accepted = `abcdef0123456789`;
+                    if (args[2].startsWith("#") && [...args[2].slice(1)].every((char) => accepted.includes(char))) {
+
+                        let edited = await this.utilities.sendEmoteCollector(message, (bool) => {
+                            return {
+                                title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s Color to ${args[2]}`,
+                                description: `Vote down below. You need net 3 votes to edit this role.`,
+                                color: args[2]
+                            }
+                        }, this.numvotes, 60 * 1000 * 2)
+
+                        if (edited) {
+                            await toedit.edit({
+                                color: args[2]
+                            })
+
+                            await this.cacheRoles();
+                        }
+
+                    }
+                } else if(args[1] === "name") {
+
+                    let edited = await this.utilities.sendEmoteCollector(message, (bool) => {
+                        return {
+                            title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s name to ${args[2]}`,
+                            description: `Vote down below. You need net 3 votes to edit this role.`,
+                            color: toedit.color
+                        }
+                    }, this.numvotes, 60 * 1000 * 2)
+
+                    if (edited) {
+                        await toedit.edit({
+                            name: args[2]
+                        });
+
+                        await this.cacheRoles();
+                    }
+                }
+
+            }
+        }
     }
 
     /**

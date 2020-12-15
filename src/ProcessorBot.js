@@ -236,6 +236,18 @@ class ProcessorBot {
             if(command === "role" || command === "roles") {
                 this.roleManagerBot.onRole(message);
             }
+            if(command === "addrole") {
+                this.roleManagerBot.addRole(message, args);
+            }
+            if(command === "deleterole") {
+                this.roleManagerBot.deleteRole(message, args);
+            }
+            if (command === "editrole") {
+                this.roleManagerBot.editRole(message, args);
+            }
+            if(command === "recacheroles") {
+                this.roleManagerBot.cacheRoles();
+            }
         }
 
         if(this.scremActive) {
