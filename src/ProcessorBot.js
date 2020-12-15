@@ -10,6 +10,7 @@ const { NameChangerBot } = require("./NameChanger")
 const { RoleManagerBot } = require("./RoleManager")
 const { ScremBot } = require("./screm");
 const { SynonymBot } = require("./SynonymBot")
+const { CountdownBot } = require("./CountdownBot")
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -31,16 +32,28 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        this.tonyActive = true;
-        this.littleActive = true;
-        this.trackerActive = true;
-        this.bdayActive = true;
-        this.reactActive = true;
-        this.nameChangerActive = true;
-        this.roleManagerActive = true;
-        this.scremActive = true;
-        this.synonymActive = true;
-        this.helpActive = true;
+        // this.tonyActive = true;
+        // this.littleActive = true;
+        // this.trackerActive = true;
+        // this.bdayActive = true;
+        // this.reactActive = true;
+        // this.nameChangerActive = true;
+        // this.roleManagerActive = true;
+        // this.scremActive = true;
+        // this.synonymActive = true;
+        // this.helpActive = true;
+
+        this.tonyActive = false;
+        this.littleActive = false;
+        this.trackerActive = false;
+        this.bdayActive = false;
+        this.reactActive = false;
+        this.nameChangerActive = false;
+        this.roleManagerActive = false;
+        this.scremActive = false;
+        this.synonymActive = false;
+        this.countdownActive = true;
+        this.helpActive = false;
 
         if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
         if (this.littleActive) this.littleBot = new LittleBot(auth, client);
@@ -51,6 +64,7 @@ class ProcessorBot {
         if (this.roleManagerActive) this.roleManagerBot = new RoleManagerBot(client);
         if (this.scremActive) this.scremBot = new ScremBot();
         if (this.synonymActive) this.synonymBot = new SynonymBot(MW, client);
+        if (this.countdownActive) this.countdownBot = new CountdownBot(client);
 
         this.client = client;
 
@@ -107,6 +121,7 @@ class ProcessorBot {
         if (this.nameChangerActive) await this.nameChangerBot.onConstruct();
         if (this.roleManagerActive) await this.roleManagerBot.onConstruct();
         if (this.synonymActive) await this.synonymBot.onConstruct();
+        if (this.countdownActive) await this.countdownBot.onConstruct();
 
     }
 

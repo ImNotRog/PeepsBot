@@ -28,6 +28,9 @@ class SynonymBot {
 
         cron.schedule("0 7 * * *", () => {
             this.goodmorningall();
+        }, 
+        {
+            timezone: `America/Los_Angeles`
         });
         
     }
