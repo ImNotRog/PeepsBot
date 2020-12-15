@@ -55,6 +55,7 @@ class ProcessorBot {
         // this.synonymActive = false;
         // this.countdownActive = false;
         // this.helpActive = false;
+        
 
         if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
         if (this.littleActive) this.littleBot = new LittleBot(auth, client);
