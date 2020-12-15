@@ -32,29 +32,29 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        // this.tonyActive = true;
-        // this.littleActive = true;
-        // this.trackerActive = true;
-        // this.bdayActive = true;
-        // this.reactActive = true;
-        // this.nameChangerActive = true;
-        // this.roleManagerActive = true;
-        // this.scremActive = true;
-        // this.synonymActive = true;
-        // this.countdownActive = true;
-        // this.helpActive = true;
-
-        this.tonyActive = false;
-        this.littleActive = false;
-        this.trackerActive = false;
-        this.bdayActive = false;
-        this.reactActive = false;
-        this.nameChangerActive = false;
+        this.tonyActive = true;
+        this.littleActive = true;
+        this.trackerActive = true;
+        this.bdayActive = true;
+        this.reactActive = true;
+        this.nameChangerActive = true;
         this.roleManagerActive = true;
-        this.scremActive = false;
-        this.synonymActive = false;
-        this.countdownActive = false;
-        this.helpActive = false;
+        this.scremActive = true;
+        this.synonymActive = true;
+        this.countdownActive = true;
+        this.helpActive = true;
+
+        // this.tonyActive = false;
+        // this.littleActive = false;
+        // this.trackerActive = false;
+        // this.bdayActive = false;
+        // this.reactActive = false;
+        // this.nameChangerActive = false;
+        // this.roleManagerActive = false;
+        // this.scremActive = false;
+        // this.synonymActive = false;
+        // this.countdownActive = false;
+        // this.helpActive = false;
 
         if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
         if (this.littleActive) this.littleBot = new LittleBot(auth, client);
@@ -139,6 +139,9 @@ class ProcessorBot {
         }
         if (serverid === this.FPERBIO) {
             embeds.push(this.nameChangerBot.helpEmbed);
+        }
+        if(serverid === this.FPERBIO) {
+            embeds.push(this.roleManagerBot.helpEmbed);
         }
         embeds.push(this.helpTechnicalEmbed)
         return embeds;
