@@ -38,7 +38,7 @@ class ProcessorBot {
         this.bdayActive = true;
         this.reactActive = true;
         this.nameChangerActive = true;
-        this.roleManagerActive = true;
+        this.roleManagerActive = false;
         this.scremActive = true;
         this.synonymActive = true;
         this.countdownActive = true;
