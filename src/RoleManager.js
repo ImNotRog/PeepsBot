@@ -30,8 +30,7 @@ class RoleManagerBot {
 
         this.fperbio = "748669830244073533";
         this.entrancechannel = "750186607352479755";
-        this.firstmessage = "786059131806023742";
-        this.secondmessage = "786061717108293714";
+        this.messageids = ["786059131806023742","786061717108293714"];
     }
 
     capitalize(str) {
@@ -50,16 +49,48 @@ class RoleManagerBot {
 
         this.roles.sort( (a,b) => b.position - a.position );
 
-        this.colorroles = this.roles.filter((role) => role.color !== 0);
+        this.colorroles = this.roles.filter((role) => role.color !== 0).array();
 
         this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
 
-        this.colorroles1 = [ ...this.colorroles ].slice(0, this.colorroles.keyArray().length - 6).map((stuff) => stuff[1]);
-        this.colorroles2 = [ ...this.colorroles].slice(this.colorroles.keyArray().length - 6).map((stuff) => stuff[1]);
-
+        /**
+         * @type {Discord.TextChannel}
+         */
         let channel = await this.client.channels.fetch(this.entrancechannel);
-        await channel.messages.fetch(this.firstmessage);
-        await channel.messages.fetch(this.secondmessage)
+
+        this.messages = [];
+        for(const messageid of this.messageids) {
+            this.messages.push(await channel.messages.fetch(messageid));
+        }
+
+        let i = 0;
+
+        /**
+         * @type {Discord.Role[][]}
+         */
+        this.roledivs = [];
+        while(i < this.colorroles.length) {
+            this.roledivs.push(this.colorroles.slice(i, i + this.alpha.length));
+            i += this.alpha.length;
+        }
+
+        for(let i = 0; i < this.roledivs.length; i++) {
+            let currroles = this.roledivs[i].map((role, index) => ` ${this.alpha[index]}: <@&${role.id}>`);
+            let length = currroles.length;
+
+            let cols = 3;
+            let parts = Array(cols).fill(0).map((zero, index) => currroles.slice(index * length / cols, (index + 1) * length / cols));
+
+            parts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.join("\n") } });
+            this.messages[i].edit({
+                embed: {
+                    title: `React for Roles`,
+                    color: 111111,
+                    fields: parts
+                }
+            })
+        }
+
     }
 
     /**
@@ -69,14 +100,13 @@ class RoleManagerBot {
      */
     async onReactAdd(reaction,user) {
 
-        if (reaction.message.id === this.firstmessage) {
-            let num = this.alpha.indexOf(reaction.emoji.name);
-            let member = await this.server.members.fetch( user );
-            member.roles.add(this.colorroles1[num]);
-        } else if (reaction.message.id === this.secondmessage) {
-            let num = this.alpha.indexOf(reaction.emoji.name);
-            let member = await this.server.members.fetch(user);
-            member.roles.add(this.colorroles2[num]);
+        for(let i = 0; i < this.messageids.length; i++) {
+            let messageid = this.messageids[i];
+            if(reaction.message.id === messageid) {
+                let num = this.alpha.indexOf(reaction.emoji.name);
+                let member = await this.server.members.fetch(user);
+                member.roles.add(this.roledivs[i][num]);
+            }
         }
 
     }
@@ -88,14 +118,13 @@ class RoleManagerBot {
      */
     async onReactRemove(reaction, user) {
 
-        if (reaction.message.id === "786059131806023742") {
-            let num = this.alpha.indexOf(reaction.emoji.name);
-            let member = await this.server.members.fetch(user);
-            member.roles.remove(this.colorroles1[num]);
-        } else if (reaction.message.id === "786061717108293714") {
-            let num = this.alpha.indexOf(reaction.emoji.name);
-            let member = await this.server.members.fetch(user);
-            member.roles.remove(this.colorroles2[num]);
+        for (let i = 0; i < this.messageids.length; i++) {
+            let messageid = this.messageids[i];
+            if (reaction.message.id === messageid) {
+                let num = this.alpha.indexOf(reaction.emoji.name);
+                let member = await this.server.members.fetch(user);
+                member.roles.remove(this.roledivs[i][num]);
+            }
         }
 
     }
@@ -110,14 +139,12 @@ class RoleManagerBot {
 
         let roleval = "";
         let counter = 0;
-        let keys = [];
-        for(const key of this.colorroles.keys()) {
-            keys.push(key);
-            let role = this.colorroles.get(key);
+        for(const role of this.colorroles) {
             counter++;
             roleval += `${counter}: <@&${role.id}>\n`;
         }
-        let sent = await message.channel.send( {
+
+        await message.channel.send( {
             embed: {
                 title: `Roles`,
                 description: 
@@ -144,8 +171,6 @@ class RoleManagerBot {
      */
     async onMessage(msg) {
 
-        let keys = this.colorroles.keyArray();
-
         let content = msg.content;
         let member = msg.member;
 
@@ -165,7 +190,7 @@ class RoleManagerBot {
         if (num > keys.length) {
             return;
         }
-        let role = this.colorroles.get(keys[num - 1]);
+        let role = this.colorroles[num-1];
 
         if (content.startsWith("+")) {
             member.roles.add(role);
