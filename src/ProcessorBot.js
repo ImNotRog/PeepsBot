@@ -270,6 +270,9 @@ class ProcessorBot {
             if (command === "wfbo") {
                 message.channel.send(await this.synonymBot.wfbo());
             }
+            if (command === "bread") {
+                message.channel.send(await this.synonymBot.goodmorning());
+            }
         }
 
         if (this.helpActive) {
