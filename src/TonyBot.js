@@ -44,11 +44,11 @@ class TonyBot extends TonyBotAccountant {
         this.BP = new BioParser();
         this.client = client;
 
-        this.dailyChannels = ["748669830244073536", "778845866786160651"];
-        // this.dailyChannels = ["750804960333135914"] // Redirect
+        // this.dailyChannels = ["748669830244073536", "778845866786160651"];
+        this.dailyChannels = ["750804960333135914"] // Redirect
 
-        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
-        // this.updateChannels = ["750804960333135914"] // Redirect
+        // this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
+        this.updateChannels = ["750804960333135914"] // Redirect
 
         this.interval = 150000;
 
