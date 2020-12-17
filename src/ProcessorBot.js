@@ -134,7 +134,7 @@ class ProcessorBot {
         if (this.approvedMusicServers.indexOf(serverid) !== -1) {
             embeds.push(this.trackerBot.helpEmbed)
         }
-        if (this.approvedTonyServers.indexOf(serverid) !== -1) {
+        if (this.tonyActive && this.approvedTonyServers.indexOf(serverid) !== -1) {
             embeds.push(this.tonyBot.helpEmbed)
             embeds.push(this.tonyBot.helpCommandsEmbed)
         }
