@@ -59,8 +59,7 @@ class CalendarBot {
         let embed = {
             title: `Reminder: It is ${person}'s birthday! 🎉`,
             description: [`Death comes for us all, but hey, at least there's instant ramen.`,
-                `Today, ${person} is ${age} years old, which may or may not qualify ${person} for senior benefits.`,
-                `School's out, so you better go spam this person in chat or something.`].join(`\n`),
+                `Today, ${person} is ${age} years old, so you better go spam this person in chat or something.`].join(`\n`),
             ...this.utils.basicEmbedInfoForCal()
         }
 
