@@ -342,7 +342,7 @@ class Utilities {
             },
             {
                 name: "Description",
-                value: trg.DESCRIPTION
+                value: trg.DESCRIPTION.slice(0,1000)
             },
             ...docfield,
             {

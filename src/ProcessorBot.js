@@ -32,7 +32,7 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        this.tonyActive = false;
+        this.tonyActive = true;
         this.littleActive = true;
         this.trackerActive = true;
         this.bdayActive = true;

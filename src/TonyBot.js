@@ -44,11 +44,11 @@ class TonyBot extends TonyBotAccountant {
         this.BP = new BioParser();
         this.client = client;
 
-        // this.dailyChannels = ["748669830244073536", "778845866786160651"];
-        this.dailyChannels = ["750804960333135914"] // Redirect
+        this.dailyChannels = ["748669830244073536", "778845866786160651"];
+        // this.dailyChannels = ["750804960333135914"] // Redirect
 
-        // this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
-        this.updateChannels = ["750804960333135914"] // Redirect
+        this.updateChannels = ["748669830244073536", "750186902879076433", "744415364376559746", "778845866786160651"]; // Actual
+        // this.updateChannels = ["750804960333135914"] // Redirect
 
         this.interval = 150000;
 
@@ -210,8 +210,8 @@ class TonyBot extends TonyBotAccountant {
             }
             if (!this.TRGExists(unit, num)) {
                 updateembeds.push({
-                    title: `***ALERT:*** **TRG ${unit}-${num}: ${trgs.get(key).TITLE}** POSTED`,
-                    description: `**TRG ${unit}-${num}: ${trgs.get(key).TITLE}** was just posted. ${hahabrr[Math.floor(Math.random() * hahabrr.length)]}`,
+                    title: `***ALERT:*** **TRG ${unit}-${num}** POSTED`,
+                    description: `**TRG ${unit}-${num}** was just posted. ${hahabrr[Math.floor(Math.random() * hahabrr.length)]}`,
                     fields: this.TRGtoFields(trgs.get(key)),
                     ...this.basicEmbedInfo()
                 })
@@ -684,8 +684,8 @@ class TonyBot extends TonyBotAccountant {
             // Send it!
             this.sendClosableEmbed(message, {
                 fields,
-                title: `TRG ${unit}-${num}: ${trg.TITLE} Status`,
-                description: `Your TRG ${unit}-${num}: ${trg.TITLE} status, as listed in the database.`,
+                title: `TRG ${unit}-${num} Status`,
+                description: `Your TRG ${unit}-${num} status, as listed in the database.`,
                 ...this.embedInfo(message)
             })
         } else if (args[0].toLowerCase() === "checkpoint") {
