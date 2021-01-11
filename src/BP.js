@@ -61,13 +61,13 @@ class BioParser extends SchoologyAccessor {
         let stuff = await this.get("/sections/2772305484/assignments?limit=1000")
         let data = await stuff.json();
 
-        // let otherstuff = await this.get("/users/2016549/grades?section_id=2772297053");
-        // let grades = await otherstuff.json();
-        // let categories = new Map();
+        let otherstuff = await this.get("/users/2016549/grades?section_id=2772297053");
+        let grades = await otherstuff.json();
+        let categories = new Map();
 
-        // for (const cat of grades.section[0].grading_category) {
-        //     categories.set("" + cat.id, cat.title);
-        // }
+        for (const cat of grades.section[0].grading_category) {
+            categories.set("" + cat.id, cat.title);
+        }
 
         let TRGMap = new Map();
         let CheckpointMap = new Map();
@@ -129,7 +129,7 @@ class BioParser extends SchoologyAccessor {
                             DUE: due,
                             SUBMITURL: web_url,
                             ID: id,
-                            // CATEGORY: categories.get(grading_category),
+                            CATEGORY: categories.get(grading_category),
                             SUMMATIVE: true,
                             UNIT: unit,
                             NUM: num,
@@ -151,7 +151,7 @@ class BioParser extends SchoologyAccessor {
                         GRADED: false,
                         DUE: due,
                         ID: id,
-                        // CATEGORY: categories.get(grading_category),
+                        CATEGORY: categories.get(grading_category),
                         SUMMATIVE: true,
                         POINTS: parseInt(max_points),
                         UNIT: unit,
@@ -167,31 +167,31 @@ class BioParser extends SchoologyAccessor {
                     DUE: due,
                     NODATE: due === "",
                     ID: id,
-                    // CATEGORY: categories.get(grading_category) || "Unknown",
+                    CATEGORY: categories.get(grading_category) || "Unknown",
                     POINTS: parseInt(max_points),
                     GRADED: false,
-                    // SUMMATIVE: (categories.get(grading_category) && categories.get(grading_category).toLowerCase().indexOf("non") === -1) || false
+                    SUMMATIVE: (categories.get(grading_category) && categories.get(grading_category).toLowerCase().indexOf("non") === -1) || false
                 })
 
             }
 
         }
 
-        // for (const entry of grades.section[0].period[0].assignment) {
-        //     for (const key of TRGMap.keys()) {
-        //         if (TRGMap.get(key).ID === entry.assignment_id) {
-        //             TRGMap.get(key).GRADED = true;
-        //         }
-        //     }
-        //     for (const key of CheckpointMap.keys()) {
-        //         if (CheckpointMap.get(key).ID === entry.assignment_id) {
-        //             CheckpointMap.get(key).GRADED = true;
-        //         }
-        //     }
-        //     if (AssignmentMap.has(entry.assignment_id)) {
-        //         AssignmentMap.get(entry.assignment_id).GRADED = true;
-        //     }
-        // }
+        for (const entry of [...grades.section[0].period[0].assignment, ...grades.section[0].period[1].assignment]) {
+            for (const key of TRGMap.keys()) {
+                if (TRGMap.get(key).ID === entry.assignment_id) {
+                    TRGMap.get(key).GRADED = true;
+                }
+            }
+            for (const key of CheckpointMap.keys()) {
+                if (CheckpointMap.get(key).ID === entry.assignment_id) {
+                    CheckpointMap.get(key).GRADED = true;
+                }
+            }
+            if (AssignmentMap.has(entry.assignment_id)) {
+                AssignmentMap.get(entry.assignment_id).GRADED = true;
+            }
+        }
 
         const docs = (await (await this.get("/sections/2772305484/documents?limit=100")).json()).document;
         for (const doc of docs) {
