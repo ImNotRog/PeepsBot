@@ -1,32 +1,32 @@
-const { google } = require('googleapis');
+import { google, GoogleApis, sheets_v4 } from 'googleapis';
 
-class SheetsUser {
-    /**
-     * 
-     * @param {google.auth.OAuth2} auth 
-     * @param {Map<string,string>} sheetIdMap 
-     */
-    constructor(auth, sheetIdMap) {
-        this.sheets = google.sheets({version: 'v4', auth});
+export class SheetsUser {
+
+    private sheets: sheets_v4.Sheets;
+    private setup: boolean;
+    private readonly alphabet: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private map: Map<string, { id: string, sheets: Map<string, string> }>;
+
+    constructor(auth, sheetIdMap: Map<string, string>) {
+        this.sheets = google.sheets({ version: 'v4', auth });
         this.map = new Map();
-        for(const key of sheetIdMap.keys()) {
+        for (const key of sheetIdMap.keys()) {
             this.map.set(key, {
                 id: sheetIdMap.get(key),
-                sheets: ""
+                sheets: new Map()
             })
         }
         this.setup = false;
-        this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     }
 
     async SetUpSheets() {
-        for(const key of this.map.keys()) {
+        for (const key of this.map.keys()) {
 
             console.log(`Setting up ${key}`);
             let info = await this.getSpreadsheetInfo(key);
             let newmap = new Map();
 
-            for(const sheet of info.data.sheets){
+            for (const sheet of info.data.sheets) {
                 newmap.set(sheet.properties.title, sheet.properties.sheetId);
             }
 
@@ -34,37 +34,37 @@ class SheetsUser {
         }
     }
 
-    async SetUpSheet(name) {
+    async SetUpSheet(name: string) {
         let info = await this.getSpreadsheetInfo(name);
         let newmap = new Map();
 
-        for(const sheet of info.data.sheets){
+        for (const sheet of info.data.sheets) {
             newmap.set(sheet.properties.title, sheet.properties.sheetId);
         }
 
         this.map.get(name).sheets = newmap;
     }
 
-    handleSheetId(param) {
+    handleSheetId(param: string) {
         return (this.map.has(param) ? this.map.get(param).id : param);
     }
 
-    async getSubsheets(name) {
+    async getSubsheets(name: string) {
         return [...this.map.get(name).sheets.keys()];
     }
 
-    async add(sheetname,subsheetname,row) {
+    async add(sheetname: string, subsheetname: string, row: (string | number)[]) {
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
         let requests = [];
 
         let mappedrow = row.map((x) => {
-            if(typeof x === "string") {
+            if (typeof x === "string") {
                 return {
                     userEnteredValue: {
                         stringValue: x
                     }
                 }
-            } else if(typeof x === "number") {
+            } else if (typeof x === "number") {
                 return {
                     userEnteredValue: {
                         numberValue: x
@@ -77,7 +77,7 @@ class SheetsUser {
             appendCells: {
                 "sheetId": subsheetid,
                 "rows": [
-                    { 
+                    {
                         values: mappedrow
                     }
                 ],
@@ -88,20 +88,20 @@ class SheetsUser {
         await this.executeRequest(sheetname, requests);
     }
 
-    async bulkAdd(sheetname, subsheetname, rows) {
+    async bulkAdd(sheetname: string, subsheetname: string, rows: (string | number)[][]) {
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
         let requests = [];
 
         let mappedrows = rows.map((y) => {
             return {
                 values: y.map((x) => {
-                    if(typeof x === "string") {
+                    if (typeof x === "string") {
                         return {
                             userEnteredValue: {
                                 stringValue: x
                             }
                         }
-                    } else if(typeof x === "number") {
+                    } else if (typeof x === "number") {
                         return {
                             userEnteredValue: {
                                 numberValue: x
@@ -111,7 +111,7 @@ class SheetsUser {
                 })
             }
         })
-        
+
 
         requests.push({
             appendCells: {
@@ -124,17 +124,17 @@ class SheetsUser {
         await this.executeRequest(sheetname, requests);
     }
 
-    async updateRow(sheetname, subsheetname, row, num) {
+    async updateRow(sheetname: string, subsheetname: string, row: (string | number)[], num: number) {
         let requests = [];
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
         let mappedrow = row.map((x) => {
-            if(typeof x === "string") {
+            if (typeof x === "string") {
                 return {
                     userEnteredValue: {
                         stringValue: x
                     }
                 }
-            } else if(typeof x === "number") {
+            } else if (typeof x === "number") {
                 return {
                     userEnteredValue: {
                         numberValue: x
@@ -145,12 +145,12 @@ class SheetsUser {
 
         requests.push({
             updateCells: {
-                rows: [{values: mappedrow }],
+                rows: [{ values: mappedrow }],
                 fields: "*",
                 range: {
                     "sheetId": subsheetid,
                     "startRowIndex": num,
-                    "endRowIndex": num+1,
+                    "endRowIndex": num + 1,
                     "startColumnIndex": 0,
                     "endColumnIndex": row.length
                 },
@@ -160,29 +160,23 @@ class SheetsUser {
         await this.executeRequest(sheetname, requests);
     }
 
-    /**
-     * 
-     * @param {string} sheetname 
-     * @param {string} subsheetname 
-     * @param {{row: string[], num: number}[]} data 
-     */
-    async bulkUpdateRows(sheetname, subsheetname, data) {
+    async bulkUpdateRows(sheetname: string, subsheetname: string, data: { row: string[], num: number }[]) {
         let requests = [];
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
 
-        for(const obj of data){
+        for (const obj of data) {
 
             let row = obj.row;
             let num = obj.num;
 
             let mappedrow = row.map((x) => {
-                if(typeof x === "string") {
+                if (typeof x === "string") {
                     return {
                         userEnteredValue: {
                             stringValue: x
                         }
                     }
-                } else if(typeof x === "number") {
+                } else if (typeof x === "number") {
                     return {
                         userEnteredValue: {
                             numberValue: x
@@ -193,32 +187,33 @@ class SheetsUser {
 
             requests.push({
                 updateCells: {
-                    rows: [{values: mappedrow }],
+                    rows: [{ values: mappedrow }],
                     fields: "*",
                     range: {
                         "sheetId": subsheetid,
                         "startRowIndex": num,
-                        "endRowIndex": num+1,
+                        "endRowIndex": num + 1,
                         "startColumnIndex": 0,
                         "endColumnIndex": row.length
                     },
                 }
             })
 
-        }       
-        
+        }
+
         await this.executeRequest(sheetname, requests);
     }
 
-    newRow(oldrow,newrow,rowcheck) {
-        for(let i = 0; i < rowcheck.length; i++) {
-            if(rowcheck[i] === true) { // It matters!
+    newRow(oldrow: string[], newrow: string[], rowcheck: (string | boolean | ((a: string, b: string) => string))[]) {
+        for (let i = 0; i < rowcheck.length; i++) {
+            if (rowcheck[i] === true) { // It matters!
                 // Don't change anything
-            } else if(rowcheck[i] === "KEEP") {
+            } else if (rowcheck[i] === "KEEP") {
                 // Don't change anything
-            } else if(rowcheck[i] === "CHANGE") {
+            } else if (rowcheck[i] === "CHANGE") {
                 oldrow[i] = newrow[i];
-            } else if(typeof rowcheck[i] === "function") {
+            } else if (typeof rowcheck[i] === "function") {
+                // @ts-ignore
                 oldrow[i] = rowcheck[i](oldrow[i], newrow[i]);
             }
         }
@@ -229,24 +224,24 @@ class SheetsUser {
         let rows = await this.readSheet(sheetname, subsheetname);
 
         let duplicate = false;
-        for(let i = 1; i < rows.length; i++) {
+        for (let i = 1; i < rows.length; i++) {
             let currrow = rows[i];
             let currisduplicate = true;
-            for(let j = 0; j < check.length; j++) {
-                if(check[j] === true) {
-                    if(currrow[j] !== row[j]) {
+            for (let j = 0; j < check.length; j++) {
+                if (check[j] === true) {
+                    if (currrow[j] !== row[j]) {
                         currisduplicate = false;
                     }
                 }
             }
-            if(currisduplicate) {
+            if (currisduplicate) {
                 duplicate = true;
-                await this.updateRow(sheetname, subsheetname, this.newRow(currrow.slice(0,row.length),row,check), i);
+                await this.updateRow(sheetname, subsheetname, this.newRow(currrow.slice(0, row.length), row, check), i);
             }
         }
 
-        if(!duplicate) {
-            await this.add(sheetname,subsheetname,row);
+        if (!duplicate) {
+            await this.add(sheetname, subsheetname, row);
         }
     }
 
@@ -255,53 +250,53 @@ class SheetsUser {
         let rows = await this.readSheet(sheetname, subsheetname);
         let newrows = [];
 
-        for(const row of addrows) {
+        for (const row of addrows) {
             let duplicate = false;
-            for(let i = 1; i < rows.length+newrows.length; i++) {
+            for (let i = 1; i < rows.length + newrows.length; i++) {
 
                 let currrow;
 
-                if(i >= rows.length) currrow = newrows[i - rows.length];
+                if (i >= rows.length) currrow = newrows[i - rows.length];
                 else currrow = rows[i];
 
-                if(changes.has(i)) currrow = changes.get(i);
+                if (changes.has(i)) currrow = changes.get(i);
                 let currisduplicate = true;
-                for(let j = 0; j < check.length; j++) {
-                    if(check[j] === true) {
-                        if(currrow[j] !== row[j]) {
+                for (let j = 0; j < check.length; j++) {
+                    if (check[j] === true) {
+                        if (currrow[j] !== row[j]) {
                             currisduplicate = false;
                         }
                     }
                 }
-                if(currisduplicate) {
+                if (currisduplicate) {
 
                     duplicate = true;
-                    if(i < rows.length) {
-                        changes.set(i, this.newRow(currrow.slice(0,row.length), row, check));
+                    if (i < rows.length) {
+                        changes.set(i, this.newRow(currrow.slice(0, row.length), row, check));
                     } else {
-                        newrows[i - rows.length] = this.newRow(currrow.slice(0,row.length), row, check);
+                        newrows[i - rows.length] = this.newRow(currrow.slice(0, row.length), row, check);
                     }
-                    
+
                 }
             }
-            if(!duplicate) {
+            if (!duplicate) {
                 newrows.push(row);
             }
         }
 
         await this.bulkAdd(sheetname, subsheetname, newrows);
-        for(const key of changes.keys()){
+        for (const key of changes.keys()) {
             await this.updateRow(sheetname, subsheetname, changes.get(key), key);
         }
 
     }
 
-    async getSpreadsheetInfo(name) {
+    async getSpreadsheetInfo(name: string) {
         name = this.handleSheetId(name);
         return await this.sheets.spreadsheets.get({ spreadsheetId: name });
     }
 
-    async readSheet(sheetname,subsheetname,range) {
+    async readSheet(sheetname: string, subsheetname: string, range?: string) {
         let info = this.map.get(sheetname);
         let res = await this.sheets.spreadsheets.values.get({
             spreadsheetId: info.id,
@@ -310,7 +305,7 @@ class SheetsUser {
         return res.data.values;
     }
 
-    async createSubsheet(sheetname,subsheetname,format) {
+    async createSubsheet(sheetname: string, subsheetname: string, format: { tabColor?: string, columnResize: (number | string)[], headers: string[] }) {
         let requests = [];
 
         requests.push({
@@ -324,15 +319,15 @@ class SheetsUser {
 
         await this.executeRequest(sheetname, requests);
         await this.SetUpSheet(sheetname);
-        await this.formatSubsheet(sheetname,subsheetname,format);
+        await this.formatSubsheet(sheetname, subsheetname, format);
     }
 
-    async formatSubsheet(sheetname,subsheetname,format) {
+    async formatSubsheet(sheetname: string, subsheetname: string, format?: { columnResize: (number | string)[], headers: string[] }) {
         let requests = [];
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
-        
-        if(format.columnResize) {
-            for(let i = 0; i < format.columnResize.length; i++) {
+
+        if (format.columnResize) {
+            for (let i = 0; i < format.columnResize.length; i++) {
                 requests.push({
                     "updateDimensionProperties": {
                         "range": {
@@ -348,17 +343,18 @@ class SheetsUser {
                     }
                 })
             }
-            
+
         }
 
-        
-        if(format.headers) {
+
+        if (format.headers) {
             let headermap = format.headers.map((x) => {
-            return {
-                userEnteredValue: {
-                    stringValue: x
+                return {
+                    userEnteredValue: {
+                        stringValue: x
+                    }
                 }
-            }});
+            });
 
             requests.push({
                 updateCells: {
@@ -393,7 +389,7 @@ class SheetsUser {
                     "fields": "userEnteredFormat(textFormat,horizontalAlignment)"
                 }
             });
-            requests.push( {
+            requests.push({
                 update_sheet_properties: {
                     properties: {
                         sheet_id: subsheetid,
@@ -405,18 +401,17 @@ class SheetsUser {
                 }
             })
         }
-        
+
         this.executeRequest(sheetname, requests);
-        
+
     }
 
-    async executeRequest(sheetname,requests) {
-        if(requests.length === 0) return;
+    async executeRequest(sheetname:string, requests: any[]) {
+        if (requests.length === 0) return;
+        // @ts-ignore
         await this.sheets.spreadsheets.batchUpdate({
             spreadsheetId: this.map.get(sheetname).id,
             resource: { requests },
         });
     }
 }
-
-module.exports = {SheetsUser};

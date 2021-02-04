@@ -1,9 +1,16 @@
-const crypto = require('crypto')
-const OAuth = require("oauth-1.0a")
-const fetch = require('node-fetch')
+import crypto = require('crypto');
+import OAuth = require("oauth-1.0a");
+import nodefetch = require('node-fetch');
+
+import * as dotenv from "dotenv";
+dotenv.config();
+
 class SchoologyAccessor {
+
+    private readonly base: string = 'https://api.schoology.com/v1';
+    private token: { key:string, secret:string };
+
     constructor(){
-        this.base = 'https://api.schoology.com/v1'
         this.token = { key: process.env.schoology_key, secret: process.env.schoology_secret }
     }
 
@@ -18,20 +25,22 @@ class SchoologyAccessor {
                 .digest('base64')
         }
 
+        // @ts-ignore
         const oauth = OAuth({
             consumer: this.token,
             signature_method: 'HMAC-SHA1',
             hash_function: hash_function_sha1,
         })
 
-        return await fetch(url,
+        // @ts-ignore
+        return await nodefetch(url,
         {
             method,
             headers: oauth.toHeader(oauth.authorize({url, method})),
         });
     }
 
-    async methodswithdata(path,data,method) {
+    async methodswithdata(path: string,data:Object,method: string) {
         const url = this.base + path;
 
         function hash_function_sha1(base_string, key) {
@@ -41,13 +50,15 @@ class SchoologyAccessor {
                 .digest('base64')
         }
 
+        // @ts-ignore
         const oauth = OAuth({
             consumer: this.token,
             signature_method: 'HMAC-SHA1',
             hash_function: hash_function_sha1,
         })
 
-        return await fetch(url,
+        // @ts-ignore
+        return await nodefetch(url,
         {
             method,
             body: JSON.stringify(data),
@@ -56,17 +67,18 @@ class SchoologyAccessor {
                 ...oauth.toHeader(oauth.authorize({url, method}))
             },
         });
+
     }
 
-    async post(path,data) {
+    async post(path:string,data:Object) {
         return await this.methodswithdata(path,data,"POST");
     }
 
-    async put(path,data){
+    async put(path:string,data:Object){
         return await this.methodswithdata(path,data,"PUT");
     }
 
-    async delete(path,data){
+    async delete(path:string,data:Object){
         return await this.methodswithdata(path,data,"DELETE");
     }
 }

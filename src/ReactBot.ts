@@ -1,7 +1,10 @@
-const Discord = require('discord.js');
+import * as Discord from 'discord.js';
+import { Module } from './Module';
 
+export class ReactBot implements Module {
 
-class ReactBot {
+    private reactmap:Map<string,string>
+    private chainmap:Map<string, {value:string, method:string}[]>
     constructor() {
         this.reactmap = new Map();
         this.reactmap.set("little", "754075455304499211")
@@ -27,10 +30,6 @@ class ReactBot {
                 {
                     value: "f",
                     method: "ONLY"
-                },
-                {
-                    value: "<:bfruh:776525118330503189>",
-                    method: "ONLY"
                 }
             ]);
 
@@ -38,36 +37,20 @@ class ReactBot {
 
     }
 
-    isChain(content,chainobj) {
-        return [false, ...chainobj].reduce((prev,curr) => {
-            if(curr.method === "ONLY") {
-                // Poorly written code here v
-                for(let i = 0; i < content.length; ) {
-                    if(i >= content.length || content.slice(i, i+curr.value.length) !== curr.value) {
-                        return prev;
-                    } else {
-                        i += curr.value.length;
-                        if(i >= content.length) {
-                            return true;
-                        } else if(content[i] === " ") {
-                            i++;
-                        } 
-                        if (i >= content.length) {
-                            return true;
-                        }
-                    }
-                }
-            } else if(curr.method === "CONTAINS") {
-                return prev || content.includes(curr.value);
+    async onConstruct(): Promise<void> { }
+
+    isChain(content: string, chainobj: { value: string, method: string }[]) {
+        for(const curr of chainobj) {
+            if (curr.method === "ONLY") {
+               return (content === curr.value)
+            } else if (curr.method === "CONTAINS") {
+                if( content.includes(curr.value)) return true;
             }
-        })
+        }
+        return false;
     }
 
-    /**
-     * 
-     * @param {Discord.Message} msg 
-     */
-    async onMessage(msg) {
+    async onMessage(msg:Discord.Message) {
         for(const key of this.reactmap.keys()) {
             if( msg.content.toLowerCase().split(" ").includes(key) ){
                 msg.react(this.reactmap.get(key));
@@ -91,5 +74,3 @@ class ReactBot {
         
     }
 }
-
-module.exports = { ReactBot };

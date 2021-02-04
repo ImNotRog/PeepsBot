@@ -1,17 +1,20 @@
 
-const fetch = require('node-fetch')
-const Discord = require('discord.js')
-const cron = require("node-cron");
-// const fs = require("fs");
-const famous = require("../data/famous-people.json");
+import * as nodefetch from 'node-fetch';
+import * as Discord from 'discord.js';
+import * as cron from "node-cron";
+import * as famous from "./data/famous-people.json";
+import { Module } from './Module';
+import { PROCESS } from './ProcessMessage';
 
-class SynonymBot {
-    /**
-     * @constructor
-     * @param {string} MW API key
-     * @param {Discord.Client} client
-     */
-    constructor(MW, client) {
+class SynonymBot implements Module {
+
+    private apikey: string;
+    private cache: Map<string, Object>;
+    private client: Discord.Client;
+    private goodmorningchannels: string[];
+    private famouspeople: string[];
+
+    constructor(MW:string, client: Discord.Client) {
         this.apikey = MW;
         this.cache = new Map();
         this.client = client;
@@ -21,7 +24,19 @@ class SynonymBot {
         this.famouspeople = famous;
     }
 
-    async onConstruct(){
+    async onMessage(message: Discord.Message): Promise<void> {
+        const result = PROCESS(message);
+        if(result) {
+            if (result.command === "wfbo") {
+                message.channel.send(await this.wfbo());
+            }
+            if (result.command === "bread") {
+                message.channel.send(await this.goodmorning());
+            }
+        }
+    }
+
+    async onConstruct(): Promise<void> {
 
         await this.goodmorning();
         await this.wfbo();
@@ -35,7 +50,7 @@ class SynonymBot {
         
     }
 
-    async goodmorningall() {
+    async goodmorningall(): Promise<void> {
 
         let quotes = []
         for(let i = 0; i < 8; i++)
@@ -46,22 +61,19 @@ class SynonymBot {
 
         for (const id of this.goodmorningchannels) {
             let channel = await this.client.channels.fetch(id)
-            channel.send( {
-                embed: {
-                    title: `Let's Get the Bread`,
-                    description: `Another morn, another 8 inspirational quotes from famous historical individuals.`,
-                    color: 111111,
-                    fields: quotes
-                }
-            })
+            if(channel instanceof Discord.TextChannel)
+                channel.send( {
+                    embed: {
+                        title: `Let's Get the Bread`,
+                        description: `Another morn, another 8 inspirational quotes from famous historical individuals.`,
+                        color: 111111,
+                        fields: quotes
+                    }
+                })
         }
     }
 
-    /**
-     * 
-     * @param {string} word 
-     */
-    async getData(word) {
+    async getData(word:string): Promise<any> {
 
         if(this.cache.has(word)) {
             return this.cache.get(word);
@@ -80,14 +92,14 @@ class SynonymBot {
                 return word;
             }
         }
-        let response = await fetch(`https://www.dictionaryapi.com/api/v3/references/thesaurus/json/${word}?key=${this.apikey}`);
+        let response = await nodefetch.default(`https://www.dictionaryapi.com/api/v3/references/thesaurus/json/${word}?key=${this.apikey}`);
         let data = await response.json();
 
         this.cache.set(word, data);
         return data;
     }
 
-    async getSynonyms(word) {
+    async getSynonyms(word:string): Promise<string|string[][]> {
         let data = await this.getData(word);
         if (typeof data === "string" ) {
             return data;
@@ -99,19 +111,11 @@ class SynonymBot {
     }
 
 
-    /**
-     * 
-     * @param {any[]} arr 
-     */
-    choose(arr) {
+    choose(arr: any[]) {
         return arr[Math.floor(arr.length *  Math.random())];
     }
 
-    /**
-     * 
-     * @param {string} sentence 
-     */
-    async synonymizeSentence(sentence) {
+    async synonymizeSentence(sentence: string): Promise<string> {
         let words = sentence.split(" ");
         let newwords = [];
         for(const word of words) {
@@ -125,15 +129,15 @@ class SynonymBot {
         return newwords.join(" ");
     }
 
-    cap(str) {
+    cap(str: string) {
         return str[0].toUpperCase() + str.slice(1);
     }
 
-    async wfbo() {
+    async wfbo(): Promise<string> {
         return this.cap( await this.synonymizeSentence("weird boast but ok") )
     }
 
-    async goodmorning() {
+    async goodmorning(): Promise<string> {
         return this.cap( await this.synonymizeSentence("good morning epic people let's get [the] bread") );
     }
 }

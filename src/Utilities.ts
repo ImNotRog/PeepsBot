@@ -1,10 +1,10 @@
 
-let moment = require("moment-timezone");
+import moment = require("moment-timezone");
 
 // For Intellisense
-const Discord = require("discord.js");
+import Discord = require("discord.js");
 
-class Utilities {
+export class Utilities {
     constructor(){
     }
 
@@ -62,7 +62,7 @@ class Utilities {
      * @param {moment.Moment}
      * @returns {number}
      */
-    timediff(momentobj) {
+    timediff(momentobj): number {
         let now = moment.tz("America/Los_Angeles");
         return momentobj.diff(now, 'days');
     }
@@ -70,14 +70,7 @@ class Utilities {
 
     /* Discord Utilities */
 
-    /**
-     * 
-     * @param {Discord.Message} origmessage 
-     * @param {function} embed 
-     * @param {number} num 
-     * @param {number} millis
-     */
-    async sendEmoteCollector(origmessage,embed,num,millis) {
+    async sendEmoteCollector(origmessage: Discord.Message,embed:(boolean) => Object,num: number,millis: number) {
 
         const emote = "👍"
         const downemote = "👎"
@@ -118,7 +111,7 @@ class Utilities {
                 let adminxed = 0;
                 for (const id of xppl.keyArray()) {
                     const gmember = (message.guild.member(xppl.get(id)));
-                    adminxed += !xppl.get(id).bot && gmember.hasPermission("ADMINISTRATOR");
+                    adminxed += !xppl.get(id).bot && gmember.hasPermission("ADMINISTRATOR") ? 1 : 0;
                 }
 
                 if (adminxed) {
@@ -143,7 +136,7 @@ class Utilities {
     /**
      * @param {Discord.Message|Discord.TextChannel} origmessage
      */
-    async sendClosableEmbed(origmessage, embed) {
+    async sendClosableEmbed(origmessage: Discord.Message | Discord.TextChannel, embed) {
 
         if(origmessage instanceof Discord.Message) {
             let message = await origmessage.channel.send({
@@ -205,7 +198,7 @@ class Utilities {
      * @param {Discord.Message} origmessage
      * @param {{embed: Object}[]} embeds
      */
-    async sendCarousel(origmessage, embeds) {
+    async sendCarousel(origmessage: Discord.Message, embeds: { embed: object; }[]) {
 
         // Remap embeds
         embeds = embeds.map( (e) => {
@@ -239,7 +232,7 @@ class Utilities {
      * @param {number} curr
      * @param {Discord.Message} origmessage
      */
-    async carouselPage(message, embeds, curr, origmessage) {
+    async carouselPage(message: Discord.Message, embeds: { embed: object; }[], curr: number, origmessage: Discord.Message) {
 
         const filter = (reaction, user) => {
             return ['❌','⬅️','➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
@@ -313,102 +306,4 @@ class Utilities {
             }
         }
     }
-
-    TRGtoFields(trg) {
-
-        let docfield = [];
-        if (trg.DOCURL) {
-            docfield.push({
-                name: "Google Doc URL",
-                value: `[Google Doc URL](${trg.DOCURL})`,
-                inline: true
-            })
-        }
-
-        return [{
-                name: "Due",
-                value: this.formatTime(trg.DUE),
-                inline: true
-            },
-            {
-                name: "Has Been Graded",
-                value: trg.GRADED ? "Yes" : "Not yet",
-                inline: true
-            },
-            {
-                name: "Points",
-                value: trg.POINTS,
-                inline: true
-            },
-            {
-                name: "Description",
-                value: trg.DESCRIPTION.slice(0,1000) + '.'
-            },
-            ...docfield,
-            {
-                name: "Schoology URLs",
-                value: `${trg.OTHERURL ? `[Original Link](${trg.OTHERURL}), ` : ""}` +
-                    `${trg.SUBMITURL ? `[Submission Link](${trg.SUBMITURL})` : ""}`,
-                inline: true
-            }
-        ]
-    }
-
-    CheckpointToFields(checkpoint) {
-        return [{
-                name: "Due",
-                value: this.formatTime(checkpoint.DUE),
-                inline: true
-            },
-            {
-                name: "Has Been Graded",
-                value: checkpoint.GRADED ? "Yes" : "Not Yet",
-                inline: true
-            },
-            {
-                name: "Points",
-                value: checkpoint.POINTS,
-                inline: true
-            },
-        ]
-    }
-
-    UnitToFields(unit) {
-        let fields = []
-
-        if (unit.LINK) {
-            fields.push({
-                name: "Folder",
-                value: `[Link](${unit.LINK})`,
-                inline: true
-            })
-        }
-
-        if (unit.CALENDAR) {
-            fields.push({
-                name: "Calendar",
-                value: `[Link](${unit.CALENDAR})`,
-                inline: true
-            })
-        }
-
-        if (unit.SLIDES) {
-            fields.push({
-                name: "Slides",
-                value: `[Link](${unit.SLIDES})`,
-                inline: true
-            })
-        }
-
-        if (unit.DISCUSSION) {
-            fields.push({
-                name: "Help Discussion",
-                value: `[Link](${unit.DISCUSSION})`
-            })
-        }
-
-        return fields;
-    }
 }
-
-module.exports = {Utilities}

@@ -1,18 +1,29 @@
 
 
-const Discord = require("discord.js");
-const { Utilities } = require("./Utilities")
+import Discord = require("discord.js");
+import { Utilities } from "./Utilities";
 
-class RoleManagerBot {
-    /**
-     * @constructor
-     * @param {Discord.Client} client 
-     */
-    constructor(client) {
+export class RoleManagerBot {
+
+    private client:Discord.Client;
+    private utilities: Utilities;
+    private readonly approvedChannels = ["750804960333135914", "748670606085587060"];
+    private readonly fperbio = "748669830244073533";
+    private readonly entrancechannel = "750186607352479755";
+    private readonly messageids = ["786059131806023742", "786061717108293714"];
+    private numvotes = 3;
+    private prefix = `--`;
+    public helpEmbed: Object;
+    private server:Discord.Guild;
+    private messages:Discord.Message[];
+    private readonly alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
+    private roles: Discord.Collection<string, Discord.Role>;
+    private colorroles: Discord.Role[];
+    private roledivs: Discord.Role[][];
+
+    constructor(client: Discord.Client) {
         this.client = client;
         this.utilities = new Utilities();
-
-        this.approvedChannels = ["750804960333135914","748670606085587060"];
 
         this.client.on("message", (message) => {
             if(this.approvedChannels.includes(message.channel.id)) {
@@ -28,13 +39,6 @@ class RoleManagerBot {
             this.onReactRemove(reaction, user)
         })
 
-        this.fperbio = "748669830244073533";
-        this.entrancechannel = "750186607352479755";
-        this.messageids = ["786059131806023742","786061717108293714"];
-
-        this.numvotes = 3;
-
-        this.prefix = `--`
         this.helpEmbed = {
             title: `Help - Roles Bot`,
             description: [
@@ -73,14 +77,13 @@ class RoleManagerBot {
         let server = this.client.guilds.cache.get(this.fperbio);
         this.server = server;
 
-        /**
-         * @type {Discord.TextChannel}
-         */
         let channel = await this.client.channels.fetch(this.entrancechannel);
+        if(channel instanceof Discord.TextChannel) {
+            this.messages = [];
+            for (const messageid of this.messageids) {
+                this.messages.push(await channel.messages.fetch(messageid));
+            }
 
-        this.messages = [];
-        for (const messageid of this.messageids) {
-            this.messages.push(await channel.messages.fetch(messageid));
         }
 
         await this.cacheRoles();
@@ -89,19 +92,15 @@ class RoleManagerBot {
     async cacheRoles() {
 
         await (this.server.roles.fetch());
+
         this.roles = this.server.roles.cache;
 
         this.roles.sort((a, b) => b.position - a.position);
 
         this.colorroles = this.roles.filter((role) => role.color !== 0).array();
 
-        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
-
         let i = 0;
 
-        /**
-         * @type {Discord.Role[][]}
-         */
         this.roledivs = [];
         while (i < this.colorroles.length) {
             this.roledivs.push(this.colorroles.slice(i, i + this.alpha.length));
@@ -115,6 +114,7 @@ class RoleManagerBot {
             let cols = 3;
             let parts = Array(cols).fill(0).map((zero, index) => currroles.slice(index * length / cols, (index + 1) * length / cols));
 
+            // @ts-ignore
             parts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.join("\n") } });
             this.messages[i].edit({
                 embed: {
@@ -168,14 +168,14 @@ class RoleManagerBot {
         if (args.length >= 1) { 
 
             let name = args[0];
-            let todelete = false;
+            let todelete: Discord.Role;
             for(const role of this.colorroles) {
                 if( role.name === name ) {
                     todelete = role;
                 }
             }
 
-            if(todelete instanceof Discord.Role) {
+            if(todelete) {
                 let deleted = await this.utilities.sendEmoteCollector(message, (bool) => {
                     return {
                         title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
@@ -199,15 +199,14 @@ class RoleManagerBot {
 
 
             let name = args[0];
-            let toedit = false;
+            let toedit: Discord.Role;
             for (const role of this.colorroles) {
                 if (role.name === name) {
                     toedit = role;
                 }
             }
 
-            if (toedit instanceof Discord.Role) {
-
+            if (toedit) {
 
                 if (args[1] === "color") {
 
@@ -373,5 +372,3 @@ class RoleManagerBot {
         
     }
 }
-
-module.exports = { RoleManagerBot };

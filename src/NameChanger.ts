@@ -1,24 +1,28 @@
 
 
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require("./Utilities")
-const Discord = require("discord.js");
-const moment = require("moment")
+import { SheetsUser } from "./SheetsUser";
+import { Utilities } from "./Utilities";
+import Discord = require("discord.js");
+import moment = require("moment");
+import { Module } from "./Module";
+import { PROCESS } from "./ProcessMessage";
 
-class NameChangerBot {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     * @param {Discord.Client} client
-     */
-    constructor(auth, client) {
+export class NameChangerBot implements Module {
+
+    private sheetsUser: SheetsUser;
+    private client: Discord.Client;
+    private utilities: Utilities;
+    private readonly prefix = `--`;
+    public helpEmbed: Object;
+    private fperbioserver: string;
+
+    constructor(auth, client: Discord.Client) {
         let currmap = new Map();
         currmap.set("names", "1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4");
         this.sheetsUser = new SheetsUser(auth, currmap);
         this.client = client;
 
         this.utilities = new Utilities();
-        this.prefix = "--";
 
         this.helpEmbed = {
             title: `Help - Themes Bot`,
@@ -42,14 +46,29 @@ class NameChangerBot {
             ]
         }
 
-        this.fperbioserver = ["748669830244073533"]
+        this.fperbioserver = "748669830244073533";
+    }
+
+    async onMessage(message: Discord.Message): Promise<void> {
+        const result = PROCESS(message);
+        if (result) {
+            if (result.command === "rename") {
+                this.onChange(message, result.args);
+            }
+            if (result.command === "themesheet") {
+                this.sendSpreadsheets(message);
+            }
+            if (result.command === "themes") {
+                this.sendThemes(message);
+            }
+        }
     }
 
     /**
      * 
      * @param {string} str 
      */
-    capitalize(str) {
+    capitalize(str: string) {
         let words = str.split(" ");
         for (let i = 0; i < words.length; i++) {
             words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
@@ -164,7 +183,7 @@ class NameChangerBot {
      * 
      * @param {Discord.Message} message 
      */
-    async sendSpreadsheets(message) {
+    async sendSpreadsheets(message: Discord.Message) {
         await this.utilities.sendClosableEmbed(message, {
             "title": "Theme Spreadsheet",
             "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!",
@@ -182,7 +201,7 @@ class NameChangerBot {
      *
      * @param {Discord.Message} message
      */
-    async sendThemes(message) {
+    async sendThemes(message: Discord.Message) {
 
         const map = await this.readThemes();
 
@@ -213,7 +232,7 @@ class NameChangerBot {
      * @param {Discord.Message} message 
      * @param {string[]} args 
      */
-    async onChange(message, args) {
+    async onChange(message: Discord.Message, args: string[]) {
 
         const param = args.join(" ");
         const map = await this.readThemes();
@@ -268,5 +287,3 @@ class NameChangerBot {
 
     }
 }
-
-module.exports = { NameChangerBot };

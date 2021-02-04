@@ -1,38 +1,37 @@
-const Discord = require("discord.js");
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require('./Utilities')
+import * as Discord from "discord.js";
+import { SheetsUser } from "./SheetsUser";
+import { Utilities } from './Utilities';
 
-const schedule = require("node-schedule");
-let moment = require("moment-timezone");
+import { scheduleJob } from "node-schedule";
+import { tz } from "moment-timezone";
+import { Module } from "./Module";
 
 /**
  * @todo Add spreadsheet link
  */
 
-class CalendarBot {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     * @param {Discord.Client} client
-     */
-    constructor(auth,client) {
+class CalendarBot implements Module {
+
+    private sheetsUser:SheetsUser;
+    private utils: Utilities;
+    private prefix = `--`;
+    private bdayChannels: string[] = ["748669830244073536"];
+    private client: Discord.Client;
+    constructor(auth, client: Discord.Client) {
+
         let currmap = new Map();
         currmap.set("peeps", "1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k");
         this.sheetsUser = new SheetsUser(auth, currmap);
 
         this.utils = new Utilities();
-        this.prefix = "--"
 
-        this.bdayChannels = ["748669830244073536"];
         // this.bdayChannels = ["750804960333135914"]; // Redirect
         this.client = client;
     }
 
-    /**
-     * 
-     * @param {string[]} row 
-     */
-    async sendBday(row) {
+    async onMessage(message: Discord.Message): Promise<void> { }
+
+    async sendBday(row:string[]) {
         const person = row[0];
         const bday = row[1];
         const age = row[3];
@@ -47,25 +46,9 @@ class CalendarBot {
 
         for(const id of this.bdayChannels) {
             let channel = await this.client.channels.fetch(id)
-            channel.send({ embed });
-        }
-    }
-
-    async remindBday(row) {
-        const person = row[0];
-        const bday = row[1];
-        const age = row[3];
-
-        let embed = {
-            title: `Reminder: It is ${person}'s birthday! 🎉`,
-            description: [`Death comes for us all, but hey, at least there's instant ramen.`,
-                `Today, ${person} is ${age} years old, so you better go spam this person in chat or something.`].join(`\n`),
-            ...this.utils.basicEmbedInfoForCal()
-        }
-
-        for (const id of this.bdayChannels) {
-            let channel = await this.client.channels.fetch(id)
-            channel.send({ embed });
+            if(channel instanceof Discord.TextChannel) {
+                channel.send({ embed });
+            }
         }
     }
 
@@ -89,22 +72,15 @@ class CalendarBot {
                 if (stuff[0].length < 2) {
                     stuff[0] = "0" + stuff[0];
                 }
-                let momentobj = (moment.tz([stuff[2],stuff[0],stuff[1]].join("-"), "America/Los_Angeles"));
+                let momentobj = (tz([stuff[2],stuff[0],stuff[1]].join("-"), "America/Los_Angeles"));
                 momentobj.set("hours", 7);
                 momentobj.set("minutes", 0);
                 momentobj.set("seconds", 0);
 
-                schedule.scheduleJob(momentobj.toDate(), () => {
+                scheduleJob(momentobj.toDate(), () => {
                     this.sendBday(row);
                 })
 
-                momentobj.set("hours", 15);
-                momentobj.set("minutes", 5);
-                momentobj.set("seconds", 0);
-
-                schedule.scheduleJob(momentobj.toDate(), () => {
-                    this.remindBday(row);
-                })
             }
         }
 

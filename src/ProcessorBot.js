@@ -3,14 +3,12 @@ const Discord = require("discord.js");
 
 const { LittleBot } = require("./LittleBot");
 const { TrackerBot } = require("./GroovyTrackerBot");
-const { TonyBot } = require("./TonyBot");
 const { CalendarBot } = require("./CalBot");
 const { ReactBot } = require("./ReactBot");
 const { NameChangerBot } = require("./NameChanger")
 const { RoleManagerBot } = require("./RoleManager")
 const { ScremBot } = require("./screm");
 const { SynonymBot } = require("./SynonymBot")
-const { CountdownBot } = require("./CountdownBot")
 const { Utilities } = require("./Utilities")
 
 class ProcessorBot {
@@ -32,7 +30,6 @@ class ProcessorBot {
         this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
         this.FPERBIO = "748669830244073533";
 
-        this.tonyActive = true;
         this.littleActive = true;
         this.trackerActive = true;
         this.bdayActive = true;
@@ -41,7 +38,6 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
-        this.countdownActive = true;
         this.helpActive = true;
 
         // this.tonyActive = false;
@@ -57,7 +53,6 @@ class ProcessorBot {
         // this.helpActive = false;
         
 
-        if (this.tonyActive) this.tonyBot = new TonyBot(db, client);
         if (this.littleActive) this.littleBot = new LittleBot(auth, client);
         if (this.trackerActive) this.trackerBot = new TrackerBot(auth);
         if (this.bdayActive) this.calBot = new CalendarBot(auth, client);
@@ -66,7 +61,6 @@ class ProcessorBot {
         if (this.roleManagerActive) this.roleManagerBot = new RoleManagerBot(client);
         if (this.scremActive) this.scremBot = new ScremBot();
         if (this.synonymActive) this.synonymBot = new SynonymBot(MW, client);
-        if (this.countdownActive) this.countdownBot = new CountdownBot(client);
 
         this.client = client;
 
@@ -116,14 +110,12 @@ class ProcessorBot {
 
     async onConstruct() {
 
-        if (this.tonyActive) await this.tonyBot.onConstruct();
         if (this.littleActive) await this.littleBot.onConstruct();
         if (this.trackerActive) await this.trackerBot.onConstruct();
         if (this.bdayActive) await this.calBot.onConstruct();
         if (this.nameChangerActive) await this.nameChangerBot.onConstruct();
         if (this.roleManagerActive) await this.roleManagerBot.onConstruct();
         if (this.synonymActive) await this.synonymBot.onConstruct();
-        if (this.countdownActive) await this.countdownBot.onConstruct();
 
     }
 
@@ -133,10 +125,6 @@ class ProcessorBot {
         embeds.push(this.littleBot.helpEmbed);
         if (this.approvedMusicServers.indexOf(serverid) !== -1) {
             embeds.push(this.trackerBot.helpEmbed)
-        }
-        if (this.tonyActive && this.approvedTonyServers.indexOf(serverid) !== -1) {
-            embeds.push(this.tonyBot.helpEmbed)
-            embeds.push(this.tonyBot.helpCommandsEmbed)
         }
         if (serverid === this.FPERBIO) {
             embeds.push(this.nameChangerBot.helpEmbed);
@@ -153,6 +141,11 @@ class ProcessorBot {
      * @param {Discord.Message} message
      */
     async onMessage(message) {
+
+        if (this.synonymActive) await this.synonymBot.onMessage(message);
+        if (this.scremActive) await this.scremBot.onMessage(message);
+        if (this.reactActive) await this.reactBot.onMessage(message);
+        if (this.nameChangerActive) this.nameChangerBot.onMessage(message);
 
         for (const id of this.destroyUsers) {
             if (message.author.id === id) {
@@ -176,9 +169,7 @@ class ProcessorBot {
 
 
         if (!message.content.startsWith(this.prefix)) {
-            if (this.reactActive) {
-                this.reactBot.onMessage(message);
-            }
+            
             return;
         };
 
@@ -206,35 +197,6 @@ class ProcessorBot {
             }
         }
 
-        if (this.tonyActive) {
-            if (command === "complete") {
-                this.tonyBot.onComplete(message, args);
-            }
-
-            if (command === "get") {
-                this.tonyBot.onGet(message, args);
-            }
-
-            if (command === "create") {
-                this.tonyBot.onCreate(message, args);
-            }
-
-            if (command === "up" || command === "upcoming" || command === "daily") {
-                this.tonyBot.dailyDose(message.channel);
-            }
-        }
-
-        if (this.nameChangerActive) {
-            if (command === "rename") {
-                this.nameChangerBot.onChange(message, args);
-            }
-            if (command === "themesheet") {
-                this.nameChangerBot.sendSpreadsheets(message);
-            }
-            if (command === "themes") {
-                this.nameChangerBot.sendThemes(message);
-            }
-        }
 
         if(this.roleManagerActive) {
             if(command === "role" || command === "roles") {
@@ -254,26 +216,6 @@ class ProcessorBot {
             }
         }
 
-        if(this.scremActive) {
-            if(command === "scream" || command === "screm") {
-                this.scremBot.scream(message,args);
-            }
-            if(command === "cursedscrem") {
-                this.scremBot.scream(message,args,true);
-            }
-            if(command === "void" || command === "screamintothevoid" || command === "scremintothevoid") {
-                this.scremBot.void(message);
-            }
-        }
-
-        if(this.synonymActive) {
-            if (command === "wfbo") {
-                message.channel.send(await this.synonymBot.wfbo());
-            }
-            if (command === "bread") {
-                message.channel.send(await this.synonymBot.goodmorning());
-            }
-        }
 
         if (this.helpActive) {
             if (command === "help") {
