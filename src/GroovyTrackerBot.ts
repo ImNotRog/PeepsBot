@@ -1,24 +1,18 @@
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require("./Utilities")
+import { SheetsUser } from "./SheetsUser";
+import { Utilities } from "./Utilities";
+import * as Discord from "discord.js";
+import { Module } from "./Module";
+import { PROCESS } from "./ProcessMessage";
 
-class TrackerBot extends Utilities {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     */
+export class TrackerBot extends Utilities implements Module {
+    private sheetsUser: SheetsUser;
+    private musicBots: string[];
+    private prefix: string = "--";
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    private approvedMusicServers = ["748669830244073533"];
+
     constructor(auth){
         super();
-        this.colors = 
-        [
-            this.RGBtoObj(255, 0, 0), 
-            this.RGBtoObj(255, 255, 0), 
-            this.RGBtoObj(0, 255, 0), 
-            this.RGBtoObj(0, 255, 255), 
-            this.RGBtoObj(0, 0, 255), 
-            this.RGBtoObj(255, 0, 255), 
-            this.RGBtoObj(255, 150, 0), 
-            this.RGBtoObj(0, 0, 0)
-        ];
 
         let currmap = new Map();
         currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
@@ -26,7 +20,6 @@ class TrackerBot extends Utilities {
         
         this.musicBots = ["234395307759108106"]
 
-        this.prefix = "--"
         this.helpEmbed = {
             title: `Help - Groovy Tracker Bot`,
             description: [
@@ -42,11 +35,16 @@ class TrackerBot extends Utilities {
         }
     }
 
-    RGBtoObj(r, g, b) {
-        return {
-            red: r / 255,
-            green: g / 255,
-            blue: b / 255
+    async onMessage(message: Discord.Message): Promise<void> {
+        const result = PROCESS(message);
+        if(result) {
+            if (result.command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
+                this.sendSpreadsheets(message);
+            }
+        }
+
+        if (message.author.bot && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
+            this.process(message);
         }
     }
 
@@ -60,14 +58,11 @@ class TrackerBot extends Utilities {
         return this.sheetsUser.readSheet("music", "Groovy");
     }
 
-    async addGroovyEntry(title,link) {
+    async addGroovyEntry(title:string,link:string) {
         this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title,link,1,this.getTodayStr()], [true,true, (x) => parseInt(x)+1, "CHANGE"]);
     }
 
-    /**
-     * @param {String} txt 
-     */
-    async processPlayMessage(txt){
+    async processPlayMessage(txt: string){
         if (txt && txt.startsWith("[")) {
             let endtitle = txt.indexOf("](");
             let title = txt.slice(1, endtitle);
@@ -98,11 +93,7 @@ class TrackerBot extends Utilities {
         
     }
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     */
-    async sendSpreadsheets(message){
+    async sendSpreadsheets(message: Discord.Message){
         message.channel.send({
             embed: {
                 "title": "– Groovy Spreadsheet –",
@@ -119,5 +110,3 @@ class TrackerBot extends Utilities {
         });
     }
 }
-
-module.exports = {TrackerBot};

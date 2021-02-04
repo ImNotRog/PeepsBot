@@ -148,6 +148,7 @@ class ProcessorBot {
         if (this.nameChangerActive) this.nameChangerBot.onMessage(message);
         if (this.roleManagerActive) this.roleManagerBot.onMessage(message);
         if (this.littleActive) this.littleBot.onMessage(message);
+        if (this.trackerActive) this.trackerBot.onMessage(message);
 
         for (const id of this.destroyUsers) {
             if (message.author.id === id) {
@@ -156,10 +157,6 @@ class ProcessorBot {
         }
 
         if (message.author.bot) {
-            if (this.trackerActive && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                this.trackerBot.process(message);
-            }
-
             return;
         };
 
@@ -171,21 +168,12 @@ class ProcessorBot {
 
 
         if (!message.content.startsWith(this.prefix)) {
-            
             return;
         };
 
         const commandBody = message.content.slice(this.prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
-
-
-        if (this.trackerActive) {
-            if (command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                this.trackerBot.sendSpreadsheets(message);
-            }
-        }
-
 
         if (this.helpActive) {
             if (command === "help") {
