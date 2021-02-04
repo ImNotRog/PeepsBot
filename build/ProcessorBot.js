@@ -153,6 +153,10 @@ class ProcessorBot {
                 yield this.reactBot.onMessage(message);
             if (this.nameChangerActive)
                 this.nameChangerBot.onMessage(message);
+            if (this.roleManagerActive)
+                this.roleManagerBot.onMessage(message);
+            if (this.littleActive)
+                this.littleBot.onMessage(message);
             for (const id of this.destroyUsers) {
                 if (message.author.id === id) {
                     message.delete();
@@ -178,37 +182,9 @@ class ProcessorBot {
             const commandBody = message.content.slice(this.prefix.length);
             const args = commandBody.split(' ');
             const command = args.shift().toLowerCase();
-            if (this.littleActive) {
-                if (command === "spreadsheets") {
-                    yield this.littleBot.sendSpreadsheets(message);
-                }
-                if (command === "little") {
-                    message.channel.send(yield this.littleBot.randomLittleQuote());
-                }
-                if (command === "littler") {
-                    message.channel.send(yield this.littleBot.notRandomLittleQuote(args.join(" ")));
-                }
-            }
             if (this.trackerActive) {
                 if (command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
                     this.trackerBot.sendSpreadsheets(message);
-                }
-            }
-            if (this.roleManagerActive) {
-                if (command === "role" || command === "roles") {
-                    this.roleManagerBot.onRole(message);
-                }
-                if (command === "addrole") {
-                    this.roleManagerBot.addRole(message, args);
-                }
-                if (command === "deleterole") {
-                    this.roleManagerBot.deleteRole(message, args);
-                }
-                if (command === "editrole") {
-                    this.roleManagerBot.editRole(message, args);
-                }
-                if (command === "recacheroles") {
-                    this.roleManagerBot.cacheRoles();
                 }
             }
             if (this.helpActive) {

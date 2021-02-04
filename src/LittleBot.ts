@@ -1,21 +1,24 @@
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require("./Utilities")
+import { SheetsUser } from "./SheetsUser";
+import { Utilities } from "./Utilities";
 
 /**
  * @todo Actually add a functional cache, instead of fetching every time it saves, b/c that is cringe
  */
 
+import Discord = require("discord.js");
+import { Module } from "./Module";
+import { PROCESS } from "./ProcessMessage";
 
-const Discord = require("discord.js");
+export class LittleBot implements Module {
+    private sheetsUser: SheetsUser;
+    private client: Discord.Client;
+    private cache: string[][];
+    private utils: Utilities;
+    private readonly collectingChannels = ["754912483390652426", "756698378116530266"]
+    private readonly prefix: string = "--";
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
-class LittleBot {
-
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth 
-     * @param {Discord.Client} client
-     */
-    constructor(auth,client){
+    constructor(auth,client: Discord.Client){
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
         this.sheetsUser = new SheetsUser(auth, currmap);
@@ -26,12 +29,9 @@ class LittleBot {
 
         this.utils = new Utilities();
 
-        this.collectingChannels =  ["754912483390652426", "756698378116530266"]
-
         this.client.on("messageReactionAdd", (reaction,user) => { this.onReaction(reaction,user) });
         this.client.on("messageReactionRemove", (reaction,user) => { this.onReaction(reaction,user) });
 
-        this.prefix = "--"
         this.helpEmbed = {
             title: `Help - Little Quotes Bot`,
             description: [
@@ -55,6 +55,23 @@ class LittleBot {
         }
     }
 
+    async onMessage(message: Discord.Message) {
+        const result = PROCESS(message);
+        if(result) {
+            if (result.command === "spreadsheets") {
+                await this.sendSpreadsheets(message);
+            }
+
+            if (result.command === "little") {
+                message.channel.send(await this.randomLittleQuote());
+            }
+
+            if (result.command === "littler") {
+                message.channel.send(await this.notRandomLittleQuote(result.args.join(" ")))
+            }
+        }
+    }
+
     async onConstruct(){
 
         console.log(`Setting up Little Bot.`)
@@ -67,10 +84,9 @@ class LittleBot {
         for (const id of this.collectingChannels) {
 
             let channel = await this.client.channels.fetch(id)
-            /**
-             * @type {Map<string, Discord.Message>}
-             */
-            const test = await channel.messages.fetch({
+
+            // @ts-ignore
+            const test: Map<string, Discord.Message> = await channel.messages.fetch({
                 limit: 90
             })
 
@@ -171,7 +187,7 @@ class LittleBot {
      * 
      * @param {Discord.Message} message 
      */
-    async sendSpreadsheets(message){
+    async sendSpreadsheets(message: Discord.Message){
         message.channel.send({
             embed: {
                 "title": "– Spreadsheets –",
@@ -193,7 +209,7 @@ class LittleBot {
      * @param {Discord.MessageReaction} reaction 
      * @param {*} user 
      */
-    async onReaction(reaction, user) {
+    async onReaction(reaction: Discord.MessageReaction, user: any) {
         
         if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
 
@@ -214,5 +230,3 @@ class LittleBot {
     }
 
 }
-
-module.exports = {LittleBot}

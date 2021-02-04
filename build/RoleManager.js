@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoleManagerBot = void 0;
 const Discord = require("discord.js");
+const ProcessMessage_1 = require("./ProcessMessage");
 const Utilities_1 = require("./Utilities");
 class RoleManagerBot {
     constructor(client) {
@@ -23,16 +24,15 @@ class RoleManagerBot {
         this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
         this.client = client;
         this.utilities = new Utilities_1.Utilities();
-        this.client.on("message", (message) => {
-            if (this.approvedChannels.includes(message.channel.id)) {
-                this.onMessage(message);
+        this.client.on("messageReactionAdd", (reaction, user) => {
+            if (user instanceof Discord.User) {
+                this.onReactAdd(reaction, user);
             }
         });
-        this.client.on("messageReactionAdd", (reaction, user) => {
-            this.onReactAdd(reaction, user);
-        });
         this.client.on("messageReactionRemove", (reaction, user) => {
-            this.onReactRemove(reaction, user);
+            if (user instanceof Discord.User) {
+                this.onReactRemove(reaction, user);
+            }
         });
         this.helpEmbed = {
             title: `Help - Roles Bot`,
@@ -58,6 +58,31 @@ class RoleManagerBot {
                 },
             ]
         };
+    }
+    onMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.approvedChannels.includes(message.channel.id)) {
+                this.parseCommand(message);
+            }
+            const result = ProcessMessage_1.PROCESS(message);
+            if (result) {
+                if (result.command === "role" || result.command === "roles") {
+                    this.onRole(message);
+                }
+                if (result.command === "addrole") {
+                    this.addRole(message, result.args);
+                }
+                if (result.command === "deleterole") {
+                    this.deleteRole(message, result.args);
+                }
+                if (result.command === "editrole") {
+                    this.editRole(message, result.args);
+                }
+                if (result.command === "recacheroles") {
+                    this.cacheRoles();
+                }
+            }
+        });
     }
     capitalize(str) {
         let words = str.split(" ");
@@ -109,11 +134,6 @@ class RoleManagerBot {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     * @param {string[]} args
-     */
     addRole(message, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (args.length >= 2) {
@@ -216,11 +236,6 @@ class RoleManagerBot {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.MessageReaction} reaction
-     * @param {Discord.User} user
-     */
     onReactAdd(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
             for (let i = 0; i < this.messageids.length; i++) {
@@ -233,11 +248,6 @@ class RoleManagerBot {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.MessageReaction} reaction
-     * @param {Discord.User} user
-     */
     onReactRemove(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
             for (let i = 0; i < this.messageids.length; i++) {
@@ -250,10 +260,6 @@ class RoleManagerBot {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
     onRole(message) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.approvedChannels.includes(message.channel.id))
@@ -283,11 +289,7 @@ class RoleManagerBot {
             });
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    onMessage(msg) {
+    parseCommand(msg) {
         return __awaiter(this, void 0, void 0, function* () {
             let content = msg.content;
             let member = msg.member;

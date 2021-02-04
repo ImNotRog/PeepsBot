@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,29 +8,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require("./Utilities");
-/**
- * @todo Actually add a functional cache, instead of fetching every time it saves, b/c that is cringe
- */
-const Discord = require("discord.js");
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LittleBot = void 0;
+const SheetsUser_1 = require("./SheetsUser");
+const Utilities_1 = require("./Utilities");
+const ProcessMessage_1 = require("./ProcessMessage");
 class LittleBot {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     * @param {Discord.Client} client
-     */
     constructor(auth, client) {
+        this.collectingChannels = ["754912483390652426", "756698378116530266"];
+        this.prefix = "--";
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
-        this.sheetsUser = new SheetsUser(auth, currmap);
+        this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
         this.client = client;
         this.cache = [];
-        this.utils = new Utilities();
-        this.collectingChannels = ["754912483390652426", "756698378116530266"];
+        this.utils = new Utilities_1.Utilities();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
-        this.prefix = "--";
         this.helpEmbed = {
             title: `Help - Little Quotes Bot`,
             description: [
@@ -52,6 +47,22 @@ class LittleBot {
             ]
         };
     }
+    onMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = ProcessMessage_1.PROCESS(message);
+            if (result) {
+                if (result.command === "spreadsheets") {
+                    yield this.sendSpreadsheets(message);
+                }
+                if (result.command === "little") {
+                    message.channel.send(yield this.randomLittleQuote());
+                }
+                if (result.command === "littler") {
+                    message.channel.send(yield this.notRandomLittleQuote(result.args.join(" ")));
+                }
+            }
+        });
+    }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(`Setting up Little Bot.`);
@@ -61,9 +72,7 @@ class LittleBot {
             console.log(`Fetching messages from Discord channels`);
             for (const id of this.collectingChannels) {
                 let channel = yield this.client.channels.fetch(id);
-                /**
-                 * @type {Map<string, Discord.Message>}
-                 */
+                // @ts-ignore
                 const test = yield channel.messages.fetch({
                     limit: 90
                 });
@@ -189,4 +198,4 @@ class LittleBot {
         });
     }
 }
-module.exports = { LittleBot };
+exports.LittleBot = LittleBot;

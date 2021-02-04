@@ -1,9 +1,11 @@
 
 
 import Discord = require("discord.js");
+import { Module } from "./Module";
+import { PROCESS } from "./ProcessMessage";
 import { Utilities } from "./Utilities";
 
-export class RoleManagerBot {
+export class RoleManagerBot implements Module {
 
     private client:Discord.Client;
     private utilities: Utilities;
@@ -25,18 +27,16 @@ export class RoleManagerBot {
         this.client = client;
         this.utilities = new Utilities();
 
-        this.client.on("message", (message) => {
-            if(this.approvedChannels.includes(message.channel.id)) {
-                this.onMessage(message);
-            }
-        })
-        
         this.client.on("messageReactionAdd", (reaction,user) => {
-            this.onReactAdd(reaction,user)
+            if(user instanceof Discord.User) {
+                this.onReactAdd(reaction, user)
+            }
         })
 
         this.client.on("messageReactionRemove", (reaction, user) => {
-            this.onReactRemove(reaction, user)
+            if (user instanceof Discord.User) {
+                this.onReactRemove(reaction, user)
+            }
         })
 
         this.helpEmbed = {
@@ -62,6 +62,31 @@ export class RoleManagerBot {
                     value: `Edits the role's name.`
                 },
             ]
+        }
+    }
+    async onMessage(message: Discord.Message): Promise<void> {
+
+        if (this.approvedChannels.includes(message.channel.id)) {
+            this.parseCommand(message);
+        }
+
+        const result = PROCESS(message);
+        if(result) {
+            if (result.command === "role" || result.command === "roles") {
+                this.onRole(message);
+            }
+            if (result.command === "addrole") {
+                this.addRole(message, result.args);
+            }
+            if (result.command === "deleterole") {
+                this.deleteRole(message, result.args);
+            }
+            if (result.command === "editrole") {
+                this.editRole(message, result.args);
+            }
+            if (result.command === "recacheroles") {
+                this.cacheRoles();
+            }
         }
     }
 
@@ -127,12 +152,7 @@ export class RoleManagerBot {
 
     }
     
-    /**
-     * 
-     * @param {Discord.Message} message 
-     * @param {string[]} args 
-     */
-    async addRole(message,args) {
+    async addRole(message: Discord.Message,args: string[]) {
         if(args.length >= 2) {
 
             let rolemanager = this.server.roles;
@@ -253,12 +273,7 @@ export class RoleManagerBot {
         }
     }
 
-    /**
-     *
-     * @param {Discord.MessageReaction} reaction
-     * @param {Discord.User} user
-     */
-    async onReactAdd(reaction,user) {
+    async onReactAdd(reaction: Discord.MessageReaction,user: Discord.User) {
 
         for(let i = 0; i < this.messageids.length; i++) {
             let messageid = this.messageids[i];
@@ -271,12 +286,8 @@ export class RoleManagerBot {
 
     }
 
-    /**
-     *
-     * @param {Discord.MessageReaction} reaction
-     * @param {Discord.User} user
-     */
-    async onReactRemove(reaction, user) {
+
+    async onReactRemove(reaction: Discord.MessageReaction, user: Discord.User) {
 
         for (let i = 0; i < this.messageids.length; i++) {
             let messageid = this.messageids[i];
@@ -289,11 +300,7 @@ export class RoleManagerBot {
 
     }
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     */
-    async onRole(message) {
+    async onRole(message: Discord.Message) {
 
         if (!this.approvedChannels.includes(message.channel.id)) return;
 
@@ -325,11 +332,7 @@ export class RoleManagerBot {
         
     }
 
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    async onMessage(msg) {
+    async parseCommand(msg: Discord.Message) {
 
         let content = msg.content;
         let member = msg.member;
