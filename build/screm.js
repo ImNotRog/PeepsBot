@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ScremBot = void 0;
 const Discord = require("discord.js");
 const ProcessMessage_1 = require("./ProcessMessage");
 class ScremBot {
@@ -163,4 +164,4 @@ class ScremBot {
         });
     }
 }
-module.exports = { ScremBot };
+exports.ScremBot = ScremBot;

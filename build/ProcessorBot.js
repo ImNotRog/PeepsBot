@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,30 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const Discord = require("discord.js");
-const { LittleBot } = require("./LittleBot");
-const { TrackerBot } = require("./GroovyTrackerBot");
-const { CalendarBot } = require("./CalBot");
-const { ReactBot } = require("./ReactBot");
-const { NameChangerBot } = require("./NameChanger");
-const { RoleManagerBot } = require("./RoleManager");
-const { ScremBot } = require("./screm");
-const { SynonymBot } = require("./SynonymBot");
-const { Utilities } = require("./Utilities");
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProcessorBot = void 0;
+const LittleBot_1 = require("./LittleBot");
+const GroovyTrackerBot_1 = require("./GroovyTrackerBot");
+const CalBot_1 = require("./CalBot");
+const ReactBot_1 = require("./ReactBot");
+const NameChanger_1 = require("./NameChanger");
+const RoleManager_1 = require("./RoleManager");
+const screm_1 = require("./screm");
+const SynonymBot_1 = require("./SynonymBot");
 class ProcessorBot {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     * @param {FirebaseFirestore.Firestore} db
-     * @param {Discord.Client} client
-     * @param {string} MW
-     */
     constructor(auth, db, client, MW) {
-        this.destroyUsers = [];
         this.prefix = "--";
-        this.approvedMusicServers = ["748669830244073533"];
-        this.approvedTonyServers = ["748669830244073533", "568220839590494209"];
-        this.FPERBIO = "748669830244073533";
         this.littleActive = true;
         this.trackerActive = true;
         this.bdayActive = true;
@@ -40,33 +30,23 @@ class ProcessorBot {
         this.scremActive = true;
         this.synonymActive = true;
         this.helpActive = true;
-        // this.tonyActive = false;
-        // this.littleActive = false;
-        // this.trackerActive = false;
-        // this.bdayActive = false;
-        // this.reactActive = false;
-        // this.nameChangerActive = false;
-        // this.roleManagerActive = false;
-        // this.scremActive = false;
-        // this.synonymActive = false;
-        // this.countdownActive = false;
-        // this.helpActive = false;
+        this.modules = [];
         if (this.littleActive)
-            this.littleBot = new LittleBot(auth, client);
+            this.modules.push(new LittleBot_1.LittleBot(auth, client));
         if (this.trackerActive)
-            this.trackerBot = new TrackerBot(auth);
+            this.modules.push(new GroovyTrackerBot_1.TrackerBot(auth));
         if (this.bdayActive)
-            this.calBot = new CalendarBot(auth, client);
+            this.modules.push(new CalBot_1.CalendarBot(auth, client));
         if (this.reactActive)
-            this.reactBot = new ReactBot();
+            this.modules.push(new ReactBot_1.ReactBot());
         if (this.nameChangerActive)
-            this.nameChangerBot = new NameChangerBot(auth, client);
+            this.modules.push(new NameChanger_1.NameChangerBot(auth, client));
         if (this.roleManagerActive)
-            this.roleManagerBot = new RoleManagerBot(client);
+            this.modules.push(new RoleManager_1.RoleManagerBot(client));
         if (this.scremActive)
-            this.scremBot = new ScremBot();
+            this.modules.push(new screm_1.ScremBot(client));
         if (this.synonymActive)
-            this.synonymBot = new SynonymBot(MW, client);
+            this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
         this.client = client;
         this.helpEmbed = {
             title: `Help - General`,
@@ -104,95 +84,51 @@ class ProcessorBot {
                 },
             ]
         };
-        this.utils = new Utilities();
-        this.client.on("message", (message) => { this.onMessage(message); });
+        this.client.on("message", (message) => {
+            this.onMessage(message);
+        });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.littleActive)
-                yield this.littleBot.onConstruct();
-            if (this.trackerActive)
-                yield this.trackerBot.onConstruct();
-            if (this.bdayActive)
-                yield this.calBot.onConstruct();
-            if (this.nameChangerActive)
-                yield this.nameChangerBot.onConstruct();
-            if (this.roleManagerActive)
-                yield this.roleManagerBot.onConstruct();
-            if (this.synonymActive)
-                yield this.synonymBot.onConstruct();
+            let allpromises = [];
+            for (const mod of this.modules) {
+                allpromises.push(mod.onConstruct());
+            }
+            yield Promise.all(allpromises);
         });
     }
-    getHelpEmbeds(serverid) {
-        const embeds = [];
-        embeds.push(this.helpEmbed);
-        embeds.push(this.littleBot.helpEmbed);
-        if (this.approvedMusicServers.indexOf(serverid) !== -1) {
-            embeds.push(this.trackerBot.helpEmbed);
-        }
-        if (serverid === this.FPERBIO) {
-            embeds.push(this.nameChangerBot.helpEmbed);
-        }
-        if (serverid === this.FPERBIO) {
-            embeds.push(this.roleManagerBot.helpEmbed);
-        }
-        embeds.push(this.helpTechnicalEmbed);
-        return embeds;
-    }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
+    // getHelpEmbeds(serverid) {
+    //     const embeds = [];
+    //     embeds.push(this.helpEmbed)
+    //     embeds.push(this.littleBot.helpEmbed);
+    //     if (this.approvedMusicServers.indexOf(serverid) !== -1) {
+    //         embeds.push(this.trackerBot.helpEmbed)
+    //     }
+    //     if (serverid === this.FPERBIO) {
+    //         embeds.push(this.nameChangerBot.helpEmbed);
+    //     }
+    //     if(serverid === this.FPERBIO) {
+    //         embeds.push(this.roleManagerBot.helpEmbed);
+    //     }
+    //     embeds.push(this.helpTechnicalEmbed)
+    //     return embeds;
+    // }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.synonymActive)
-                yield this.synonymBot.onMessage(message);
-            if (this.scremActive)
-                yield this.scremBot.onMessage(message);
-            if (this.reactActive)
-                yield this.reactBot.onMessage(message);
-            if (this.nameChangerActive)
-                this.nameChangerBot.onMessage(message);
-            if (this.roleManagerActive)
-                this.roleManagerBot.onMessage(message);
-            if (this.littleActive)
-                this.littleBot.onMessage(message);
-            for (const id of this.destroyUsers) {
-                if (message.author.id === id) {
-                    message.delete();
-                }
+            for (const mod of this.modules) {
+                mod.onMessage(message);
             }
-            if (message.author.bot) {
-                if (this.trackerActive && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                    this.trackerBot.process(message);
-                }
-                return;
-            }
-            ;
-            if (message.content.startsWith("!little")) {
-                message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`);
-            }
-            else if (message.content.includes("<@!750573267026182185>") && this.littleActive) {
-                message.channel.send(yield this.randomLittleQuote());
-            }
-            if (!message.content.startsWith(this.prefix)) {
-                return;
-            }
-            ;
-            const commandBody = message.content.slice(this.prefix.length);
-            const args = commandBody.split(' ');
-            const command = args.shift().toLowerCase();
-            if (this.trackerActive) {
-                if (command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                    this.trackerBot.sendSpreadsheets(message);
-                }
-            }
-            if (this.helpActive) {
-                if (command === "help") {
-                    this.utils.sendCarousel(message, this.getHelpEmbeds(message.guild.id));
-                }
-            }
+            // if (message.content.startsWith("!little")) {
+            //     message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
+            // } else if (message.content.includes("<@!750573267026182185>") && this.littleActive) {
+            //     message.channel.send(await this.randomLittleQuote());
+            // }
+            // if (this.helpActive) {
+            //     if (command === "help") {
+            //         this.utils.sendCarousel(message, this.getHelpEmbeds(message.guild.id));
+            //     }
+            // }
         });
     }
 }
-module.exports = { ProcessorBot };
+exports.ProcessorBot = ProcessorBot;

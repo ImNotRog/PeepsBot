@@ -6,7 +6,7 @@ import * as famous from "./data/famous-people.json";
 import { Module } from './Module';
 import { PROCESS } from './ProcessMessage';
 
-class SynonymBot implements Module {
+export class SynonymBot implements Module {
 
     private apikey: string;
     private cache: Map<string, Object>;
@@ -141,4 +141,3 @@ class SynonymBot implements Module {
         return this.cap( await this.synonymizeSentence("good morning epic people let's get [the] bread") );
     }
 }
-module.exports = { SynonymBot };

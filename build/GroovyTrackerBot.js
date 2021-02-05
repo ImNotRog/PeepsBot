@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,31 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { SheetsUser } = require("./SheetsUser");
-const { Utilities } = require("./Utilities");
-class TrackerBot extends Utilities {
-    /**
-     * @constructor
-     * @param {google.auth.OAuth2} auth
-     */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TrackerBot = void 0;
+const SheetsUser_1 = require("./SheetsUser");
+const Utilities_1 = require("./Utilities");
+const ProcessMessage_1 = require("./ProcessMessage");
+class TrackerBot extends Utilities_1.Utilities {
     constructor(auth) {
         super();
-        this.colors =
-            [
-                this.RGBtoObj(255, 0, 0),
-                this.RGBtoObj(255, 255, 0),
-                this.RGBtoObj(0, 255, 0),
-                this.RGBtoObj(0, 255, 255),
-                this.RGBtoObj(0, 0, 255),
-                this.RGBtoObj(255, 0, 255),
-                this.RGBtoObj(255, 150, 0),
-                this.RGBtoObj(0, 0, 0)
-            ];
+        this.prefix = "--";
+        this.approvedMusicServers = ["748669830244073533"];
         let currmap = new Map();
         currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
-        this.sheetsUser = new SheetsUser(auth, currmap);
+        this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
         this.musicBots = ["234395307759108106"];
-        this.prefix = "--";
         this.helpEmbed = {
             title: `Help - Groovy Tracker Bot`,
             description: [
@@ -46,12 +36,18 @@ class TrackerBot extends Utilities {
             ]
         };
     }
-    RGBtoObj(r, g, b) {
-        return {
-            red: r / 255,
-            green: g / 255,
-            blue: b / 255
-        };
+    onMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = ProcessMessage_1.PROCESS(message);
+            if (result) {
+                if (result.command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
+                    this.sendSpreadsheets(message);
+                }
+            }
+            if (message.author.bot && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
+                this.process(message);
+            }
+        });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -70,9 +66,6 @@ class TrackerBot extends Utilities {
             this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title, link, 1, this.getTodayStr()], [true, true, (x) => parseInt(x) + 1, "CHANGE"]);
         });
     }
-    /**
-     * @param {String} txt
-     */
     processPlayMessage(txt) {
         return __awaiter(this, void 0, void 0, function* () {
             if (txt && txt.startsWith("[")) {
@@ -101,10 +94,6 @@ class TrackerBot extends Utilities {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
     sendSpreadsheets(message) {
         return __awaiter(this, void 0, void 0, function* () {
             message.channel.send({
@@ -118,4 +107,4 @@ class TrackerBot extends Utilities {
         });
     }
 }
-module.exports = { TrackerBot };
+exports.TrackerBot = TrackerBot;

@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CalendarBot = void 0;
 const Discord = require("discord.js");
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
@@ -77,4 +78,4 @@ class CalendarBot {
         });
     }
 }
-module.exports = { CalendarBot };
+exports.CalendarBot = CalendarBot;

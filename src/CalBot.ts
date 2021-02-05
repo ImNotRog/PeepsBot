@@ -10,7 +10,7 @@ import { Module } from "./Module";
  * @todo Add spreadsheet link
  */
 
-class CalendarBot implements Module {
+export class CalendarBot implements Module {
 
     private sheetsUser:SheetsUser;
     private utils: Utilities;
@@ -88,5 +88,3 @@ class CalendarBot implements Module {
     }
 
 }
-
-module.exports = { CalendarBot };

@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SynonymBot = void 0;
 const nodefetch = require("node-fetch");
 const Discord = require("discord.js");
 const cron = require("node-cron");
@@ -134,4 +135,4 @@ class SynonymBot {
         });
     }
 }
-module.exports = { SynonymBot };
+exports.SynonymBot = SynonymBot;

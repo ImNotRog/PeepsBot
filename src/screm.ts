@@ -2,7 +2,7 @@ import * as Discord from "discord.js";
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
-class ScremBot implements Module {
+export class ScremBot implements Module {
 
     private readonly chars: string[] = ["a", "A"];
     private readonly cursedchars: string[] = ["a", "A", "ḁ̶̧̡͉̹͖̭̈͒͛͂́̀̐̿̎͆͛̓̕͠͝", "ä̷̢̨̛͓̙̗̗̼̝͇̦͖͙̦͚̳̪̘̟̩̘̤͚͕͈̩̭̦͎̱͉̘̳̣̫͙͎̫̜̬̝̺͇̮̲͔̮͔̯̀̃̓̌̀̀̆͛͐̃̆̈́͑͆̈́͌̔͒̋̋̔̃̐̂̿̉͂̂̆̈́͋̆̈́̀͒͘̕͘͝͠͝͝", "a̸̡̨̡̡̨̛̛̤̲̱̲̗͇̦̦͉͕̬͔̞̺͇̘̼̲̖̬̖͎̖̦̳̺̦̪̱͎͈͕͓̖͈͍̼͇͖̳͙̖͓̼͈̖̙͔̱͚̞̗̖̝̻̞̬̮͙̳̘̺͕̞̟̩͓̙͉͈̩͔͗̆̍͒̄͊̎̏̄̈́̿̇̂̓̌̈́͗͋͋͆̋͒͗͐̒̉̅̾̃̐̓̃͛̀̋͋͌̔̓͌̐͛̌̾̉̇́̑͛͛̋̊́̃̚͘̕͜͜͜͝͝͠͠͝͠ͅ", "Ằ̵̡̨̢̨̢̧̨̨̢̤͓͓̩͚̤̮͇̤͇̠̦̝̝̯͎͍̫̮̦̬̰̝̪͙͇̪̥̖̭͎̼͔̺̝͓͚̻̤̣̥̭̲̮̯̣̺̝͕͕̰͉͚͔̘̜̗͈̳͉̼̞̟͈̗̄̋́̉̿̇͒̅́̈́͆̄̔̍͆̒̀͂͒̄̾̅̚̚͝͠͝ͅͅ", "Á̵̧̦̟̘̯̩̱̥̰̹̙̮̲̹̀̽͊͛́̈́͐̓́́̋͋́̓͂̾̂̏͊̓̊̕̚͝͝"];
@@ -174,5 +174,3 @@ class ScremBot implements Module {
 
     }
 }
-
-module.exports = { ScremBot }
