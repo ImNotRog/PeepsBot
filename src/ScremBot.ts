@@ -7,6 +7,7 @@ export class ScremBot implements Module {
     private readonly chars: string[] = ["a", "A"];
     private readonly cursedchars: string[] = ["a", "A", "ḁ̶̧̡͉̹͖̭̈͒͛͂́̀̐̿̎͆͛̓̕͠͝", "ä̷̢̨̛͓̙̗̗̼̝͇̦͖͙̦͚̳̪̘̟̩̘̤͚͕͈̩̭̦͎̱͉̘̳̣̫͙͎̫̜̬̝̺͇̮̲͔̮͔̯̀̃̓̌̀̀̆͛͐̃̆̈́͑͆̈́͌̔͒̋̋̔̃̐̂̿̉͂̂̆̈́͋̆̈́̀͒͘̕͘͝͠͝͝", "a̸̡̨̡̡̨̛̛̤̲̱̲̗͇̦̦͉͕̬͔̞̺͇̘̼̲̖̬̖͎̖̦̳̺̦̪̱͎͈͕͓̖͈͍̼͇͖̳͙̖͓̼͈̖̙͔̱͚̞̗̖̝̻̞̬̮͙̳̘̺͕̞̟̩͓̙͉͈̩͔͗̆̍͒̄͊̎̏̄̈́̿̇̂̓̌̈́͗͋͋͆̋͒͗͐̒̉̅̾̃̐̓̃͛̀̋͋͌̔̓͌̐͛̌̾̉̇́̑͛͛̋̊́̃̚͘̕͜͜͜͝͝͠͠͝͠ͅ", "Ằ̵̡̨̢̨̢̧̨̨̢̤͓͓̩͚̤̮͇̤͇̠̦̝̝̯͎͍̫̮̦̬̰̝̪͙͇̪̥̖̭͎̼͔̺̝͓͚̻̤̣̥̭̲̮̯̣̺̝͕͕̰͉͚͔̘̜̗͈̳͉̼̞̟͈̗̄̋́̉̿̇͒̅́̈́͆̄̔̍͆̒̀͂͒̄̾̅̚̚͝͠͝ͅͅ", "Á̵̧̦̟̘̯̩̱̥̰̹̙̮̲̹̀̽͊͛́̈́͐̓́́̋͋́̓͂̾̂̏͊̓̊̕̚͝͝"];
     private client: Discord.Client;
+    private readonly voidchannels = ["750804960333135914", "748670606085587060"];
 
     constructor(client:Discord.Client) {
         this.client = client;
@@ -21,7 +22,8 @@ export class ScremBot implements Module {
             if (result.command === "cursedscrem") {
                 this.scream(message, result.args, true);
             }
-            if (result.command === "void" || result.command === "screamintothevoid" || result.command === "scremintothevoid") {
+            if ( this.voidchannels.includes(message.channel.id) &&
+                (result.command === "void" || result.command === "screamintothevoid" || result.command === "scremintothevoid") ){
                 this.void(message);
             }
         }
@@ -124,10 +126,6 @@ export class ScremBot implements Module {
 
     }
 
-    /**
-     *
-     * @param {Discord.Message} message
-     */
     async void(message: Discord.Message): Promise<void> {
 
         let sent = await message.channel.send({

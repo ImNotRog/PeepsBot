@@ -7,7 +7,7 @@ import { CalendarBot } from "./CalBot";
 import { ReactBot } from "./ReactBot";
 import { NameChangerBot } from "./NameChanger";
 import { RoleManagerBot } from "./RoleManager";
-import { ScremBot } from "./screm";
+import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
 
 import { Module } from "./Module";
