@@ -23,6 +23,9 @@ export class ImageBot implements Module {
     async onMessage(message: Discord.Message): Promise<void> {
         if(this.approvedChannels.includes(message.channel.id)) {
             if(message.attachments.size > 0) {
+
+                console.log("Uploading!");
+                
                 const url = message.attachments.first().url;
                 const path = `./temp/${message.id}.png`;
 

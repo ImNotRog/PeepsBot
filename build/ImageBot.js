@@ -25,6 +25,7 @@ class ImageBot {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.approvedChannels.includes(message.channel.id)) {
                 if (message.attachments.size > 0) {
+                    console.log("Uploading!");
                     const url = message.attachments.first().url;
                     const path = `./temp/${message.id}.png`;
                     let p = new Promise((r, j) => {
