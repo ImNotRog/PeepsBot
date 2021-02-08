@@ -2,11 +2,12 @@
   "compilerOptions": {
     "outDir": "./build",
     "resolveJsonModule": true,
-    "allowJs": true,
     "target": "es6",
     "module": "commonjs",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "types": [],
+    "skipLibCheck": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["./node_modules", "./data"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/**/*"]
 }

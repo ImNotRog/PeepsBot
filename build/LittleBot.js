@@ -13,7 +13,6 @@ exports.LittleBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
-const DriveUser_1 = require("./DriveUser");
 class LittleBot {
     constructor(auth, client) {
         this.collectingChannels = ["754912483390652426", "756698378116530266"];
@@ -21,7 +20,6 @@ class LittleBot {
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
-        this.driveUser = new DriveUser_1.DriveUser(auth);
         this.client = client;
         this.cache = [];
         this.utils = new Utilities_1.Utilities();
@@ -70,7 +68,6 @@ class LittleBot {
             console.log(`Setting up Little Bot.`);
             console.log(`Setting up sheets`);
             yield this.sheetsUser.onConstruct();
-            yield this.driveUser.onConstruct();
             this.cache = yield this.fetchLittleQuotes();
             console.log(`Fetching messages from Discord channels`);
             for (const id of this.collectingChannels) {

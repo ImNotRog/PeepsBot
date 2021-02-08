@@ -198,3 +198,4 @@ class BioParser extends SchoologyAccessor {
     }
 }
 module.exports = { BioParser };
+//# sourceMappingURL=BP.js.map

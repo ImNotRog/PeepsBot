@@ -9,6 +9,7 @@ import { NameChangerBot } from "./NameChanger";
 import { RoleManagerBot } from "./RoleManager";
 import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
+import { ImageBot } from "./ImageBot";
 
 import { Module } from "./Module";
 
@@ -23,16 +24,19 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
+    private readonly imageActive = true;
     private readonly helpActive = true;
 
-    // private littleBot: LittleBot;
-    // private trackerBot: TrackerBot;
-    // private calBot: CalendarBot;
-    // private reactBot: ReactBot;
-    // private nameChangerBot: NameChangerBot;
-    // private roleManagerBot: RoleManagerBot;
-    // private scremBot: ScremBot;
-    // private synonymBot: SynonymBot;
+    // private readonly littleActive = false;
+    // private readonly trackerActive = false;
+    // private readonly bdayActive = false;
+    // private readonly reactActive = false;
+    // private readonly nameChangerActive = false;
+    // private readonly roleManagerActive = false;
+    // private readonly scremActive = false;
+    // private readonly synonymActive = false;
+    // private readonly imageActive = false;
+    // private readonly helpActive = false;
 
     private modules: Module[];
 
@@ -44,14 +48,15 @@ export class ProcessorBot {
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
         this.modules = [];
-        if (this.littleActive) this.modules.push ( new LittleBot(auth, client) );
-        if (this.trackerActive) this.modules.push( new TrackerBot(auth) );
-        if (this.bdayActive) this.modules.push( new CalendarBot(auth, client) );
-        if (this.reactActive) this.modules.push( new ReactBot() );
-        if (this.nameChangerActive) this.modules.push( new NameChangerBot(auth, client) );
-        if (this.roleManagerActive) this.modules.push( new RoleManagerBot(client) );
-        if (this.scremActive) this.modules.push( new ScremBot(client) );
-        if (this.synonymActive) this.modules.push( new SynonymBot(MW, client) );
+        if (this.littleActive) this.modules.push(new LittleBot(auth, client));
+        if (this.trackerActive) this.modules.push(new TrackerBot(auth));
+        if (this.bdayActive) this.modules.push(new CalendarBot(auth, client));
+        if (this.reactActive) this.modules.push(new ReactBot());
+        if (this.nameChangerActive) this.modules.push(new NameChangerBot(auth, client));
+        if (this.roleManagerActive) this.modules.push(new RoleManagerBot(client));
+        if (this.scremActive) this.modules.push(new ScremBot(client));
+        if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
+        if (this.imageActive) this.modules.push(new ImageBot(auth, client));
 
         this.client = client;
 
@@ -93,18 +98,18 @@ export class ProcessorBot {
             ]
         }
 
-        this.client.on("message", (message) => { 
-            this.onMessage(message) 
+        this.client.on("message", (message) => {
+            this.onMessage(message)
         });
 
     }
 
     async onConstruct() {
         let allpromises = [];
-        for(const mod of this.modules) {
-            allpromises.push( mod.onConstruct() );
+        for (const mod of this.modules) {
+            allpromises.push(mod.onConstruct());
         }
-        await Promise.all( allpromises );
+        await Promise.all(allpromises);
     }
 
     // getHelpEmbeds(serverid) {
@@ -126,7 +131,7 @@ export class ProcessorBot {
 
     async onMessage(message: Discord.Message) {
 
-        for(const mod of this.modules) {
+        for (const mod of this.modules) {
             mod.onMessage(message);
         }
 
@@ -143,8 +148,6 @@ export class ProcessorBot {
         //         this.utils.sendCarousel(message, this.getHelpEmbeds(message.guild.id));
         //     }
         // }
-
-
 
     }
 

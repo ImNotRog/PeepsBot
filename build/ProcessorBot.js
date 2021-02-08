@@ -18,6 +18,7 @@ const NameChanger_1 = require("./NameChanger");
 const RoleManager_1 = require("./RoleManager");
 const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
+const ImageBot_1 = require("./ImageBot");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
@@ -29,6 +30,7 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
+        this.imageActive = true;
         this.helpActive = true;
         this.modules = [];
         if (this.littleActive)
@@ -47,6 +49,8 @@ class ProcessorBot {
             this.modules.push(new ScremBot_1.ScremBot(client));
         if (this.synonymActive)
             this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
+        if (this.imageActive)
+            this.modules.push(new ImageBot_1.ImageBot(auth, client));
         this.client = client;
         this.helpEmbed = {
             title: `Help - General`,
