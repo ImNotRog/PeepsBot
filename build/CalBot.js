@@ -52,7 +52,7 @@ class CalendarBot {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(`Setting up Calendar Bot`);
             console.log(`Setting up Google Sheets.`);
-            yield this.sheetsUser.SetUpSheets();
+            yield this.sheetsUser.onConstruct();
             console.log(`Fetching data, setting up Birthdays.`);
             let rows = (yield this.sheetsUser.readSheet("peeps", "Birthdays"));
             for (let i = 2; i < rows.length; i++) {

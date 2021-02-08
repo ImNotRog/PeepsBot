@@ -130,7 +130,7 @@ class NameChangerBot {
             // console.log(leomember)
             console.log(`Setting up Name Changer Bot.`);
             console.log(`Setting up sheets`);
-            yield this.sheetsUser.SetUpSheets();
+            yield this.sheetsUser.onConstruct();
             console.log(`Name Changer Bot Complete`);
         });
     }

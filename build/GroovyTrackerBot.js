@@ -52,7 +52,7 @@ class TrackerBot extends Utilities_1.Utilities {
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(`Groovy Tracker Bot constructing...`);
-            yield this.sheetsUser.SetUpSheets();
+            yield this.sheetsUser.onConstruct();
             console.log(`Groovy Tracker Bot complete.`);
         });
     }

@@ -136,7 +136,7 @@ export class NameChangerBot implements Module {
 
         console.log(`Setting up Name Changer Bot.`)
         console.log(`Setting up sheets`)
-        await this.sheetsUser.SetUpSheets();
+        await this.sheetsUser.onConstruct();
 
         console.log(`Name Changer Bot Complete`);
     }

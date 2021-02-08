@@ -16,7 +16,7 @@ const CalBot_1 = require("./CalBot");
 const ReactBot_1 = require("./ReactBot");
 const NameChanger_1 = require("./NameChanger");
 const RoleManager_1 = require("./RoleManager");
-const screm_1 = require("./screm");
+const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
@@ -44,7 +44,7 @@ class ProcessorBot {
         if (this.roleManagerActive)
             this.modules.push(new RoleManager_1.RoleManagerBot(client));
         if (this.scremActive)
-            this.modules.push(new screm_1.ScremBot(client));
+            this.modules.push(new ScremBot_1.ScremBot(client));
         if (this.synonymActive)
             this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
         this.client = client;

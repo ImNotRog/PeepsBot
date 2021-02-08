@@ -1,4 +1,4 @@
-import { google, GoogleApis, sheets_v4 } from 'googleapis';
+import { google, sheets_v4 } from 'googleapis';
 
 export class SheetsUser {
 
@@ -19,7 +19,7 @@ export class SheetsUser {
         this.setup = false;
     }
 
-    async SetUpSheets() {
+    async onConstruct() {
         for (const key of this.map.keys()) {
 
             console.log(`Setting up ${key}`);

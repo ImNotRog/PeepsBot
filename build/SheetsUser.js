@@ -24,7 +24,7 @@ class SheetsUser {
         }
         this.setup = false;
     }
-    SetUpSheets() {
+    onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             for (const key of this.map.keys()) {
                 console.log(`Setting up ${key}`);

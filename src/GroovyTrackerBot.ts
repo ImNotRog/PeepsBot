@@ -50,7 +50,7 @@ export class TrackerBot extends Utilities implements Module {
 
     async onConstruct(){
         console.log(`Groovy Tracker Bot constructing...`)
-        await this.sheetsUser.SetUpSheets();
+        await this.sheetsUser.onConstruct();
         console.log(`Groovy Tracker Bot complete.`)
     }
 

@@ -8,6 +8,7 @@ import { Utilities } from "./Utilities";
 import Discord = require("discord.js");
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
+import { DriveUser } from "./DriveUser";
 
 export class LittleBot implements Module {
     private sheetsUser: SheetsUser;
@@ -17,11 +18,14 @@ export class LittleBot implements Module {
     private readonly collectingChannels = ["754912483390652426", "756698378116530266"]
     private readonly prefix: string = "--";
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    private driveUser: DriveUser;
 
     constructor(auth,client: Discord.Client){
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
         this.sheetsUser = new SheetsUser(auth, currmap);
+
+        this.driveUser = new DriveUser(auth);
 
         this.client = client;
 
@@ -76,7 +80,8 @@ export class LittleBot implements Module {
 
         console.log(`Setting up Little Bot.`)
         console.log(`Setting up sheets`)
-        await this.sheetsUser.SetUpSheets();
+        await this.sheetsUser.onConstruct();
+        await this.driveUser.onConstruct();
 
         this.cache = await this.fetchLittleQuotes();
 

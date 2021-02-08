@@ -57,7 +57,7 @@ export class CalendarBot implements Module {
         console.log(`Setting up Calendar Bot`);
 
         console.log(`Setting up Google Sheets.`)
-        await this.sheetsUser.SetUpSheets();
+        await this.sheetsUser.onConstruct();
 
         console.log(`Fetching data, setting up Birthdays.`)
         let rows = (await this.sheetsUser.readSheet("peeps", "Birthdays"));
