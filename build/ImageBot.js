@@ -29,17 +29,22 @@ class ImageBot {
                 if (message.attachments.size > 0) {
                     console.log("Uploading!");
                     const url = message.attachments.first().url;
-                    const path = `./temp/${message.id}.png`;
+                    const filetype = url.slice(url.lastIndexOf('.') + 1);
+                    console.log(filetype);
+                    const path = `./temp/${message.id}.${filetype}`;
                     let p = new Promise((r, j) => {
                         https.get(url, (res) => {
                             res.on('end', () => {
                                 r();
                             });
-                            res.pipe(fs.createWriteStream(path));
+                            const writestream = fs.createWriteStream(path);
+                            writestream.on('open', () => {
+                                res.pipe(writestream);
+                            });
                         });
                     });
                     yield p;
-                    yield this.driveUser.uploadFile(`${message.id}.png`, path, this.jackFolder);
+                    yield this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.jackFolder);
                 }
             }
         });

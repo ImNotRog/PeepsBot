@@ -5,6 +5,8 @@ import * as fs from 'fs';
 export class DriveUser {
     
     private drive:drive_v3.Drive;
+
+    public static SPREADSHEET = 'application/vnd.google-apps.spreadsheet';
     
     constructor(auth) {
         this.drive = google.drive({ version: 'v3', auth });
@@ -34,6 +36,28 @@ export class DriveUser {
         return (await this.drive.files.list({
             q: `parents in "${folderid}"`
         })).data.files;
+    }
+
+    async createFile(name:string, filetype: string, parentID?:string){
+
+        let requestBody:any;
+        if(parentID)  {
+            requestBody = {
+                mimeType: filetype,
+                name: name,
+                parents: [parentID]
+            }
+        } else {
+            requestBody = {
+                mimeType: filetype,
+                name: name
+            }
+        }
+
+        return (await this.drive.files.create({
+            requestBody,
+            fields: 'id'
+        })).data.id;
     }
 
     async createFolder(name:string,parentID?:string):Promise<string> {

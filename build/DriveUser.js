@@ -38,6 +38,28 @@ class DriveUser {
             })).data.files;
         });
     }
+    createFile(name, filetype, parentID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let requestBody;
+            if (parentID) {
+                requestBody = {
+                    mimeType: filetype,
+                    name: name,
+                    parents: [parentID]
+                };
+            }
+            else {
+                requestBody = {
+                    mimeType: filetype,
+                    name: name
+                };
+            }
+            return (yield this.drive.files.create({
+                requestBody,
+                fields: 'id'
+            })).data.id;
+        });
+    }
     createFolder(name, parentID) {
         return __awaiter(this, void 0, void 0, function* () {
             var fileMetadata;
@@ -126,3 +148,4 @@ class DriveUser {
     }
 }
 exports.DriveUser = DriveUser;
+DriveUser.SPREADSHEET = 'application/vnd.google-apps.spreadsheet';

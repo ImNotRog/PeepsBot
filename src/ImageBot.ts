@@ -30,28 +30,35 @@ export class ImageBot implements Module {
                 console.log("Uploading!");
                 
                 const url = message.attachments.first().url;
-                const path = `./temp/${message.id}.png`;
+
+                const filetype = url.slice(url.lastIndexOf('.') + 1);
+                console.log(filetype);
+
+                const path = `./temp/${message.id}.${filetype}`;
 
                 let p:Promise<void> = new Promise((r,j) => {
                     https.get(url, (res) => {
                         res.on('end', () => {
                             r();
                         })
-                        res.pipe(fs.createWriteStream(path));
+                        const writestream = fs.createWriteStream(path);
+                        writestream.on('open', () => {
+                            res.pipe(writestream);
+                        })
                     })
                 })
 
                 await p;
 
-                await this.driveUser.uploadFile(`${message.id}.png`, path, this.jackFolder);
+                await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.jackFolder);
             }
         }
 
     
     }
-    
+
     async onConstruct(): Promise<void> {
-        
+
     }
     
 }
