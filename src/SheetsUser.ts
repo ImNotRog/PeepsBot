@@ -28,27 +28,14 @@ export class SheetsUser {
             sheets: new Map()
         });
 
-        await this.setUpSheet(key);
-    }
-
-    async setUpSheet(key:string) {
-
-        let info = await this.getSpreadsheetInfo(key);
-        let newmap = new Map();
-
-        for (const sheet of info.data.sheets) {
-            newmap.set(sheet.properties.title, sheet.properties.sheetId);
-        }
-
-        this.map.get(key).sheets = newmap;
-
+        await this.SetUpSheet(key);
     }
 
     async onConstruct() {
         for (const key of this.map.keys()) {
 
             console.log(`Setting up ${key}`);
-            await this.setUpSheet(key);
+            await this.SetUpSheet(key);
         }
     }
 
@@ -420,7 +407,7 @@ export class SheetsUser {
             })
         }
 
-        this.executeRequest(sheetname, requests);
+        await this.executeRequest(sheetname, requests);
 
     }
 

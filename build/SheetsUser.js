@@ -32,24 +32,14 @@ class SheetsUser {
                 id,
                 sheets: new Map()
             });
-            yield this.setUpSheet(key);
-        });
-    }
-    setUpSheet(key) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let info = yield this.getSpreadsheetInfo(key);
-            let newmap = new Map();
-            for (const sheet of info.data.sheets) {
-                newmap.set(sheet.properties.title, sheet.properties.sheetId);
-            }
-            this.map.get(key).sheets = newmap;
+            yield this.SetUpSheet(key);
         });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             for (const key of this.map.keys()) {
                 console.log(`Setting up ${key}`);
-                yield this.setUpSheet(key);
+                yield this.SetUpSheet(key);
             }
         });
     }
@@ -407,7 +397,7 @@ class SheetsUser {
                     }
                 });
             }
-            this.executeRequest(sheetname, requests);
+            yield this.executeRequest(sheetname, requests);
         });
     }
     executeRequest(sheetname, requests) {

@@ -21,165 +21,54 @@ class LittleBot {
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
         this.client = client;
-        this.cache = [];
+        this.cache = new Map();
         this.utils = new Utilities_1.Utilities();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
-        this.helpEmbed = {
-            title: `Help - Little Quotes Bot`,
-            description: [
-                `Little Bot keeps track of all sorts of quotes from Mr.Little.`,
-                `Want advice? Mr.Little's got you covered.`
-            ].join(` `),
-            fields: [
-                {
-                    name: `${this.prefix}little`,
-                    value: `Provides an entirely random little quote. It's often surprisingly accurate.`
-                },
-                {
-                    name: `${this.prefix}littler [a sentence]`,
-                    value: `Provides a not entirely random little quote, based off of word similarities.`
-                },
-                {
-                    name: `${this.prefix}spreadsheets`,
-                    value: `Provides the Google spreadsheet where the Little Quotes live.`
-                },
-            ]
-        };
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
-                if (result.command === "spreadsheets") {
-                    yield this.sendSpreadsheets(message);
+                let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
+                if (this.cache.has(teach)) {
+                    message.channel.send(this.randomQuote(teach));
                 }
-                if (result.command === "little") {
-                    message.channel.send(yield this.randomLittleQuote());
-                }
-                if (result.command === "littler") {
-                    message.channel.send(yield this.notRandomLittleQuote(result.args.join(" ")));
-                }
+            }
+        });
+    }
+    addQuote(quote, teacher, stars) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.cache.has(teacher)) {
+                yield this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
+                this.cache.set(teacher, yield this.sheetsUser.readSheet("quotes", teacher));
+            }
+            else {
+                yield this.sheetsUser.createSubsheet("quotes", teacher, {
+                    columnResize: [800, 100],
+                    headers: ["Quote", "Number"]
+                });
+                yield this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
+                this.cache.set(teacher, yield this.sheetsUser.readSheet("quotes", teacher));
             }
         });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(`Setting up Little Bot.`);
-            console.log(`Setting up sheets`);
             yield this.sheetsUser.onConstruct();
-            this.cache = yield this.fetchLittleQuotes();
-            console.log(`Fetching messages from Discord channels`);
+            let subsheets = (yield this.sheetsUser.getSubsheets("quotes"));
+            for (const subsheet of subsheets) {
+                this.cache.set(subsheet, yield this.sheetsUser.readSheet("quotes", subsheet));
+            }
             for (const id of this.collectingChannels) {
                 let channel = yield this.client.channels.fetch(id);
                 // @ts-ignore
                 const test = yield channel.messages.fetch({
                     limit: 90
                 });
-                // Testing why it didn't work
-                // for(const key of test.keys()) {
-                //     const msg = test.get(key);
-                //     if (msg.reactions.cache.has('👍')) {
-                //         console.log(`${msg.content} has ${msg.reactions.cache.get('👍').count} thumbs.`)
-                //     }
-                // }
-            }
-            console.log(`Little Bot Construction Complete!`);
-        });
-    }
-    stripQuotes(txt) {
-        if (txt.startsWith('"')) {
-            txt = txt.slice(1, txt.length - 1);
-        }
-        return txt;
-    }
-    similarities(txt1, txt2) {
-        txt1 = txt1.replace(/[\.?!',"]/g, "");
-        txt2 = txt2.replace(/[\.?!',"]/g, "");
-        let words1 = txt1.toLowerCase().split(" ");
-        let words2 = txt2.toLowerCase().split(" ");
-        let similarities = 0;
-        for (const word of words1) {
-            if (words2.indexOf(word) !== -1)
-                similarities++;
-        }
-        return similarities;
-    }
-    fetchLittleQuotes() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let rows = (yield this.sheetsUser.readSheet("quotes", "Quotes")).slice(1);
-            for (const row of rows) {
-                row[0] = this.stripQuotes(row[0]);
-            }
-            return rows;
-        });
-    }
-    readLittleQuotes() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.cache;
-        });
-    }
-    addLittleQuote(quote, stars) {
-        return __awaiter(this, void 0, void 0, function* () {
-            quote = this.stripQuotes(quote);
-            yield this.sheetsUser.addWithoutDuplicates("quotes", "Quotes", [quote, stars], [true, "CHANGE"]);
-            this.cache = yield this.fetchLittleQuotes();
-        });
-    }
-    randomLittleQuote() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let quotes = yield this.readLittleQuotes();
-            let total = 0;
-            for (const row of quotes) {
-                total += parseInt(row[1]);
-            }
-            let randomnum = Math.random() * total;
-            for (const row of quotes) {
-                randomnum -= parseInt(row[1]);
-                if (randomnum <= 0) {
-                    let quote = this.stripQuotes(row[0]);
-                    console.log(`My wisdom was summoned, and I responded with ${quote}.`);
-                    return quote;
-                }
             }
         });
     }
-    notRandomLittleQuote(messagecontent) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let quotes = yield this.readLittleQuotes();
-            let max = -1;
-            let maxmsg = "";
-            for (let i = 0; i < quotes.length; i++) {
-                const row = quotes[i];
-                if (this.similarities(row[0], messagecontent) > max) {
-                    max = this.similarities(row[0], messagecontent);
-                    maxmsg = row[0];
-                }
-            }
-            return max > 0 ? maxmsg : "Sorry, I'm not sure what to think about that.";
-        });
-    }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    sendSpreadsheets(message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            message.channel.send({
-                embed: Object.assign({ "title": "– Spreadsheets –", "description": "A list of PeepsBot's spreadsheets.", "fields": [
-                        {
-                            "name": "Little Quotes",
-                            "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
-                        },
-                    ] }, this.utils.embedInfo(message))
-            });
-        });
-    }
-    /**
-     *
-     * @param {Discord.MessageReaction} reaction
-     * @param {*} user
-     */
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1)
@@ -193,9 +82,36 @@ class LittleBot {
             }
             if (reaction.emoji.name === "👍") {
                 console.log(`${reaction.message.content} has ${reaction.count}`);
-                this.addLittleQuote(reaction.message.content, reaction.count);
+                // this.addLittleQuote(reaction.message.content, reaction.count)
+                let content = reaction.message.content;
+                let teacher = "Little";
+                if (content.includes("-")) {
+                    let nowhitespace = content.replace(/ /g, '');
+                    teacher = nowhitespace.slice(nowhitespace.lastIndexOf('-') + 1);
+                    content = content.slice(0, content.lastIndexOf("-"));
+                }
+                teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
+                if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
+                    content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
+                }
+                this.addQuote(content, teacher, reaction.count);
             }
         });
+    }
+    randomQuote(teacher) {
+        let total = 0;
+        let cache = this.cache.get(teacher);
+        for (let i = 1; i < cache.length; i++) {
+            total += parseInt(cache[i][1]);
+        }
+        let rand = Math.random() * total;
+        for (let i = 1; i < cache.length; i++) {
+            rand -= parseInt(cache[i][1]);
+            if (rand < 0) {
+                return cache[i][0];
+            }
+        }
+        return "Uh oh, something went wrong.";
     }
 }
 exports.LittleBot = LittleBot;

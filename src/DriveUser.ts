@@ -7,6 +7,7 @@ export class DriveUser {
     private drive:drive_v3.Drive;
 
     public static SPREADSHEET = 'application/vnd.google-apps.spreadsheet';
+    public static FOLDER = 'application/vnd.google-apps.folder';
     
     constructor(auth) {
         this.drive = google.drive({ version: 'v3', auth });
@@ -67,7 +68,7 @@ export class DriveUser {
         if (parentID) {
             fileMetadata = {
                 name,
-                parent: [parentID],
+                parents: [parentID],
                 mimeType: 'application/vnd.google-apps.folder'
             };
         } else {

@@ -66,7 +66,7 @@ class DriveUser {
             if (parentID) {
                 fileMetadata = {
                     name,
-                    parent: [parentID],
+                    parents: [parentID],
                     mimeType: 'application/vnd.google-apps.folder'
                 };
             }
@@ -149,3 +149,4 @@ class DriveUser {
 }
 exports.DriveUser = DriveUser;
 DriveUser.SPREADSHEET = 'application/vnd.google-apps.spreadsheet';
+DriveUser.FOLDER = 'application/vnd.google-apps.folder';
