@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageBot = void 0;
 const DriveUser_1 = require("./DriveUser");
+const SheetsUser_1 = require("./SheetsUser");
 const fs = require("fs");
 const https = require("https");
 class ImageBot {
@@ -20,6 +21,7 @@ class ImageBot {
         this.approvedChannels = ['808469386746789938'];
         this.client = client;
         this.driveUser = new DriveUser_1.DriveUser(auth);
+        this.sheetUser = new SheetsUser_1.SheetsUser(auth);
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

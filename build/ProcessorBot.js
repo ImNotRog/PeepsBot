@@ -30,7 +30,7 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
-        this.imageActive = true;
+        this.imageActive = false;
         this.helpActive = true;
         this.modules = [];
         if (this.littleActive)

@@ -35,7 +35,7 @@ export class ProcessorBot {
     // private readonly roleManagerActive = false;
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
-    // private readonly imageActive = false;
+    // private readonly imageActive = true;
     // private readonly helpActive = false;
 
     private modules: Module[];

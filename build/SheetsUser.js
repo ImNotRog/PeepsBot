@@ -16,24 +16,40 @@ class SheetsUser {
         this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         this.sheets = googleapis_1.google.sheets({ version: 'v4', auth });
         this.map = new Map();
-        for (const key of sheetIdMap.keys()) {
-            this.map.set(key, {
-                id: sheetIdMap.get(key),
-                sheets: new Map()
-            });
+        if (sheetIdMap) {
+            for (const key of sheetIdMap.keys()) {
+                this.map.set(key, {
+                    id: sheetIdMap.get(key),
+                    sheets: new Map()
+                });
+            }
         }
         this.setup = false;
+    }
+    addSheet(key, id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.map.set(key, {
+                id,
+                sheets: new Map()
+            });
+            yield this.setUpSheet(key);
+        });
+    }
+    setUpSheet(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let info = yield this.getSpreadsheetInfo(key);
+            let newmap = new Map();
+            for (const sheet of info.data.sheets) {
+                newmap.set(sheet.properties.title, sheet.properties.sheetId);
+            }
+            this.map.get(key).sheets = newmap;
+        });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             for (const key of this.map.keys()) {
                 console.log(`Setting up ${key}`);
-                let info = yield this.getSpreadsheetInfo(key);
-                let newmap = new Map();
-                for (const sheet of info.data.sheets) {
-                    newmap.set(sheet.properties.title, sheet.properties.sheetId);
-                }
-                this.map.get(key).sheets = newmap;
+                yield this.setUpSheet(key);
             }
         });
     }
