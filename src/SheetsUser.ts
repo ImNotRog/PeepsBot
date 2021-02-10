@@ -7,30 +7,48 @@ export class SheetsUser {
     private readonly alphabet: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private map: Map<string, { id: string, sheets: Map<string, string> }>;
 
-    constructor(auth, sheetIdMap: Map<string, string>) {
+    constructor(auth, sheetIdMap?: Map<string, string>) {
         this.sheets = google.sheets({ version: 'v4', auth });
         this.map = new Map();
-        for (const key of sheetIdMap.keys()) {
-            this.map.set(key, {
-                id: sheetIdMap.get(key),
-                sheets: new Map()
-            })
+
+        if(sheetIdMap) {
+            for (const key of sheetIdMap.keys()) {
+                this.map.set(key, {
+                    id: sheetIdMap.get(key),
+                    sheets: new Map()
+                })
+            }
         }
         this.setup = false;
+    }
+
+    async addSheet(key:string, id:string) {
+        this.map.set(key,{
+            id,
+            sheets: new Map()
+        });
+
+        await this.setUpSheet(key);
+    }
+
+    async setUpSheet(key:string) {
+
+        let info = await this.getSpreadsheetInfo(key);
+        let newmap = new Map();
+
+        for (const sheet of info.data.sheets) {
+            newmap.set(sheet.properties.title, sheet.properties.sheetId);
+        }
+
+        this.map.get(key).sheets = newmap;
+
     }
 
     async onConstruct() {
         for (const key of this.map.keys()) {
 
             console.log(`Setting up ${key}`);
-            let info = await this.getSpreadsheetInfo(key);
-            let newmap = new Map();
-
-            for (const sheet of info.data.sheets) {
-                newmap.set(sheet.properties.title, sheet.properties.sheetId);
-            }
-
-            this.map.get(key).sheets = newmap;
+            await this.setUpSheet(key);
         }
     }
 

@@ -24,7 +24,7 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
-    private readonly imageActive = true;
+    private readonly imageActive = false;
     private readonly helpActive = true;
 
     // private readonly littleActive = false;

@@ -2,6 +2,7 @@ import Discord = require("discord.js");
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 import { DriveUser } from "./DriveUser";
+import { SheetsUser } from "./SheetsUser";
 import * as fs from 'fs';
 import * as nodeFetch from 'node-fetch';
 import * as https from 'https';
@@ -11,6 +12,7 @@ export class ImageBot implements Module {
     private client: Discord.Client;
     private readonly prefix: string = "--";
     private driveUser: DriveUser;
+    private sheetUser: SheetsUser;
 
     private jackFolder = '1JyzBfznVFXsuzv_fJYjdSrju5PDDrAZb';
     private approvedChannels = ['808469386746789938'];
@@ -18,6 +20,7 @@ export class ImageBot implements Module {
     constructor(auth, client: Discord.Client) {
         this.client = client;
         this.driveUser = new DriveUser(auth);
+        this.sheetUser = new SheetsUser(auth);
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
@@ -46,6 +49,7 @@ export class ImageBot implements Module {
 
     
     }
+    
     async onConstruct(): Promise<void> {
         
     }
