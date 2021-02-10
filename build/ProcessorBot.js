@@ -22,26 +22,16 @@ const ImageBot_1 = require("./ImageBot");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        // private readonly littleActive = false;
-        // private readonly trackerActive = true;
-        // private readonly bdayActive = true;
-        // private readonly reactActive = true;
-        // private readonly nameChangerActive = true;
-        // private readonly roleManagerActive = true;
-        // private readonly scremActive = true;
-        // private readonly synonymActive = true;
-        // private readonly imageActive = false;
-        // private readonly helpActive = true;
         this.littleActive = true;
-        this.trackerActive = false;
-        this.bdayActive = false;
-        this.reactActive = false;
-        this.nameChangerActive = false;
-        this.roleManagerActive = false;
-        this.scremActive = false;
-        this.synonymActive = false;
+        this.trackerActive = true;
+        this.bdayActive = true;
+        this.reactActive = true;
+        this.nameChangerActive = true;
+        this.roleManagerActive = true;
+        this.scremActive = true;
+        this.synonymActive = true;
         this.imageActive = true;
-        this.helpActive = false;
+        this.helpActive = true;
         this.modules = [];
         if (this.littleActive)
             this.modules.push(new LittleBot_1.LittleBot(auth, client));
