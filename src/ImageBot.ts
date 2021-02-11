@@ -14,6 +14,7 @@ export class ImageBot implements Module {
     private sheetUser: SheetsUser;
 
     private categories:Map<string,string>;
+    private categoriesSpreadsheetCache: Map<string,string[][]>;
     private readonly imagesFolder = '1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2';
     private readonly imagesSheet = '17iYieSC2zDKpxgSPqhk6fcJZQjVBvJFE5S5KS1IcON8';
 
@@ -31,6 +32,7 @@ export class ImageBot implements Module {
         this.sheetUser = new SheetsUser(auth, map);
 
         this.categories = new Map();
+        this.categoriesSpreadsheetCache = new Map();
 
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
@@ -52,8 +54,8 @@ export class ImageBot implements Module {
                     this.categories.set(cat, await this.driveUser.createFolder(cat,this.imagesFolder) );
 
                     await this.sheetUser.createSubsheet("images", cat, {
-                        columnResize: [200, 200, 100, 200, 200, 100],
-                        headers: ["File Name", "M-ID", "File Type", "UID", "User", "Stars"]
+                        columnResize: [200, 200, 100, 200, 200, 100, 300],
+                        headers: ["File Name", "M-ID", "File Type", "UID", "User", "Stars", "D-ID"]
                     })
 
                 }
@@ -79,12 +81,48 @@ export class ImageBot implements Module {
 
                 await p;
 
-                await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
+                let id = await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
                 
-                await this.sheetUser.add("images", cat, [`${message.id}.${filetype}`, message.id, filetype, message.author.id, message.author.username + '#' + message.author.discriminator, 0]);
+                await this.sheetUser.add("images", cat, [`${message.id}.${filetype}`, message.id, filetype, message.author.id, message.author.username + '#' + message.author.discriminator, 0, id]);
+                this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
                 
             }
         }
+
+        const result = PROCESS(message);
+        if(result) {
+            if(this.categories.has(this.capitilize(result.command))) {
+
+
+                let time = Date.now();
+                // console.log(result.command);
+                const cat = this.capitilize(result.command);
+                // const link = `https://drive.google.com/uc?id=${'1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9'}`
+                // const a = new Discord.MessageAttachment("./temp/brr.jpeg");
+                // await this.driveUser.downloadFile('1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9', './temp/test.jpeg');
+                // const a = new Discord.MessageAttachment(link);
+                // await message.channel.send(a);
+                // console.log(Date.now() - time);
+
+                let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
+                let index = Math.floor(Math.random() * entries) + 1;
+                let row = this.categoriesSpreadsheetCache.get(cat)[index];
+                let DID = row[6];
+                let filename = row[0];
+
+                if(!this.inCache(filename)) {
+                    await this.driveUser.downloadFile(DID, `./temp/${filename}`);
+                }
+                
+                const a = new Discord.MessageAttachment(`./temp/${filename}`);
+                await message.channel.send(a);
+            }
+        }
+        
+    }
+
+    inCache(filename:string) {
+        return fs.existsSync(`./temp/${filename}`)
     }
 
     async onReaction(reaction: Discord.MessageReaction, user: any) {
@@ -107,8 +145,9 @@ export class ImageBot implements Module {
 
             if(true) {
             // if(this.voting.includes(cat)) {
-                await this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE"]);
-            }            
+                await this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count, "D-ID"], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE", "KEEP"]);
+                this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
+            }
         }
 
     }
@@ -123,6 +162,10 @@ export class ImageBot implements Module {
             }
         }
 
+        for(const key of this.categories.keys()) {
+            this.categoriesSpreadsheetCache.set(key, await this.sheetUser.readSheet("images", key));
+        }
+
         for (const id of this.approvedChannels) {
 
             let channel = await this.client.channels.fetch(id)
@@ -132,24 +175,9 @@ export class ImageBot implements Module {
                 limit: 90
             })
         }
-
+        
         console.log(this.categories);
 
-        await this.sheetUser.onConstruct();
-
-        // for (const id of this.approvedChannels) {
-
-        //     let channel = await this.client.channels.fetch(id)
-
-        //     // @ts-ignore
-        //     const test: Map<string, Discord.Message> = await channel.messages.fetch({
-        //         limit: 13
-        //     })
-
-        //     for(const key of test.keys()) {
-        //         this.onMessage(test.get(key));
-        //     }
-        // }
     }
 
     capitilize(a:string) {

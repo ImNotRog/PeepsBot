@@ -27,7 +27,7 @@ export class ProcessorBot {
     private readonly imageActive = true;
     private readonly helpActive = true;
 
-    // private readonly littleActive = true;
+    // private readonly littleActive = false;
     // private readonly trackerActive = false;
     // private readonly bdayActive = false;
     // private readonly reactActive = false;

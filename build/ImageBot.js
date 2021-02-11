@@ -10,6 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageBot = void 0;
+const Discord = require("discord.js");
+const ProcessMessage_1 = require("./ProcessMessage");
 const DriveUser_1 = require("./DriveUser");
 const SheetsUser_1 = require("./SheetsUser");
 const fs = require("fs");
@@ -28,6 +30,7 @@ class ImageBot {
         map.set('images', this.imagesSheet);
         this.sheetUser = new SheetsUser_1.SheetsUser(auth, map);
         this.categories = new Map();
+        this.categoriesSpreadsheetCache = new Map();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
     }
@@ -44,8 +47,8 @@ class ImageBot {
                         // New category
                         this.categories.set(cat, yield this.driveUser.createFolder(cat, this.imagesFolder));
                         yield this.sheetUser.createSubsheet("images", cat, {
-                            columnResize: [200, 200, 100, 200, 200, 100],
-                            headers: ["File Name", "M-ID", "File Type", "UID", "User", "Stars"]
+                            columnResize: [200, 200, 100, 200, 200, 100, 300],
+                            headers: ["File Name", "M-ID", "File Type", "UID", "User", "Stars", "D-ID"]
                         });
                     }
                     const url = message.attachments.first().url;
@@ -64,11 +67,39 @@ class ImageBot {
                         });
                     });
                     yield p;
-                    yield this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
-                    yield this.sheetUser.add("images", cat, [`${message.id}.${filetype}`, message.id, filetype, message.author.id, message.author.username + '#' + message.author.discriminator, 0]);
+                    let id = yield this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
+                    yield this.sheetUser.add("images", cat, [`${message.id}.${filetype}`, message.id, filetype, message.author.id, message.author.username + '#' + message.author.discriminator, 0, id]);
+                    this.categoriesSpreadsheetCache.set(cat, yield this.sheetUser.readSheet("images", cat));
+                }
+            }
+            const result = ProcessMessage_1.PROCESS(message);
+            if (result) {
+                if (this.categories.has(this.capitilize(result.command))) {
+                    let time = Date.now();
+                    // console.log(result.command);
+                    const cat = this.capitilize(result.command);
+                    // const link = `https://drive.google.com/uc?id=${'1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9'}`
+                    // const a = new Discord.MessageAttachment("./temp/brr.jpeg");
+                    // await this.driveUser.downloadFile('1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9', './temp/test.jpeg');
+                    // const a = new Discord.MessageAttachment(link);
+                    // await message.channel.send(a);
+                    // console.log(Date.now() - time);
+                    let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
+                    let index = Math.floor(Math.random() * entries) + 1;
+                    let row = this.categoriesSpreadsheetCache.get(cat)[index];
+                    let DID = row[6];
+                    let filename = row[0];
+                    if (!this.inCache(filename)) {
+                        yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
+                    }
+                    const a = new Discord.MessageAttachment(`./temp/${filename}`);
+                    yield message.channel.send(a);
                 }
             }
         });
+    }
+    inCache(filename) {
+        return fs.existsSync(`./temp/${filename}`);
     }
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -86,7 +117,8 @@ class ImageBot {
                 console.log(`${reaction.message.id} has ${reaction.count} and cat ${cat}`);
                 if (true) {
                     // if(this.voting.includes(cat)) {
-                    yield this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE"]);
+                    yield this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count, "D-ID"], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE", "KEEP"]);
+                    this.categoriesSpreadsheetCache.set(cat, yield this.sheetUser.readSheet("images", cat));
                 }
             }
         });
@@ -99,6 +131,9 @@ class ImageBot {
                     this.categories.set(file.name, file.id);
                 }
             }
+            for (const key of this.categories.keys()) {
+                this.categoriesSpreadsheetCache.set(key, yield this.sheetUser.readSheet("images", key));
+            }
             for (const id of this.approvedChannels) {
                 let channel = yield this.client.channels.fetch(id);
                 // @ts-ignore
@@ -107,17 +142,6 @@ class ImageBot {
                 });
             }
             console.log(this.categories);
-            yield this.sheetUser.onConstruct();
-            // for (const id of this.approvedChannels) {
-            //     let channel = await this.client.channels.fetch(id)
-            //     // @ts-ignore
-            //     const test: Map<string, Discord.Message> = await channel.messages.fetch({
-            //         limit: 13
-            //     })
-            //     for(const key of test.keys()) {
-            //         this.onMessage(test.get(key));
-            //     }
-            // }
         });
     }
     capitilize(a) {
