@@ -24,7 +24,7 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
-    private readonly imageActive = true;
+    private readonly imageActive = false;
     private readonly helpActive = true;
 
     // private readonly littleActive = false;
@@ -131,8 +131,15 @@ export class ProcessorBot {
 
     async onMessage(message: Discord.Message) {
 
+        
         for (const mod of this.modules) {
-            mod.onMessage(message);
+            try {
+                await mod.onMessage(message);
+            } catch(err) {
+                console.log("Ruh roh! Error in module " + mod);
+                console.error(err);
+                message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`);
+            }
         }
 
 

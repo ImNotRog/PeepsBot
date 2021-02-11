@@ -30,7 +30,7 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
-        this.imageActive = true;
+        this.imageActive = false;
         this.helpActive = true;
         this.modules = [];
         if (this.littleActive)
@@ -120,7 +120,14 @@ class ProcessorBot {
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             for (const mod of this.modules) {
-                mod.onMessage(message);
+                try {
+                    yield mod.onMessage(message);
+                }
+                catch (err) {
+                    console.log("Ruh roh! Error in module " + mod);
+                    console.error(err);
+                    message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`);
+                }
             }
             // if (message.content.startsWith("!little")) {
             //     message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
