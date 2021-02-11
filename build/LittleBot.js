@@ -81,8 +81,6 @@ class LittleBot {
                 return;
             }
             if (reaction.emoji.name === "👍") {
-                console.log(`${reaction.message.content} has ${reaction.count}`);
-                // this.addLittleQuote(reaction.message.content, reaction.count)
                 let content = reaction.message.content;
                 let teacher = "Little";
                 if (content.includes("-")) {
@@ -94,6 +92,7 @@ class LittleBot {
                 if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
                     content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
                 }
+                console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
                 this.addQuote(content, teacher, reaction.count);
             }
         });

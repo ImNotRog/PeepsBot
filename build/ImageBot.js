@@ -53,7 +53,7 @@ class ImageBot {
                     }
                     const url = message.attachments.first().url;
                     const filetype = url.slice(url.lastIndexOf('.') + 1);
-                    console.log(`Uploading ${filetype}`);
+                    console.log(`Uploading ${filetype}, category ${cat}`);
                     const path = `./temp/${message.id}.${filetype}`;
                     let p = new Promise((r, j) => {
                         https.get(url, (res) => {
@@ -114,7 +114,7 @@ class ImageBot {
             }
             if (reaction.emoji.name === "👍" && reaction.message.attachments.size > 0) {
                 const cat = this.cat(reaction.message);
-                console.log(`${reaction.message.id} has ${reaction.count} and cat ${cat}`);
+                console.log(`${reaction.message.id} has ${reaction.count} in category ${cat}`);
                 if (true) {
                     // if(this.voting.includes(cat)) {
                     yield this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count, "D-ID"], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE", "KEEP"]);
