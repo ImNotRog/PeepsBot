@@ -141,6 +141,7 @@ class ImageBot {
                     limit: 90
                 });
             }
+            yield this.sheetUser.onConstruct();
             console.log(this.categories);
         });
     }

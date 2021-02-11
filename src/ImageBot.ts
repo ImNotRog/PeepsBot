@@ -176,6 +176,7 @@ export class ImageBot implements Module {
             })
         }
         
+        await this.sheetUser.onConstruct();
         console.log(this.categories);
 
     }
