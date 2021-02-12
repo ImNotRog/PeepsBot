@@ -178,7 +178,7 @@ class ImageBot {
                     let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
                     let index = Math.floor(Math.random() * entries) + 1;
                     let row = this.categoriesSpreadsheetCache.get(cat)[index];
-                    let DID = row[6];
+                    let DID = row[3];
                     let filename = row[0];
                     if (!this.inCache(filename)) {
                         yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
