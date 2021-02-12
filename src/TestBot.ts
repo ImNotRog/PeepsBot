@@ -26,6 +26,7 @@ export class TestBot implements Module {
     }
     async onMessage(message: Discord.Message): Promise<void> {
         
+        
     }
 
     async onConstruct(): Promise<void> {
