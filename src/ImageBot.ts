@@ -38,24 +38,120 @@ export class ImageBot implements Module {
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
     }
 
-    cat(message:Discord.Message):string {
-        const cat = message.content.length > 0 ? this.capitilize(message.content) : this.jackChannels.includes(message.channel.id) ? 'Jack' : 'Archive';
-        return cat;
+    parseInfo(message:Discord.Message):{ cat:string, cap:string, tags: string[] } {
+
+        const content = message.content;
+        let cat = '';
+        let cap = '';
+        let tags = [];
+        
+        if( content.startsWith("```") && content.endsWith("```")) {
+            let lines = content.split('\n');
+            for(const line of lines) {
+
+                if(line.includes(':')) {
+                    let param = line.slice(0,line.indexOf(':'));
+                    let value = line.slice(line.indexOf(':')+1);
+                    if(value.startsWith(' ')) value = value.slice(1);
+
+                    if(param.startsWith('cat')) {
+                        cat = value;
+                    } if(param.startsWith('cap')) {
+                        cap = value;
+                    } if(param.startsWith('tag')) {
+                        let tagstr = value;
+                        while (tagstr.includes('"')) {
+                            let first = tagstr.indexOf('"');
+                            let second = tagstr.slice(first + 1).indexOf('"') + first + 1;
+                            if (second === -1) break;
+                            let arg = tagstr.slice(first + 1, second);
+                            tags.push(arg);
+                            tagstr = tagstr.slice(0, first) + tagstr.slice(second + 1);
+                        }
+                        tags.push(...tagstr.split(' '));
+                        tags = tags.filter(a => a !== "");
+                    }
+                }
+            }
+        } else {
+            const args = content.split(' ');
+            const argnums = Array(args.length).fill(-1);
+
+            const dashargs = ['-cat', '-cap', '-tag'];
+            for (let i = 0; i < args.length; i++) {
+                argnums[i] = dashargs.indexOf(args[i]);
+            }
+
+            const until = (from: number, cond: (a: number) => boolean): number => {
+                let last = from;
+                while (last < args.length) {
+                    last++;
+                    if (cond(argnums[last])) {
+                        break;
+                    }
+                }
+                return last;
+            }
+
+            let catarg = argnums.indexOf(0);
+            if (catarg === -1) {
+                if (argnums[0] === -1) {
+                    cat = args.slice(0, until(0, (a) => a !== -1)).join(' ');
+                }
+            } else {
+                cat = args.slice(catarg + 1, until(catarg, (a) => a !== -1)).join(' ');
+            }
+
+            
+            let caparg = argnums.indexOf(1);
+            if (caparg !== -1) {
+                cap = args.slice(caparg + 1, until(caparg, (a) => a !== -1)).join(' ');
+            }
+
+            let tagarg = argnums.indexOf(2);
+            let tagstr = '';
+            if (tagarg !== -1) {
+                tagstr = args.slice(tagarg + 1, until(tagarg, (a) => a !== -1)).join(' ');
+                while (tagstr.includes('"')) {
+                    let first = tagstr.indexOf('"');
+                    let second = tagstr.slice(first + 1).indexOf('"') + first + 1;
+                    if (second === -1) break;
+                    let arg = tagstr.slice(first + 1, second);
+                    tags.push(arg);
+                    tagstr = tagstr.slice(0, first) + tagstr.slice(second + 1);
+                }
+                tags.push(...tagstr.split(' '));
+                tags = tags.filter(a => a !== "");
+            }
+
+            
+            // -cat -cap -tag
+            // return { cat };
+        }
+
+        if (cat === '') cat = this.jackChannels.includes(message.channel.id) ? 'Jack' : 'Archive';
+
+        cat = this.capitilize(cat);
+        
+        console.log({ cat, cap, tags });
+        return { cat, cap, tags }
+        
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
+
         if(this.approvedChannels.includes(message.channel.id)) {
             if(message.attachments.size > 0 && !message.author.bot) {
 
-                const cat = this.cat(message);
+                const { cat, cap, tags } = this.parseInfo(message);
 
                 if (!this.categories.has(cat)) {
                     // New category
                     this.categories.set(cat, await this.driveUser.createFolder(cat,this.imagesFolder) );
 
                     await this.sheetUser.createSubsheet("images", cat, {
-                        columnResize: [200, 200, 100, 200, 200, 100, 300],
-                        headers: ["File Name", "M-ID", "File Type", "UID", "User", "Stars", "D-ID"]
+                        columnResize: [200, 200, 100, 300, 200, 200, 300, 300, 100],
+                        headers: ["File Name", "M-ID", "File Type", "D-ID", "UID", "User", "Caption", "Tags", "Stars"]
                     })
 
                 }
@@ -83,7 +179,17 @@ export class ImageBot implements Module {
 
                 let id = await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
                 
-                await this.sheetUser.add("images", cat, [`${message.id}.${filetype}`, message.id, filetype, message.author.id, message.author.username + '#' + message.author.discriminator, 0, id]);
+                await this.sheetUser.add("images", cat, 
+                [
+                    `${message.id}.${filetype}`,
+                    message.id, 
+                    filetype, 
+                    id,
+                    message.author.id, 
+                    message.author.username + '#' + message.author.discriminator, 
+                    cap,
+                    tags.join('|'),
+                    0]);
                 this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
                 
             }
@@ -91,18 +197,12 @@ export class ImageBot implements Module {
 
         const result = PROCESS(message);
         if(result) {
-            if(this.categories.has(this.capitilize(result.command))) {
-
+            if (this.categories.has(this.capitilize(result.command.replace(/_/g, " ")))) {
 
                 let time = Date.now();
-                // console.log(result.command);
-                const cat = this.capitilize(result.command);
-                // const link = `https://drive.google.com/uc?id=${'1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9'}`
-                // const a = new Discord.MessageAttachment("./temp/brr.jpeg");
-                // await this.driveUser.downloadFile('1kkKs4sfeMqM8B9gAAbdzS2Ungu2gjor9', './temp/test.jpeg');
-                // const a = new Discord.MessageAttachment(link);
-                // await message.channel.send(a);
-                // console.log(Date.now() - time);
+                const cat = this.capitilize(result.command.replace(/_/g, " "));
+
+                await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
 
                 let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
                 let index = Math.floor(Math.random() * entries) + 1;
@@ -115,7 +215,9 @@ export class ImageBot implements Module {
                 }
                 
                 const a = new Discord.MessageAttachment(`./temp/${filename}`);
-                await message.channel.send(a);
+                
+                await message.channel.send(`Random image of category ${cat}`, a);
+                await message.channel.send(`Latency: ${Date.now() - time} ms`);
             }
         }
         
@@ -138,14 +240,13 @@ export class ImageBot implements Module {
 
         if (reaction.emoji.name === "👍" && reaction.message.attachments.size > 0) {
             
-
-            const cat = this.cat(reaction.message);
+            const { cat } = this.parseInfo(reaction.message);
 
             console.log(`${reaction.message.id} has ${reaction.count} in category ${cat}`);
 
             if(true) {
             // if(this.voting.includes(cat)) {
-                await this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "UID", "User", reaction.count, "D-ID"], ["KEEP", true, "KEEP", "KEEP", "KEEP", "CHANGE", "KEEP"]);
+                await this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "D-ID", "UID", "User", "Caption", "Tags", reaction.count], ["KEEP", true, "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "CHANGE"]);
                 this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
             }
         }

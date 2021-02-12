@@ -10,6 +10,7 @@ import { RoleManagerBot } from "./RoleManager";
 import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
 import { ImageBot } from "./ImageBot";
+import { TestBot } from "./TestBot";
 
 import { Module } from "./Module";
 
@@ -24,7 +25,8 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
-    private readonly imageActive = false;
+    private readonly imageActive = true;
+    private readonly testActive = false;
     private readonly helpActive = true;
 
     // private readonly littleActive = false;
@@ -36,6 +38,7 @@ export class ProcessorBot {
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
     // private readonly imageActive = true;
+    // private readonly testActive = false;
     // private readonly helpActive = false;
 
     private modules: Module[];
@@ -57,6 +60,7 @@ export class ProcessorBot {
         if (this.scremActive) this.modules.push(new ScremBot(client));
         if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
+        if (this.testActive) this.modules.push(new TestBot(auth, client));
 
         this.client = client;
 

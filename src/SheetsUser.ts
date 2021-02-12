@@ -54,6 +54,100 @@ export class SheetsUser {
         return (this.map.has(param) ? this.map.get(param).id : param);
     }
 
+    async moveCol(sheetname:string, subsheetname:string, rowa:number, rowb:number) {
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        let requests = [];
+        
+        requests.push({
+            "moveDimension": {
+                "source": {
+                    "sheetId": subsheetid,
+                    "dimension": "COLUMNS",
+                    "startIndex": rowa,
+                    "endIndex": rowa+1
+                },
+                "destinationIndex": rowb
+            }
+        });
+
+
+        await this.executeRequest(sheetname, requests);
+    }
+
+    async insertCol(sheetname: string, subsheetname: string, header:string, col: number, size:number) {
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        let requests = [];
+
+        requests.push({
+            "insertDimension": {
+                "range": {
+                    "sheetId": subsheetid,
+                    "dimension": "COLUMNS",
+                    "startIndex": col,
+                    "endIndex": col+1
+                },
+                "inheritFromBefore": true
+            }
+        });
+
+        requests.push({
+            updateCells: {
+                "rows": [{
+                    values: [{
+                        userEnteredValue: {
+                            stringValue: header
+                        }
+                    }]
+                }],
+                fields: "*",
+                range: {
+                    "sheetId": subsheetid,
+                    "startRowIndex": 0,
+                    "endRowIndex": 1,
+                    "startColumnIndex": col,
+                    "endColumnIndex": col+1
+                },
+            }
+        })
+
+        requests.push({
+            "updateDimensionProperties": {
+                "range": {
+                    "sheetId": subsheetid,
+                    "dimension": "COLUMNS",
+                    "startIndex": col,
+                    "endIndex": col + 1
+                },
+                "properties": {
+                    "pixelSize": size
+                },
+                "fields": "pixelSize"
+            }
+        })
+
+        requests.push({
+            repeatCell: {
+                range: {
+                    sheetId: subsheetid,
+                    startRowIndex: 0,
+                    endRowIndex: 1
+                },
+                cell: {
+                    userEnteredFormat: {
+                        horizontalAlignment: "CENTER",
+                        textFormat: {
+                            bold: true
+                        }
+                    }
+                },
+                "fields": "userEnteredFormat(textFormat,horizontalAlignment)"
+            }
+        });
+
+
+        await this.executeRequest(sheetname, requests);
+    }
+
     async getSubsheets(name: string) {
         return [...this.map.get(name).sheets.keys()];
     }
