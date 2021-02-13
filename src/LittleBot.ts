@@ -8,7 +8,6 @@ export class LittleBot implements Module {
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
     private cache: Map<string, any[][]>;
-    private utils: Utilities;
     private readonly collectingChannels = ["754912483390652426", "756698378116530266"]
     private readonly prefix: string = "--";
 
@@ -21,8 +20,6 @@ export class LittleBot implements Module {
         this.client = client;
 
         this.cache = new Map();
-
-        this.utils = new Utilities();
 
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });

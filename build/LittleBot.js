@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LittleBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
-const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
 class LittleBot {
     constructor(auth, client) {
@@ -22,7 +21,6 @@ class LittleBot {
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
         this.client = client;
         this.cache = new Map();
-        this.utils = new Utilities_1.Utilities();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
     }
