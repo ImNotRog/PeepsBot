@@ -8,7 +8,6 @@ import { Utilities } from "./Utilities";
 export class RoleManagerBot implements Module {
 
     private client:Discord.Client;
-    private utilities: Utilities;
     private readonly approvedChannels = ["750804960333135914", "748670606085587060"];
     private readonly fperbio = "748669830244073533";
     private readonly entrancechannel = "750186607352479755";
@@ -25,7 +24,6 @@ export class RoleManagerBot implements Module {
 
     constructor(client: Discord.Client) {
         this.client = client;
-        this.utilities = new Utilities();
 
         this.client.on("messageReactionAdd", (reaction,user) => {
             if(user instanceof Discord.User) {
@@ -160,7 +158,7 @@ export class RoleManagerBot implements Module {
             let accepted = `abcdef0123456789`;
             if( args[1].startsWith("#") && [...args[1].slice(1)].every((char) => accepted.includes(char))) {
 
-                let created = await this.utilities.sendEmoteCollector(message, (bool) => {
+                let created = await Utilities.sendEmoteCollector(message, (bool) => {
                     return {
                         title: `Create${bool ? 'd' : ''} Role ${args[0]}`,
                         description: `Vote down below. You need net 3 votes to create this role.`,
@@ -196,7 +194,7 @@ export class RoleManagerBot implements Module {
             }
 
             if(todelete) {
-                let deleted = await this.utilities.sendEmoteCollector(message, (bool) => {
+                let deleted = await Utilities.sendEmoteCollector(message, (bool) => {
                     return {
                         title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
                         description: `Vote down below. You need net 3 votes to delete this role.`,
@@ -233,7 +231,7 @@ export class RoleManagerBot implements Module {
                     let accepted = `abcdef0123456789`;
                     if (args[2].startsWith("#") && [...args[2].slice(1)].every((char) => accepted.includes(char))) {
 
-                        let edited = await this.utilities.sendEmoteCollector(message, (bool) => {
+                        let edited = await Utilities.sendEmoteCollector(message, (bool) => {
                             return {
                                 title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s Color to ${args[2]}`,
                                 description: `Vote down below. You need net 3 votes to edit this role.`,
@@ -252,7 +250,7 @@ export class RoleManagerBot implements Module {
                     }
                 } else if(args[1] === "name") {
 
-                    let edited = await this.utilities.sendEmoteCollector(message, (bool) => {
+                    let edited = await Utilities.sendEmoteCollector(message, (bool) => {
                         return {
                             title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s name to ${args[2]}`,
                             description: `Vote down below. You need net 3 votes to edit this role.`,

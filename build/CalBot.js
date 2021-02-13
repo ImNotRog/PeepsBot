@@ -25,7 +25,6 @@ class CalendarBot {
         let currmap = new Map();
         currmap.set("peeps", "1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k");
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
-        this.utils = new Utilities_1.Utilities();
         // this.bdayChannels = ["750804960333135914"]; // Redirect
         this.client = client;
     }
@@ -39,7 +38,7 @@ class CalendarBot {
             const age = row[3];
             let embed = Object.assign({ title: `Happy Birthday to ${person}! 🎉`, description: [`${age} years ago, on ${bday}, they were birthed into this cruel and doomed world.`,
                     `But today, we celebrate! Here's to being 1 year closer to death!`,
-                    `Ok, now go bully them with your singing or something.`].join(`\n`) }, this.utils.basicEmbedInfoForCal());
+                    `Ok, now go bully them with your singing or something.`].join(`\n`) }, Utilities_1.Utilities.basicEmbedInfoForCal());
             for (const id of this.bdayChannels) {
                 let channel = yield this.client.channels.fetch(id);
                 if (channel instanceof Discord.TextChannel) {

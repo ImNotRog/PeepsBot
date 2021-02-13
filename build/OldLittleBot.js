@@ -171,7 +171,7 @@ class LittleBot {
                             "name": "Little Quotes",
                             "value": "All of our Little Quotes can be found here: [Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=0,)"
                         },
-                    ] }, this.utils.embedInfo(message))
+                    ] }, Utilities_1.Utilities.embedInfo(message))
             });
         });
     }

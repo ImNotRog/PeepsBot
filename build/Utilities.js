@@ -18,37 +18,13 @@ class Utilities {
     constructor() {
     }
     /* Moment Utilities */
-    now() {
-        return this.nowObj().format();
+    static now() {
+        return moment.tz("America/Los_Angeles").format();
     }
-    nowObj() {
-        return moment.tz("America/Los_Angeles");
-    }
-    getDay() {
-        return moment.tz("America/Los_Angeles").day();
-    }
-    getTodayStr() {
+    static getTodayStr() {
         return moment.tz("America/Los_Angeles").format("MM/DD/YYYY");
     }
-    formatTime(t) {
-        let time = moment.tz(t, "America/Los_Angeles");
-        let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
-        if (diff < 0) {
-            return time.format("MM/DD h:mm:ss a");
-        }
-        else {
-            let days = time.diff(moment.tz("America/Los_Angeles"), "days");
-            let hrs = time.diff(moment.tz("America/Los_Angeles"), "hours") % 24;
-            let mins = time.diff(moment.tz("America/Los_Angeles"), "minutes") % 60;
-            if (days > 3) {
-                return `${time.format("MM/DD h:mm:ss a")}`;
-            }
-            else {
-                return `${days} days, ${hrs} hrs, ${mins} mins`;
-            }
-        }
-    }
-    longFormatTime(t) {
+    static formatTime(t) {
         let time = moment.tz(t, "America/Los_Angeles");
         let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
         if (diff < 0) {
@@ -61,16 +37,12 @@ class Utilities {
             return `${days} days, ${hrs} hrs, ${mins} mins, at ${time.format("MM/DD h:mm:ss a")}`;
         }
     }
-    /**
-     * @param {moment.Moment}
-     * @returns {number}
-     */
-    timediff(momentobj) {
+    static timediff(momentobj) {
         let now = moment.tz("America/Los_Angeles");
         return momentobj.diff(now, 'days');
     }
     /* Discord Utilities */
-    sendEmoteCollector(origmessage, embed, num, millis) {
+    static sendEmoteCollector(origmessage, embed, num, millis) {
         return __awaiter(this, void 0, void 0, function* () {
             const emote = "👍";
             const downemote = "👎";
@@ -124,7 +96,7 @@ class Utilities {
     /**
      * @param {Discord.Message|Discord.TextChannel} origmessage
      */
-    sendClosableEmbed(origmessage, embed) {
+    static sendClosableEmbed(origmessage, embed) {
         return __awaiter(this, void 0, void 0, function* () {
             if (origmessage instanceof Discord.Message) {
                 let message = yield origmessage.channel.send({
@@ -179,20 +151,16 @@ class Utilities {
             }
         });
     }
-    /**
-     * @param {Discord.Message} origmessage
-     * @param {{embed: Object}[]} embeds
-     */
-    sendCarousel(origmessage, embeds) {
+    static sendCarousel(origmessage, embeds) {
         return __awaiter(this, void 0, void 0, function* () {
             // Remap embeds
             embeds = embeds.map((e) => {
                 if (e.embed) {
-                    return Object.assign(Object.assign({}, e), this.embedInfo(origmessage));
+                    return Object.assign(Object.assign({}, e), Utilities.embedInfo(origmessage));
                 }
                 else {
                     return {
-                        embed: Object.assign(Object.assign({}, e), this.embedInfo(origmessage))
+                        embed: Object.assign(Object.assign({}, e), Utilities.embedInfo(origmessage))
                     };
                 }
             });
@@ -201,16 +169,10 @@ class Utilities {
             yield message.react("⬅️");
             yield message.react("❌");
             yield message.react("➡️");
-            this.carouselPage(message, embeds, 0, origmessage);
+            Utilities.carouselPage(message, embeds, 0, origmessage);
         });
     }
-    /**
-     * @param {Discord.Message} message
-     * @param {{embed: Object}[]} embeds
-     * @param {number} curr
-     * @param {Discord.Message} origmessage
-     */
-    carouselPage(message, embeds, curr, origmessage) {
+    static carouselPage(message, embeds, curr, origmessage) {
         return __awaiter(this, void 0, void 0, function* () {
             const filter = (reaction, user) => {
                 return ['❌', '⬅️', '➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
@@ -251,29 +213,18 @@ class Utilities {
             }
         });
     }
-    basicEmbedInfo() {
-        return {
-            "color": 1111111,
-            "timestamp": this.now(),
-            "author": {
-                "name": "Mr. Little",
-                "url": "https://pausd.schoology.com/user/52984930/info",
-                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-            },
-        };
-    }
-    basicEmbedInfoForCal() {
+    static basicEmbedInfoForCal() {
         return {
             "color": 111111,
-            "timestamp": this.now(),
+            "timestamp": Utilities.now(),
             "author": {
                 "name": "F Period Bio",
                 "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
             },
         };
     }
-    embedInfo(message) {
-        return Object.assign(Object.assign({}, this.basicEmbedInfoForCal()), { "footer": {
+    static embedInfo(message) {
+        return Object.assign(Object.assign({}, Utilities.basicEmbedInfoForCal()), { "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
             } });

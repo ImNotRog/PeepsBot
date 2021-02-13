@@ -184,7 +184,7 @@ export class NameChangerBot implements Module {
      * @param {Discord.Message} message 
      */
     async sendSpreadsheets(message: Discord.Message) {
-        await this.utilities.sendClosableEmbed(message, {
+        await Utilities.sendClosableEmbed(message, {
             "title": "Theme Spreadsheet",
             "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!",
             "fields": [
@@ -193,7 +193,7 @@ export class NameChangerBot implements Module {
                     "value": "Themes found here: [Link](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0)"
                 },
             ],
-            ...this.utilities.embedInfo(message)
+            ...Utilities.embedInfo(message)
         });
     }
 
@@ -219,11 +219,11 @@ export class NameChangerBot implements Module {
         }
 
 
-        await this.utilities.sendClosableEmbed(message, {
+        await Utilities.sendClosableEmbed(message, {
             title: `Themes`,
             description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use ${this.prefix}themesheet)`,
             fields,
-            ...this.utilities.embedInfo(message)
+            ...Utilities.embedInfo(message)
         });
     }
 
@@ -241,7 +241,7 @@ export class NameChangerBot implements Module {
                 embed: {
                     title: `Invalid Theme ${param}`,
                     description: `That theme is not valid. Capitalization matters.`,
-                    ...this.utilities.embedInfo(message)
+                    ...Utilities.embedInfo(message)
                 }
             });
             return false;
@@ -252,7 +252,7 @@ export class NameChangerBot implements Module {
                 embed: {
                     title: `Slow Down!`,
                     description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.`,
-                    ...this.utilities.embedInfo(message)
+                    ...Utilities.embedInfo(message)
                 }
             });
             return false;
@@ -261,7 +261,7 @@ export class NameChangerBot implements Module {
         const arr = map.get(param);
         const arrstr = arr.join(", ");
 
-        const passed = await this.utilities.sendEmoteCollector(message, (bool) => {
+        const passed = await Utilities.sendEmoteCollector(message, (bool) => {
 
             if (typeof bool === "boolean") {
                 return {
@@ -274,7 +274,7 @@ export class NameChangerBot implements Module {
                         name: `Channel Names:`,
                         value: arrstr
                     }],
-                    ...this.utilities.embedInfo(message)
+                    ...Utilities.embedInfo(message)
                 }
             }
 

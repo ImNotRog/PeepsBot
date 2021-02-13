@@ -34,7 +34,6 @@ class ImageBot {
         this.categoriesSpreadsheetCache = new Map();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
-        this.utils = new Utilities_1.Utilities();
     }
     parseInfo(message) {
         const content = message.content;
@@ -196,7 +195,7 @@ class ImageBot {
                                     name: 'Categories',
                                     value: this.listCategories().join('\n')
                                 }
-                            ] }, this.utils.embedInfo(message))
+                            ] }, Utilities_1.Utilities.embedInfo(message))
                     });
                 }
                 if (result.command === 'merge') {

@@ -13,7 +13,6 @@ import { Module } from "./Module";
 export class CalendarBot implements Module {
 
     private sheetsUser:SheetsUser;
-    private utils: Utilities;
     private prefix = `--`;
     private bdayChannels: string[] = ["748669830244073536"];
     private client: Discord.Client;
@@ -23,7 +22,6 @@ export class CalendarBot implements Module {
         currmap.set("peeps", "1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k");
         this.sheetsUser = new SheetsUser(auth, currmap);
 
-        this.utils = new Utilities();
 
         // this.bdayChannels = ["750804960333135914"]; // Redirect
         this.client = client;
@@ -41,7 +39,7 @@ export class CalendarBot implements Module {
             description: [`${age} years ago, on ${bday}, they were birthed into this cruel and doomed world.`,
                     `But today, we celebrate! Here's to being 1 year closer to death!`,
                     `Ok, now go bully them with your singing or something.`].join(`\n`),
-            ...this.utils.basicEmbedInfoForCal()
+            ...Utilities.basicEmbedInfoForCal()
         }
 
         for(const id of this.bdayChannels) {

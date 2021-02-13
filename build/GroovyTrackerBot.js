@@ -13,9 +13,8 @@ exports.TrackerBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
-class TrackerBot extends Utilities_1.Utilities {
+class TrackerBot {
     constructor(auth) {
-        super();
         this.prefix = "--";
         this.approvedMusicServers = ["748669830244073533"];
         let currmap = new Map();
@@ -63,7 +62,7 @@ class TrackerBot extends Utilities_1.Utilities {
     }
     addGroovyEntry(title, link) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title, link, 1, this.getTodayStr()], [true, true, (x) => parseInt(x) + 1, "CHANGE"]);
+            this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title, link, 1, Utilities_1.Utilities.getTodayStr()], [true, true, (x) => parseInt(x) + 1, "CHANGE"]);
         });
     }
     processPlayMessage(txt) {
@@ -102,7 +101,7 @@ class TrackerBot extends Utilities_1.Utilities {
                             "name": "Our Groovy History",
                             "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
                         }
-                    ] }, this.embedInfo(message))
+                    ] }, Utilities_1.Utilities.embedInfo(message))
             });
         });
     }

@@ -4,7 +4,7 @@ import * as Discord from "discord.js";
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
-export class TrackerBot extends Utilities implements Module {
+export class TrackerBot implements Module {
     private sheetsUser: SheetsUser;
     private musicBots: string[];
     private prefix: string = "--";
@@ -12,7 +12,6 @@ export class TrackerBot extends Utilities implements Module {
     private approvedMusicServers = ["748669830244073533"];
 
     constructor(auth){
-        super();
 
         let currmap = new Map();
         currmap.set("music", "17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU");
@@ -59,7 +58,7 @@ export class TrackerBot extends Utilities implements Module {
     }
 
     async addGroovyEntry(title:string,link:string) {
-        this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title,link,1,this.getTodayStr()], [true,true, (x) => parseInt(x)+1, "CHANGE"]);
+        this.sheetsUser.addWithoutDuplicates("music", "Groovy", [title,link,1,Utilities.getTodayStr()], [true,true, (x) => parseInt(x)+1, "CHANGE"]);
     }
 
     async processPlayMessage(txt: string){
@@ -104,7 +103,7 @@ export class TrackerBot extends Utilities implements Module {
                         "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
                     }
                 ],
-                ...this.embedInfo(message)
+                ...Utilities.embedInfo(message)
             }
             
         });

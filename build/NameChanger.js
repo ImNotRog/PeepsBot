@@ -176,12 +176,12 @@ class NameChangerBot {
      */
     sendSpreadsheets(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.utilities.sendClosableEmbed(message, Object.assign({ "title": "Theme Spreadsheet", "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!", "fields": [
+            yield Utilities_1.Utilities.sendClosableEmbed(message, Object.assign({ "title": "Theme Spreadsheet", "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!", "fields": [
                     {
                         "name": "Spreadsheet:",
                         "value": "Themes found here: [Link](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0)"
                     },
-                ] }, this.utilities.embedInfo(message)));
+                ] }, Utilities_1.Utilities.embedInfo(message)));
         });
     }
     /**
@@ -202,7 +202,7 @@ class NameChangerBot {
                     value: `Sample: ${randsample}`
                 });
             }
-            yield this.utilities.sendClosableEmbed(message, Object.assign({ title: `Themes`, description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use ${this.prefix}themesheet)`, fields }, this.utilities.embedInfo(message)));
+            yield Utilities_1.Utilities.sendClosableEmbed(message, Object.assign({ title: `Themes`, description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use ${this.prefix}themesheet)`, fields }, Utilities_1.Utilities.embedInfo(message)));
         });
     }
     /**
@@ -216,19 +216,19 @@ class NameChangerBot {
             const map = yield this.readThemes();
             if (!map.has(param)) {
                 message.channel.send({
-                    embed: Object.assign({ title: `Invalid Theme ${param}`, description: `That theme is not valid. Capitalization matters.` }, this.utilities.embedInfo(message))
+                    embed: Object.assign({ title: `Invalid Theme ${param}`, description: `That theme is not valid. Capitalization matters.` }, Utilities_1.Utilities.embedInfo(message))
                 });
                 return false;
             }
             if (!(yield this.available())) {
                 message.channel.send({
-                    embed: Object.assign({ title: `Slow Down!`, description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.` }, this.utilities.embedInfo(message))
+                    embed: Object.assign({ title: `Slow Down!`, description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.` }, Utilities_1.Utilities.embedInfo(message))
                 });
                 return false;
             }
             const arr = map.get(param);
             const arrstr = arr.join(", ");
-            const passed = yield this.utilities.sendEmoteCollector(message, (bool) => {
+            const passed = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
                 if (typeof bool === "boolean") {
                     return Object.assign({ title: bool ? `Changed the Theme to ${param}` : `Change the Theme to ${param}?`, description: bool ?
                             `The theme was changed. You must wait 5 minutes before changing again.` :
@@ -236,7 +236,7 @@ class NameChangerBot {
                                 `Also, admins can use ❌ to instantly disable the vote. Finally, after 2 minutes of inactivity, the vote is disabled.`, fields: [{
                                 name: `Channel Names:`,
                                 value: arrstr
-                            }] }, this.utilities.embedInfo(message));
+                            }] }, Utilities_1.Utilities.embedInfo(message));
                 }
             }, 4, 1000 * 60 * 2);
             if (passed) {

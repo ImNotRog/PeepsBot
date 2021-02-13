@@ -23,7 +23,6 @@ export class ImageBot implements Module {
 
     private approvedChannels = ['808469386746789938', '809143110302826497'];
     private voting = ['Jack', 'Nature'];
-    private utils: Utilities;
 
     constructor(auth, client: Discord.Client) {
         this.client = client;
@@ -39,7 +38,6 @@ export class ImageBot implements Module {
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
 
-        this.utils = new Utilities();
     }
 
     parseInfo(message:Discord.Message):{ cat:string, cap:string, tags: string[] } {
@@ -236,7 +234,7 @@ export class ImageBot implements Module {
                             }
                         ],
 
-                        ...this.utils.embedInfo(message)
+                        ...Utilities.embedInfo(message)
                     }
                 })
             } 

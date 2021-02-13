@@ -7,45 +7,21 @@ import moment = require("moment-timezone");
 import Discord = require("discord.js");
 
 export class Utilities {
-    constructor(){
+    private constructor(){
     }
+
 
     /* Moment Utilities */
-    now() {
-        return this.nowObj().format();
+
+    public static now() {
+        return moment.tz("America/Los_Angeles").format();
     }
 
-    nowObj(){
-        return moment.tz("America/Los_Angeles");
-    }
-
-    getDay() {
-        return moment.tz("America/Los_Angeles").day();
-    }
-
-    getTodayStr(){
+    public static getTodayStr(){
         return moment.tz("America/Los_Angeles").format("MM/DD/YYYY");
     }
 
-    formatTime(t) {
-        let time = moment.tz(t, "America/Los_Angeles")
-        let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
-        if(diff < 0) {
-            return time.format("MM/DD h:mm:ss a")
-        } else {
-            let days = time.diff(moment.tz("America/Los_Angeles"), "days");
-            let hrs = time.diff(moment.tz("America/Los_Angeles"), "hours") % 24;
-            let mins = time.diff(moment.tz("America/Los_Angeles"), "minutes") % 60;
-
-            if(days > 3) {
-                return `${time.format("MM/DD h:mm:ss a")}`;
-            } else {
-                return `${days} days, ${hrs} hrs, ${mins} mins`
-            }
-        }
-    }
-
-    longFormatTime(t) {
+    public static formatTime(t) {
         let time = moment.tz(t, "America/Los_Angeles")
         let diff = time.diff(moment.tz("America/Los_Angeles"), "milliseconds");
         if(diff < 0) {
@@ -60,11 +36,7 @@ export class Utilities {
         }
     }
 
-    /**
-     * @param {moment.Moment}
-     * @returns {number}
-     */
-    timediff(momentobj): number {
+    public static timediff(momentobj: moment.Moment): number {
         let now = moment.tz("America/Los_Angeles");
         return momentobj.diff(now, 'days');
     }
@@ -72,7 +44,7 @@ export class Utilities {
 
     /* Discord Utilities */
 
-    async sendEmoteCollector(origmessage: Discord.Message,embed:(boolean) => Object,num: number,millis: number) {
+    public static async sendEmoteCollector(origmessage: Discord.Message,embed:(boolean) => Object,num: number,millis: number) {
 
         const emote = "👍"
         const downemote = "👎"
@@ -138,7 +110,7 @@ export class Utilities {
     /**
      * @param {Discord.Message|Discord.TextChannel} origmessage
      */
-    async sendClosableEmbed(origmessage: Discord.Message | Discord.TextChannel, embed) {
+    public static async sendClosableEmbed(origmessage: Discord.Message | Discord.TextChannel, embed) {
 
         if(origmessage instanceof Discord.Message) {
             let message = await origmessage.channel.send({
@@ -196,24 +168,20 @@ export class Utilities {
         
     }
 
-    /**
-     * @param {Discord.Message} origmessage
-     * @param {{embed: Object}[]} embeds
-     */
-    async sendCarousel(origmessage: Discord.Message, embeds: { embed: object; }[]) {
+    public static async sendCarousel(origmessage: Discord.Message, embeds: { embed: object; }[]) {
 
         // Remap embeds
         embeds = embeds.map( (e) => {
             if(e.embed) {
                 return { 
                     ...e,
-                    ...this.embedInfo(origmessage)
+                    ...Utilities.embedInfo(origmessage)
                 };
             } else {
                 return {
                     embed: {
                         ...e,
-                        ...this.embedInfo(origmessage)
+                        ...Utilities.embedInfo(origmessage)
                     }
                 }
             }
@@ -225,16 +193,10 @@ export class Utilities {
         await message.react("❌")
         await message.react("➡️")
 
-        this.carouselPage(message, embeds, 0, origmessage);
+        Utilities.carouselPage(message, embeds, 0, origmessage);
     }
 
-    /**
-     * @param {Discord.Message} message
-     * @param {{embed: Object}[]} embeds
-     * @param {number} curr
-     * @param {Discord.Message} origmessage
-     */
-    async carouselPage(message: Discord.Message, embeds: { embed: object; }[], curr: number, origmessage: Discord.Message) {
+    public static async carouselPage(message: Discord.Message, embeds: { embed: object; }[], curr: number, origmessage: Discord.Message) {
 
         const filter = (reaction, user) => {
             return ['❌','⬅️','➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
@@ -276,22 +238,11 @@ export class Utilities {
 
     }
 
-    basicEmbedInfo() {
-        return {
-            "color": 1111111,
-            "timestamp": this.now(),
-            "author": {
-                "name": "Mr. Little",
-                "url": "https://pausd.schoology.com/user/52984930/info",
-                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-            },
-        }
-    }
 
-    basicEmbedInfoForCal() {
+    public static basicEmbedInfoForCal() {
         return {
             "color": 111111,
-            "timestamp": this.now(),
+            "timestamp": Utilities.now(),
             "author": {
                 "name": "F Period Bio",
                 "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
@@ -299,9 +250,9 @@ export class Utilities {
         }
     }
 
-    embedInfo(message) {
+    public static embedInfo(message:Discord.Message) {
         return {
-            ...this.basicEmbedInfoForCal(),
+            ...Utilities.basicEmbedInfoForCal(),
             "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
