@@ -29,6 +29,30 @@ class DriveUser {
             // const id = await this.createFolder("brr");
             // this.uploadFile("haha", "./brr.png", id);
             //1JyzBfznVFXsuzv_fJYjdSrju5PDDrAZb
+            // this.drive.files.update({
+            //     fileId: "16gjjPNgTnJ_5CxFOjAwy73WR8cPx3Wfu",
+            //     fields: "id",
+            //     addParents: "1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2"
+            // })
+        });
+    }
+    deleteFile(fileId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.drive.files.delete({
+                fileId
+            });
+            console.trace(`DRIVE FILE DELETED: ${fileId}`);
+        });
+    }
+    moveFile(fileId, folderid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const file = yield this.drive.files.get({ fileId, fields: 'parents' });
+            const prev = file.data.parents.join(',');
+            yield this.drive.files.update({
+                fileId,
+                addParents: folderid,
+                removeParents: prev
+            });
         });
     }
     getItemsInFolder(folderid) {

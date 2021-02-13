@@ -1,4 +1,5 @@
 "use strict";
+// change to static
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -272,7 +273,7 @@ class Utilities {
         };
     }
     embedInfo(message) {
-        return Object.assign(Object.assign({}, this.basicEmbedInfo()), { "footer": {
+        return Object.assign(Object.assign({}, this.basicEmbedInfoForCal()), { "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
             } });

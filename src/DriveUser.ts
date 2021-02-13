@@ -31,6 +31,29 @@ export class DriveUser {
         // this.uploadFile("haha", "./brr.png", id);
 
         //1JyzBfznVFXsuzv_fJYjdSrju5PDDrAZb
+
+        // this.drive.files.update({
+        //     fileId: "16gjjPNgTnJ_5CxFOjAwy73WR8cPx3Wfu",
+        //     fields: "id",
+        //     addParents: "1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2"
+        // })
+    }
+
+    async deleteFile(fileId:string) {
+        await this.drive.files.delete({
+            fileId
+        })
+        console.trace(`DRIVE FILE DELETED: ${fileId}`)
+    }
+
+    async moveFile(fileId:string, folderid:string) {
+        const file = await this.drive.files.get({ fileId, fields: 'parents' })
+        const prev = file.data.parents.join(',');
+        await this.drive.files.update({
+            fileId,
+            addParents: folderid,
+            removeParents: prev
+        })
     }
 
     async getItemsInFolder(folderid:string) {

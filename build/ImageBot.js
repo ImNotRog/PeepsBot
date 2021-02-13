@@ -14,6 +14,7 @@ const Discord = require("discord.js");
 const ProcessMessage_1 = require("./ProcessMessage");
 const DriveUser_1 = require("./DriveUser");
 const SheetsUser_1 = require("./SheetsUser");
+const Utilities_1 = require("./Utilities");
 const fs = require("fs");
 const https = require("https");
 class ImageBot {
@@ -33,6 +34,7 @@ class ImageBot {
         this.categoriesSpreadsheetCache = new Map();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
+        this.utils = new Utilities_1.Utilities();
     }
     parseInfo(message) {
         const content = message.content;
@@ -174,7 +176,7 @@ class ImageBot {
                 if (this.categories.has(this.capitilize(result.command.replace(/_/g, " ")))) {
                     let time = Date.now();
                     const cat = this.capitilize(result.command.replace(/_/g, " "));
-                    yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                    let msg = yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
                     let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
                     let index = Math.floor(Math.random() * entries) + 1;
                     let row = this.categoriesSpreadsheetCache.get(cat)[index];
@@ -185,7 +187,34 @@ class ImageBot {
                     }
                     const a = new Discord.MessageAttachment(`./temp/${filename}`);
                     yield message.channel.send(`Random image of category ${cat}`, a);
-                    yield message.channel.send(`Latency: ${Date.now() - time} ms`);
+                    yield msg.edit(`Latency: ${Date.now() - time} ms`);
+                }
+                if (result.command === 'imagecategories') {
+                    yield message.channel.send({
+                        embed: Object.assign({ title: 'Image Categories', description: 'When using categories with spaces, replace spaces with _', fields: [
+                                {
+                                    name: 'Categories',
+                                    value: this.listCategories().join('\n')
+                                }
+                            ] }, this.utils.embedInfo(message))
+                    });
+                }
+                if (result.command === 'merge') {
+                    if (!message.member.hasPermission("ADMINISTRATOR")) {
+                        yield message.channel.send(`You must have permission ADMINISTRATOR!`);
+                        return;
+                    }
+                    let cats = result.args.slice(0, 2).map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
+                    if (cats.length < 2) {
+                        yield message.channel.send(`Invalid parameters! You must include two categories, the first one from, the second one to.`);
+                        return;
+                    }
+                    if (!(this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1])) {
+                        yield message.channel.send(`Invalid categories! ${cats}`);
+                        return;
+                    }
+                    const { num } = yield this.merge(cats[0], cats[1]);
+                    yield message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`);
                 }
             }
         });
@@ -223,8 +252,14 @@ class ImageBot {
                     this.categories.set(file.name, file.id);
                 }
             }
-            for (const key of this.categories.keys()) {
-                this.categoriesSpreadsheetCache.set(key, yield this.sheetUser.readSheet("images", key));
+            yield this.sheetUser.onConstruct();
+            let valueranges = yield this.sheetUser.bulkRead("images");
+            for (const valuerange of valueranges) {
+                let range = valuerange.range;
+                if (range) {
+                    let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
+                    this.categoriesSpreadsheetCache.set(cat, valuerange.values);
+                }
             }
             for (const id of this.approvedChannels) {
                 let channel = yield this.client.channels.fetch(id);
@@ -233,12 +268,40 @@ class ImageBot {
                     limit: 90
                 });
             }
-            yield this.sheetUser.onConstruct();
-            console.log(this.categories);
+        });
+    }
+    merge(from, to) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let fromarr = this.categoriesSpreadsheetCache.get(from).slice(1);
+            for (const row of fromarr) {
+                let did = row[3];
+                yield this.driveUser.moveFile(did, this.categories.get(to));
+            }
+            const num = fromarr.length;
+            fromarr = fromarr.map(row => {
+                let tags = row[7].split('|');
+                tags.push(from);
+                if (tags[0] === '')
+                    tags = tags.slice(1);
+                row[7] = tags.join('|');
+                return row;
+            });
+            yield this.sheetUser.bulkAdd("images", to, fromarr);
+            yield this.sheetUser.deleteSubSheet("images", from);
+            yield this.driveUser.deleteFile(this.categories.get(from));
+            this.categories.delete(from);
+            this.categoriesSpreadsheetCache.set(to, yield this.sheetUser.readSheet("images", to));
+            return { num };
         });
     }
     capitilize(a) {
         return a[0].toUpperCase() + a.slice(1).toLowerCase();
+    }
+    isCategory(cat) {
+        return this.categories.has(cat);
+    }
+    listCategories() {
+        return [...this.categories.keys()];
     }
 }
 exports.ImageBot = ImageBot;

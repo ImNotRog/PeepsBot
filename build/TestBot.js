@@ -31,7 +31,8 @@ class TestBot {
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             // console.log('hello!');
-            // await this.sheetUser.onConstruct();
+            yield this.sheetUser.onConstruct();
+            console.log(yield this.sheetUser.bulkRead("images"));
             // for(const subsheet of await this.sheetUser.getSubsheets("images")) {
             //     // await this.sheetUser.moveCol("images", subsheet, 6, 3);
             //     await this.sheetUser.insertCol("images", subsheet, "Caption", 6, 300);

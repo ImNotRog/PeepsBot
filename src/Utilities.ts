@@ -1,4 +1,6 @@
 
+// change to static
+
 import moment = require("moment-timezone");
 
 // For Intellisense
@@ -299,7 +301,7 @@ export class Utilities {
 
     embedInfo(message) {
         return {
-            ...this.basicEmbedInfo(),
+            ...this.basicEmbedInfoForCal(),
             "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()

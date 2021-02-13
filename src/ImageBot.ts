@@ -3,6 +3,7 @@ import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 import { DriveUser } from "./DriveUser";
 import { SheetsUser } from "./SheetsUser";
+import { Utilities } from "./Utilities";
 import * as fs from 'fs';
 import * as https from 'https';
 
@@ -22,6 +23,7 @@ export class ImageBot implements Module {
 
     private approvedChannels = ['808469386746789938', '809143110302826497'];
     private voting = ['Jack', 'Nature'];
+    private utils: Utilities;
 
     constructor(auth, client: Discord.Client) {
         this.client = client;
@@ -36,6 +38,8 @@ export class ImageBot implements Module {
 
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
+
+        this.utils = new Utilities();
     }
 
     parseInfo(message:Discord.Message):{ cat:string, cap:string, tags: string[] } {
@@ -202,7 +206,7 @@ export class ImageBot implements Module {
                 let time = Date.now();
                 const cat = this.capitilize(result.command.replace(/_/g, " "));
 
-                await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                let msg = await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
 
                 let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
                 let index = Math.floor(Math.random() * entries) + 1;
@@ -210,14 +214,49 @@ export class ImageBot implements Module {
                 let DID = row[3];
                 let filename = row[0];
 
-                if(!this.inCache(filename)) {
+                if (!this.inCache(filename)) {
                     await this.driveUser.downloadFile(DID, `./temp/${filename}`);
                 }
-                
+
                 const a = new Discord.MessageAttachment(`./temp/${filename}`);
-                
+
                 await message.channel.send(`Random image of category ${cat}`, a);
-                await message.channel.send(`Latency: ${Date.now() - time} ms`);
+                await msg.edit(`Latency: ${Date.now() - time} ms`);
+
+            } 
+            if(result.command === 'imagecategories') {
+                await message.channel.send({
+                    embed: {
+                        title: 'Image Categories',
+                        description: 'When using categories with spaces, replace spaces with _',
+                        fields: [
+                            {
+                                name: 'Categories',
+                                value: this.listCategories().join('\n')
+                            }
+                        ],
+
+                        ...this.utils.embedInfo(message)
+                    }
+                })
+            } 
+            if(result.command === 'merge') {
+                if(!message.member.hasPermission("ADMINISTRATOR")) {
+                    await message.channel.send(`You must have permission ADMINISTRATOR!`)
+                    return;
+                }
+                let cats = result.args.slice(0,2).map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
+                if(cats.length < 2) {
+                    await message.channel.send(`Invalid parameters! You must include two categories, the first one from, the second one to.`)
+                    return;
+                }
+                if(!( this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1] )){
+                    await message.channel.send(`Invalid categories! ${cats}`)
+                    return;
+                }
+
+                const {num} = await this.merge(cats[0],cats[1]);
+                await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`)
             }
         }
         
@@ -263,8 +302,16 @@ export class ImageBot implements Module {
             }
         }
 
-        for(const key of this.categories.keys()) {
-            this.categoriesSpreadsheetCache.set(key, await this.sheetUser.readSheet("images", key));
+        await this.sheetUser.onConstruct();
+
+        let valueranges = await this.sheetUser.bulkRead("images");
+
+        for(const valuerange of valueranges) {
+            let range = valuerange.range;
+            if(range)  {
+                let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
+                this.categoriesSpreadsheetCache.set(cat, valuerange.values);
+            }
         }
 
         for (const id of this.approvedChannels) {
@@ -276,14 +323,43 @@ export class ImageBot implements Module {
                 limit: 90
             })
         }
-        
-        await this.sheetUser.onConstruct();
-        console.log(this.categories);
-
+    
     }
 
+    async merge(from:string, to:string): Promise<{num:number}> {
+        let fromarr = this.categoriesSpreadsheetCache.get(from).slice(1);
+        for(const row of fromarr) {
+            let did = row[3];
+            await this.driveUser.moveFile(did, this.categories.get(to));
+        }
+        const num = fromarr.length;
+        fromarr = fromarr.map(row => {
+            let tags = row[7].split('|');
+            tags.push(from);
+            if(tags[0] === '') tags = tags.slice(1);
+            row[7] = tags.join('|');
+            return row;
+        });
+        await this.sheetUser.bulkAdd("images", to, fromarr);
+        await this.sheetUser.deleteSubSheet("images", from);
+        await this.driveUser.deleteFile(this.categories.get(from));
+
+        this.categories.delete(from);
+        this.categoriesSpreadsheetCache.set(to, await this.sheetUser.readSheet("images", to));
+
+        return {num};
+    }
+    
     capitilize(a:string) {
         return a[0].toUpperCase() + a.slice(1).toLowerCase();
+    }
+
+    isCategory(cat:string) {
+        return this.categories.has(cat);
+    }
+
+    listCategories():string[] {
+        return [...this.categories.keys()];
     }
     
 }

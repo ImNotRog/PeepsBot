@@ -28,18 +28,18 @@ export class SheetsUser {
             sheets: new Map()
         });
 
-        await this.SetUpSheet(key);
+        await this.setUpSheet(key);
     }
 
     async onConstruct() {
         for (const key of this.map.keys()) {
 
             console.log(`Setting up ${key}`);
-            await this.SetUpSheet(key);
+            await this.setUpSheet(key);
         }
     }
 
-    async SetUpSheet(name: string) {
+    async setUpSheet(name: string) {
         let info = await this.getSpreadsheetInfo(name);
         let newmap = new Map();
 
@@ -52,6 +52,21 @@ export class SheetsUser {
 
     handleSheetId(param: string) {
         return (this.map.has(param) ? this.map.get(param).id : param);
+    }
+
+    async deleteSubSheet(sheetname: string, subsheetname: string) {
+        let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+        console.trace(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`)
+        let reqs = [];
+
+
+        reqs.push({
+            "deleteSheet": {
+                "sheetId": subsheetid
+            }
+        });
+
+        await this.executeRequest(sheetname, reqs);
     }
 
     async moveCol(sheetname:string, subsheetname:string, rowa:number, rowb:number) {
@@ -72,6 +87,14 @@ export class SheetsUser {
 
 
         await this.executeRequest(sheetname, requests);
+    }
+
+    async bulkRead(sheetname:string) {
+        let res = await this.sheets.spreadsheets.values.batchGet({
+            spreadsheetId: this.map.get(sheetname).id,
+            ranges: await this.getSubsheets(sheetname),
+        })
+        return res.data.valueRanges;
     }
 
     async insertCol(sheetname: string, subsheetname: string, header:string, col: number, size:number) {
@@ -417,7 +440,7 @@ export class SheetsUser {
         })
 
         await this.executeRequest(sheetname, requests);
-        await this.SetUpSheet(sheetname);
+        await this.setUpSheet(sheetname);
         await this.formatSubsheet(sheetname, subsheetname, format);
     }
 

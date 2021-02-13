@@ -32,7 +32,8 @@ export class TestBot implements Module {
     async onConstruct(): Promise<void> {
         // console.log('hello!');
 
-        // await this.sheetUser.onConstruct();
+        await this.sheetUser.onConstruct();
+        console.log(await this.sheetUser.bulkRead("images"));
 
         // for(const subsheet of await this.sheetUser.getSubsheets("images")) {
         //     // await this.sheetUser.moveCol("images", subsheet, 6, 3);

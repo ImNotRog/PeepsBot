@@ -32,18 +32,18 @@ class SheetsUser {
                 id,
                 sheets: new Map()
             });
-            yield this.SetUpSheet(key);
+            yield this.setUpSheet(key);
         });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             for (const key of this.map.keys()) {
                 console.log(`Setting up ${key}`);
-                yield this.SetUpSheet(key);
+                yield this.setUpSheet(key);
             }
         });
     }
-    SetUpSheet(name) {
+    setUpSheet(name) {
         return __awaiter(this, void 0, void 0, function* () {
             let info = yield this.getSpreadsheetInfo(name);
             let newmap = new Map();
@@ -55,6 +55,19 @@ class SheetsUser {
     }
     handleSheetId(param) {
         return (this.map.has(param) ? this.map.get(param).id : param);
+    }
+    deleteSubSheet(sheetname, subsheetname) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
+            console.trace(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`);
+            let reqs = [];
+            reqs.push({
+                "deleteSheet": {
+                    "sheetId": subsheetid
+                }
+            });
+            yield this.executeRequest(sheetname, reqs);
+        });
     }
     moveCol(sheetname, subsheetname, rowa, rowb) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -72,6 +85,15 @@ class SheetsUser {
                 }
             });
             yield this.executeRequest(sheetname, requests);
+        });
+    }
+    bulkRead(sheetname) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let res = yield this.sheets.spreadsheets.values.batchGet({
+                spreadsheetId: this.map.get(sheetname).id,
+                ranges: yield this.getSubsheets(sheetname),
+            });
+            return res.data.valueRanges;
         });
     }
     insertCol(sheetname, subsheetname, header, col, size) {
@@ -405,7 +427,7 @@ class SheetsUser {
                 }
             });
             yield this.executeRequest(sheetname, requests);
-            yield this.SetUpSheet(sheetname);
+            yield this.setUpSheet(sheetname);
             yield this.formatSubsheet(sheetname, subsheetname, format);
         });
     }
