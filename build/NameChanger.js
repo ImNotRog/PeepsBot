@@ -21,7 +21,6 @@ class NameChangerBot {
         currmap.set("names", "1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4");
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, currmap);
         this.client = client;
-        this.utilities = new Utilities_1.Utilities();
         this.helpEmbed = {
             title: `Help - Themes Bot`,
             description: [

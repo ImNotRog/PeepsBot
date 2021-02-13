@@ -11,7 +11,6 @@ export class NameChangerBot implements Module {
 
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
-    private utilities: Utilities;
     private readonly prefix = `--`;
     public helpEmbed: Object;
     private fperbioserver: string;
@@ -22,7 +21,6 @@ export class NameChangerBot implements Module {
         this.sheetsUser = new SheetsUser(auth, currmap);
         this.client = client;
 
-        this.utilities = new Utilities();
 
         this.helpEmbed = {
             title: `Help - Themes Bot`,
