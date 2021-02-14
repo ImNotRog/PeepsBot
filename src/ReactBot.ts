@@ -40,7 +40,7 @@ export class ReactBot implements Module {
 
         this.helpEmbed = {
             title: 'Help - React Bot',
-            description: `Ever wanted *your* ^ to be an actual carrot? Well, want no more, for this incredibly useless bot now exists! Any time you say ^, TRG, Checkpoint, CER, or more, you'll be rewarded with a custom emoji reaction!`,
+            description: `Ever wanted your ^ to be an actual carrot? Well, want no more, for this incredibly useless bot now exists! Any time you say ^, TRG, Checkpoint, CER, or more, you'll be rewarded with a custom emoji reaction!`,
             fields: []
         }
 

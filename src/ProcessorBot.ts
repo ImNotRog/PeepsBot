@@ -13,6 +13,7 @@ import { ImageBot } from "./ImageBot";
 import { TestBot } from "./TestBot";
 
 import { Module } from "./Module";
+import { HelpBot } from "./HelpBot";
 
 export class ProcessorBot {
 
@@ -37,9 +38,9 @@ export class ProcessorBot {
     // private readonly roleManagerActive = false;
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
-    // private readonly imageActive = true;
+    // private readonly imageActive = false;
     // private readonly testActive = false;
-    // private readonly helpActive = false;
+    // private readonly helpActive = true;
 
     private modules: Module[];
 
@@ -61,46 +62,9 @@ export class ProcessorBot {
         if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
         if (this.testActive) this.modules.push(new TestBot(auth, client));
+        if (this.helpActive) this.modules.push(new HelpBot(this.modules, client));
 
         this.client = client;
-
-        this.helpEmbed = {
-            title: `Help - General`,
-            description: [
-                `This is a very long help section, much like the girthy substance of a complete TRG.`,
-                `I do a lot of things, from quotes to alerts. You can use those arrows down there to scroll around,`,
-                `which I don't think I really have to say, but the brick to human ratio is surprisingly high.`,
-                `Alright, go read and exercise that 3 second attention span. GLHF`
-            ].join(` `)
-        }
-
-        this.helpTechnicalEmbed = {
-            title: `Help - Details for Nerds`,
-            description: `If you're a CS nerd, here's all you need to know.`,
-            fields: [
-                {
-                    name: `Contact Me!`,
-                    value: `Rog#7499 is the owner of this bot. Contact him to add to your server or sign channels up for alerts.`
-                },
-                {
-                    name: `Invite Link`,
-                    value: `Not available, ask Rog#7499 for one. This is a mainly private bot.`
-                },
-                {
-                    name: `Github`,
-                    value: `All my code is on Github: https://github.com/BubbyBabur/PeepsBot`
-                },
-                {
-                    name: `NodeJS`,
-                    value: [
-                        `Built using NodeJS, and if you use any other language, I *will* block you.`,
-                        `Node Packages can be found in the Github.`,
-                        `I use Heroku to host the bot and use Firebase's Firestore service to store data. It's a straight pain in the butt, but it gets the job done.`,
-                        `I also use Google API to store some data in Google spreadsheets, which is sick.`
-                    ].join(`\n`)
-                },
-            ]
-        }
 
         this.client.on("message", (message) => {
             this.onMessage(message)
@@ -116,23 +80,6 @@ export class ProcessorBot {
         await Promise.all(allpromises);
     }
 
-    // getHelpEmbeds(serverid) {
-    //     const embeds = [];
-    //     embeds.push(this.helpEmbed)
-    //     embeds.push(this.littleBot.helpEmbed);
-    //     if (this.approvedMusicServers.indexOf(serverid) !== -1) {
-    //         embeds.push(this.trackerBot.helpEmbed)
-    //     }
-    //     if (serverid === this.FPERBIO) {
-    //         embeds.push(this.nameChangerBot.helpEmbed);
-    //     }
-    //     if(serverid === this.FPERBIO) {
-    //         embeds.push(this.roleManagerBot.helpEmbed);
-    //     }
-    //     embeds.push(this.helpTechnicalEmbed)
-    //     return embeds;
-    // }
-
     async onMessage(message: Discord.Message) {
 
         
@@ -146,21 +93,7 @@ export class ProcessorBot {
                 message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`);
             }
         }
-
-
-        // if (message.content.startsWith("!little")) {
-        //     message.channel.send(`It's ${this.prefix}little now. I had to change it to something less generic.`)
-        // } else if (message.content.includes("<@!750573267026182185>") && this.littleActive) {
-        //     message.channel.send(await this.randomLittleQuote());
-        // }
-
-
-        // if (this.helpActive) {
-        //     if (command === "help") {
-        //         this.utils.sendCarousel(message, this.getHelpEmbeds(message.guild.id));
-        //     }
-        // }
-
+        
     }
 
 }

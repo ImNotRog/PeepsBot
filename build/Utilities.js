@@ -213,18 +213,14 @@ class Utilities {
             }
         });
     }
-    static basicEmbedInfoForCal() {
+    static basicEmbedInfo() {
         return {
             "color": 111111,
             "timestamp": Utilities.now(),
-            "author": {
-                "name": "F Period Bio",
-                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-            },
         };
     }
     static embedInfo(message) {
-        return Object.assign(Object.assign({}, Utilities.basicEmbedInfoForCal()), { "footer": {
+        return Object.assign(Object.assign({}, Utilities.basicEmbedInfo()), { "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
             } });

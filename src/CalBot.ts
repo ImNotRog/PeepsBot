@@ -53,7 +53,7 @@ export class CalendarBot implements Module {
             description: [`${age} years ago, on ${bday}, they were birthed into this cruel and doomed world.`,
                     `But today, we celebrate! Here's to being 1 year closer to death!`,
                     `Ok, now go bully them with your singing or something.`].join(`\n`),
-            ...Utilities.basicEmbedInfoForCal()
+            ...Utilities.basicEmbedInfo()
         }
 
         for(const id of this.bdayChannels) {

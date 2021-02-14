@@ -238,20 +238,16 @@ export class Utilities {
     }
 
 
-    public static basicEmbedInfoForCal() {
+    public static basicEmbedInfo() {
         return {
             "color": 111111,
             "timestamp": Utilities.now(),
-            "author": {
-                "name": "F Period Bio",
-                "icon_url": "https://cdn.discordapp.com/embed/avatars/2.png"
-            },
         }
     }
 
     public static embedInfo(message:Discord.Message) {
         return {
-            ...Utilities.basicEmbedInfoForCal(),
+            ...Utilities.basicEmbedInfo(),
             "footer": {
                 "text": `Requested by ${message.author.username}`,
                 "icon_url": message.author.displayAvatarURL()
