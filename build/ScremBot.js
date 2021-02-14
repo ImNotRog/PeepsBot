@@ -14,10 +14,32 @@ const Discord = require("discord.js");
 const ProcessMessage_1 = require("./ProcessMessage");
 class ScremBot {
     constructor(client) {
+        this.prefix = '--';
         this.chars = ["a", "A"];
         this.cursedchars = ["a", "A", "ḁ̶̧̡͉̹͖̭̈͒͛͂́̀̐̿̎͆͛̓̕͠͝", "ä̷̢̨̛͓̙̗̗̼̝͇̦͖͙̦͚̳̪̘̟̩̘̤͚͕͈̩̭̦͎̱͉̘̳̣̫͙͎̫̜̬̝̺͇̮̲͔̮͔̯̀̃̓̌̀̀̆͛͐̃̆̈́͑͆̈́͌̔͒̋̋̔̃̐̂̿̉͂̂̆̈́͋̆̈́̀͒͘̕͘͝͠͝͝", "a̸̡̨̡̡̨̛̛̤̲̱̲̗͇̦̦͉͕̬͔̞̺͇̘̼̲̖̬̖͎̖̦̳̺̦̪̱͎͈͕͓̖͈͍̼͇͖̳͙̖͓̼͈̖̙͔̱͚̞̗̖̝̻̞̬̮͙̳̘̺͕̞̟̩͓̙͉͈̩͔͗̆̍͒̄͊̎̏̄̈́̿̇̂̓̌̈́͗͋͋͆̋͒͗͐̒̉̅̾̃̐̓̃͛̀̋͋͌̔̓͌̐͛̌̾̉̇́̑͛͛̋̊́̃̚͘̕͜͜͜͝͝͠͠͝͠ͅ", "Ằ̵̡̨̢̨̢̧̨̨̢̤͓͓̩͚̤̮͇̤͇̠̦̝̝̯͎͍̫̮̦̬̰̝̪͙͇̪̥̖̭͎̼͔̺̝͓͚̻̤̣̥̭̲̮̯̣̺̝͕͕̰͉͚͔̘̜̗͈̳͉̼̞̟͈̗̄̋́̉̿̇͒̅́̈́͆̄̔̍͆̒̀͂͒̄̾̅̚̚͝͠͝ͅͅ", "Á̵̧̦̟̘̯̩̱̥̰̹̙̮̲̹̀̽͊͛́̈́͐̓́́̋͋́̓͂̾̂̏͊̓̊̕̚͝͝"];
         this.voidchannels = ["750804960333135914", "748670606085587060"];
         this.client = client;
+        this.helpEmbed = {
+            title: `Help - Screm Bot`,
+            description: `Born from the collective suffering of Bio H students, Screm Bot is the embodied voice of pure pain.`,
+            fields: [
+                {
+                    name: `${this.prefix}void`,
+                    value: `Scream into the void! Once active, everything you spam will be deleted upon sending ${this.prefix}end.`
+                },
+                {
+                    name: `${this.prefix}screm`,
+                    value: this.screm(50)
+                },
+                {
+                    name: `${this.prefix}cursedscrem`,
+                    value: this.curse(50)
+                }
+            ]
+        };
+    }
+    available(message) {
+        return true;
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

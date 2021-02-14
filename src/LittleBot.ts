@@ -10,6 +10,7 @@ export class LittleBot implements Module {
     private cache: Map<string, any[][]>;
     private readonly collectingChannels = ["754912483390652426", "756698378116530266"]
     private readonly prefix: string = "--";
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
     constructor(auth, client: Discord.Client) {
 
@@ -24,6 +25,27 @@ export class LittleBot implements Module {
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
 
+        this.helpEmbed = {
+            title: `Help - Quotes Bot`,
+            description: `A bot for keeping teacher quotes, often horribly out of context.`,
+            fields: [
+                {
+                    name: `${this.prefix}[teacher name]`,
+                    value: `Spews out a random quote from that teacher.`
+                },
+                {
+                    name: `How to Add Quotes`,
+                    value: `In a designated channel specifically on select servers, you can enter a quote of the format: \n` +
+                        `"[Quote Content]" - [Teacher Last Name Only, no Shenanigans]\n` + 
+                        `Then, react to quotations with 👍 to add them. (The more 👍s a quote has, the higher probability it's chosen.)`
+                }
+            ]
+        }
+    }
+
+    
+    available(message: Discord.Message): boolean {
+        return true;
     }
 
     async onMessage(message: Discord.Message): Promise<void> {

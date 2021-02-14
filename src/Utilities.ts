@@ -10,7 +10,6 @@ export class Utilities {
     private constructor(){
     }
 
-
     /* Moment Utilities */
 
     public static now() {

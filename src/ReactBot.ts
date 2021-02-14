@@ -4,7 +4,9 @@ import { Module } from './Module';
 export class ReactBot implements Module {
 
     private reactmap:Map<string,string>
-    private chainmap:Map<string, {value:string, method:string}[]>
+    private chainmap: Map<string, { value: string, method: string }[]>
+    helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+
     constructor() {
         this.reactmap = new Map();
         this.reactmap.set("little", "754075455304499211")
@@ -34,7 +36,18 @@ export class ReactBot implements Module {
             ]);
 
         // More code here
+        // @todo Carrot steal
 
+        this.helpEmbed = {
+            title: 'Help - React Bot',
+            description: `Ever wanted *your* ^ to be an actual carrot? Well, want no more, for this incredibly useless bot now exists! Any time you say ^, TRG, Checkpoint, CER, or more, you'll be rewarded with a custom emoji reaction!`,
+            fields: []
+        }
+
+    }
+
+    available(message: Discord.Message): boolean {
+        return true;
     }
 
     async onConstruct(): Promise<void> { }

@@ -34,6 +34,34 @@ class ImageBot {
         this.categoriesSpreadsheetCache = new Map();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
+        this.helpEmbed = {
+            title: `Help - Image Bot`,
+            description: `A bot that archives images in certain channels, then adds them to Google Drive for storage.`,
+            fields: [
+                {
+                    name: `${this.prefix}[category]`,
+                    value: `Enter the category, and it will send a randomly chosen image from that category. Any category name with spaces should have spaces replaced with "_"s.`
+                },
+                {
+                    name: `${this.prefix}imagecategories`,
+                    value: `Lists the categories.`
+                },
+                {
+                    name: `${this.prefix}merge [from category] [to category]`,
+                    value: `Merges two categories.`
+                },
+                {
+                    name: `How to Add Images`,
+                    value: `Whenever you post an image in one of the designated channels, it defaults to a certain category. ` +
+                        `To override it, just enter the category name as the image caption when uploading. \n\n` +
+                        `(There's actually a way to get more metadata into your photo, but 1. that's nerd shtuff and ` +
+                        `2. it's so miserably overcomplicated that explaining it would exceed your goldfish attention span tenfold.)`
+                }
+            ]
+        };
+    }
+    available(message) {
+        return message.guild.id === '748669830244073533';
     }
     parseInfo(message) {
         const content = message.content;

@@ -36,6 +36,15 @@ class ReactBot {
             }
         ]);
         // More code here
+        // @todo Carrot steal
+        this.helpEmbed = {
+            title: 'Help - React Bot',
+            description: `Ever wanted *your* ^ to be an actual carrot? Well, want no more, for this incredibly useless bot now exists! Any time you say ^, TRG, Checkpoint, CER, or more, you'll be rewarded with a custom emoji reaction!`,
+            fields: []
+        };
+    }
+    available(message) {
+        return true;
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () { });

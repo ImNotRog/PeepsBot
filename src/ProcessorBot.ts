@@ -137,6 +137,7 @@ export class ProcessorBot {
 
         
         for (const mod of this.modules) {
+            if(!mod.available(message)) continue;
             try {
                 await mod.onMessage(message);
             } catch(err) {

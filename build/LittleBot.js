@@ -23,6 +23,25 @@ class LittleBot {
         this.cache = new Map();
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
+        this.helpEmbed = {
+            title: `Help - Quotes Bot`,
+            description: `A bot for keeping teacher quotes, often horribly out of context.`,
+            fields: [
+                {
+                    name: `${this.prefix}[teacher name]`,
+                    value: `Spews out a random quote from that teacher.`
+                },
+                {
+                    name: `How to Add Quotes`,
+                    value: `In a designated channel specifically on select servers, you can enter a quote of the format: \n` +
+                        `"[Quote Content]" - [Teacher Last Name Only, no Shenanigans]\n` +
+                        `Then, react to quotations with 👍 to add them. (The more 👍s a quote has, the higher probability it's chosen.)`
+                }
+            ]
+        };
+    }
+    available(message) {
+        return true;
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

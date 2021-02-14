@@ -14,13 +14,14 @@ export class RoleManagerBot implements Module {
     private readonly messageids = ["786059131806023742", "786061717108293714"];
     private numvotes = 3;
     private prefix = `--`;
-    public helpEmbed: Object;
     private server:Discord.Guild;
     private messages:Discord.Message[];
     private readonly alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
     private roles: Discord.Collection<string, Discord.Role>;
     private colorroles: Discord.Role[];
     private roledivs: Discord.Role[][];
+
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
     constructor(client: Discord.Client) {
         this.client = client;
@@ -62,6 +63,11 @@ export class RoleManagerBot implements Module {
             ]
         }
     }
+
+    available(message: Discord.Message): boolean {
+        return message.guild.id === '748669830244073533';
+    }
+
     async onMessage(message: Discord.Message): Promise<void> {
 
         if (this.approvedChannels.includes(message.channel.id)) {

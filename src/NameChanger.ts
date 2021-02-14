@@ -12,15 +12,14 @@ export class NameChangerBot implements Module {
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
     private readonly prefix = `--`;
-    public helpEmbed: Object;
     private fperbioserver: string;
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
     constructor(auth, client: Discord.Client) {
         let currmap = new Map();
         currmap.set("names", "1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4");
         this.sheetsUser = new SheetsUser(auth, currmap);
         this.client = client;
-
 
         this.helpEmbed = {
             title: `Help - Themes Bot`,
@@ -45,6 +44,10 @@ export class NameChangerBot implements Module {
         }
 
         this.fperbioserver = "748669830244073533";
+    }
+    
+    available(message: Discord.Message): boolean {
+        return message.guild.id === '748669830244073533';
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
@@ -139,7 +142,9 @@ export class NameChangerBot implements Module {
         console.log(`Name Changer Bot Complete`);
     }
 
-    async available() {
+    
+
+    async changeavailable() {
         let time = moment();
 
         let prev = await this.sheetsUser.readSheet("names", "Info");
@@ -245,7 +250,7 @@ export class NameChangerBot implements Module {
             return false;
         }
 
-        if (!(await this.available())) {
+        if (!(await this.changeavailable())) {
             message.channel.send({
                 embed: {
                     title: `Slow Down!`,

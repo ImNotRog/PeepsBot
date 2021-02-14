@@ -8,11 +8,13 @@ import { PROCESS } from './ProcessMessage';
 
 export class SynonymBot implements Module {
 
+    private readonly prefix = '--';
     private apikey: string;
     private cache: Map<string, Object>;
     private client: Discord.Client;
     private goodmorningchannels: string[];
     private famouspeople: string[];
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
     constructor(MW:string, client: Discord.Client) {
         this.apikey = MW;
@@ -22,7 +24,32 @@ export class SynonymBot implements Module {
         this.goodmorningchannels = ["748669830244073536"];
 
         this.famouspeople = famous;
+
+        this.helpEmbed = {
+            title: `Help - Synonym Bot`,
+            description: `Sends synonyms of specific sentences.`,
+            fields: [
+                {
+                    name: `${this.prefix}bread`,
+                    value: `Sends a synonym version of "Good morning epic gamers let's get the bread".`
+                },
+                {
+                    name: `${this.prefix}wfbo`,
+                    value: `Sends a synonym version of "Weird flex but ok".`
+                },
+                {
+                    name: `Why Don't You Add More?`,
+                    value: `API limits.`
+                },
+
+            ]
+        }
     }
+
+    available(message: Discord.Message): boolean {
+        return true;
+    }
+    
 
     async onMessage(message: Discord.Message): Promise<void> {
         const result = PROCESS(message);

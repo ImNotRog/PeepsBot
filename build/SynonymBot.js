@@ -17,11 +17,33 @@ const famous = require("./data/famous-people.json");
 const ProcessMessage_1 = require("./ProcessMessage");
 class SynonymBot {
     constructor(MW, client) {
+        this.prefix = '--';
         this.apikey = MW;
         this.cache = new Map();
         this.client = client;
         this.goodmorningchannels = ["748669830244073536"];
         this.famouspeople = famous;
+        this.helpEmbed = {
+            title: `Help - Synonym Bot`,
+            description: `Sends synonyms of specific sentences.`,
+            fields: [
+                {
+                    name: `${this.prefix}bread`,
+                    value: `Sends a synonym version of "Good morning epic gamers let's get the bread".`
+                },
+                {
+                    name: `${this.prefix}wfbo`,
+                    value: `Sends a synonym version of "Weird flex but ok".`
+                },
+                {
+                    name: `Why Don't You Add More?`,
+                    value: `API limits.`
+                },
+            ]
+        };
+    }
+    available(message) {
+        return true;
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

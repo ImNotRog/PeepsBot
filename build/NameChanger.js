@@ -44,6 +44,9 @@ class NameChangerBot {
         };
         this.fperbioserver = "748669830244073533";
     }
+    available(message) {
+        return message.guild.id === '748669830244073533';
+    }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             const result = ProcessMessage_1.PROCESS(message);
@@ -133,7 +136,7 @@ class NameChangerBot {
             console.log(`Name Changer Bot Complete`);
         });
     }
-    available() {
+    changeavailable() {
         return __awaiter(this, void 0, void 0, function* () {
             let time = moment();
             let prev = yield this.sheetsUser.readSheet("names", "Info");
@@ -219,7 +222,7 @@ class NameChangerBot {
                 });
                 return false;
             }
-            if (!(yield this.available())) {
+            if (!(yield this.changeavailable())) {
                 message.channel.send({
                     embed: Object.assign({ title: `Slow Down!`, description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.` }, Utilities_1.Utilities.embedInfo(message))
                 });

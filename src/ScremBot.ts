@@ -4,13 +4,37 @@ import { PROCESS } from "./ProcessMessage";
 
 export class ScremBot implements Module {
 
+    private readonly prefix = '--';
     private readonly chars: string[] = ["a", "A"];
     private readonly cursedchars: string[] = ["a", "A", "ḁ̶̧̡͉̹͖̭̈͒͛͂́̀̐̿̎͆͛̓̕͠͝", "ä̷̢̨̛͓̙̗̗̼̝͇̦͖͙̦͚̳̪̘̟̩̘̤͚͕͈̩̭̦͎̱͉̘̳̣̫͙͎̫̜̬̝̺͇̮̲͔̮͔̯̀̃̓̌̀̀̆͛͐̃̆̈́͑͆̈́͌̔͒̋̋̔̃̐̂̿̉͂̂̆̈́͋̆̈́̀͒͘̕͘͝͠͝͝", "a̸̡̨̡̡̨̛̛̤̲̱̲̗͇̦̦͉͕̬͔̞̺͇̘̼̲̖̬̖͎̖̦̳̺̦̪̱͎͈͕͓̖͈͍̼͇͖̳͙̖͓̼͈̖̙͔̱͚̞̗̖̝̻̞̬̮͙̳̘̺͕̞̟̩͓̙͉͈̩͔͗̆̍͒̄͊̎̏̄̈́̿̇̂̓̌̈́͗͋͋͆̋͒͗͐̒̉̅̾̃̐̓̃͛̀̋͋͌̔̓͌̐͛̌̾̉̇́̑͛͛̋̊́̃̚͘̕͜͜͜͝͝͠͠͝͠ͅ", "Ằ̵̡̨̢̨̢̧̨̨̢̤͓͓̩͚̤̮͇̤͇̠̦̝̝̯͎͍̫̮̦̬̰̝̪͙͇̪̥̖̭͎̼͔̺̝͓͚̻̤̣̥̭̲̮̯̣̺̝͕͕̰͉͚͔̘̜̗͈̳͉̼̞̟͈̗̄̋́̉̿̇͒̅́̈́͆̄̔̍͆̒̀͂͒̄̾̅̚̚͝͠͝ͅͅ", "Á̵̧̦̟̘̯̩̱̥̰̹̙̮̲̹̀̽͊͛́̈́͐̓́́̋͋́̓͂̾̂̏͊̓̊̕̚͝͝"];
     private client: Discord.Client;
     private readonly voidchannels = ["750804960333135914", "748670606085587060"];
-
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    
     constructor(client:Discord.Client) {
         this.client = client;
+        this.helpEmbed = {
+            title: `Help - Screm Bot`,
+            description: `Born from the collective suffering of Bio H students, Screm Bot is the embodied voice of pure pain.`,
+            fields: [
+                {
+                    name: `${this.prefix}void`,
+                    value: `Scream into the void! Once active, everything you spam will be deleted upon sending ${this.prefix}end.`
+                },
+                {
+                    name: `${this.prefix}screm`,
+                    value: this.screm(50)
+                },
+                {
+                    name: `${this.prefix}cursedscrem`,
+                    value: this.curse(50)
+                }
+            ]
+        }
+    }
+
+    available(message: Discord.Message): boolean {
+        return true;
     }
 
     async onMessage(message: Discord.Message): Promise<void> {

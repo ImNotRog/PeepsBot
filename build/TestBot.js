@@ -23,6 +23,14 @@ class TestBot {
         let map = new Map();
         map.set('images', this.imagesSheet);
         this.sheetUser = new SheetsUser_1.SheetsUser(auth, map);
+        this.helpEmbed = {
+            title: `Help - Test Bot`,
+            description: `A test module for dev purposes. tl;dr nerd shtuf.`,
+            fields: []
+        };
+    }
+    available(message) {
+        return false;
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -35,6 +35,9 @@ class TrackerBot {
             ]
         };
     }
+    available(message) {
+        return message.guild.id === '748669830244073533';
+    }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             const result = ProcessMessage_1.PROCESS(message);

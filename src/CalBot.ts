@@ -16,6 +16,8 @@ export class CalendarBot implements Module {
     private prefix = `--`;
     private bdayChannels: string[] = ["748669830244073536"];
     private client: Discord.Client;
+    public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+
     constructor(auth, client: Discord.Client) {
 
         let currmap = new Map();
@@ -25,6 +27,18 @@ export class CalendarBot implements Module {
 
         // this.bdayChannels = ["750804960333135914"]; // Redirect
         this.client = client;
+
+        this.helpEmbed = {
+            title: 'Help - Birthday Bot',
+            description: `Issues a friendly reminder whenever it's someone's birthday.`,
+            fields: []
+        }
+        
+    }
+
+    
+    available(message: Discord.Message): boolean {
+        return message.guild.id === '748669830244073533';
     }
 
     async onMessage(message: Discord.Message): Promise<void> { }

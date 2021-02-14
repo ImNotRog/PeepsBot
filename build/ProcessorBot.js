@@ -124,6 +124,8 @@ class ProcessorBot {
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             for (const mod of this.modules) {
+                if (!mod.available(message))
+                    continue;
                 try {
                     yield mod.onMessage(message);
                 }
