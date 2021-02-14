@@ -1,7 +1,7 @@
 import { Message } from "discord.js";
 
 export function PROCESS(msg: Message):  { command: string, args: string[] } | null {
-    if(msg.content.startsWith(`--`)) {
+    if(msg.content.startsWith(`--`) && !msg.author.bot) {
         const commandBody = msg.content.slice(`--`.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();

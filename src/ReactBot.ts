@@ -1,5 +1,6 @@
 import * as Discord from 'discord.js';
 import { Module } from './Module';
+import { PROCESS } from './ProcessMessage';
 
 export class ReactBot implements Module {
 
@@ -64,8 +65,9 @@ export class ReactBot implements Module {
     }
 
     async onMessage(msg:Discord.Message) {
+
         for(const key of this.reactmap.keys()) {
-            if( msg.content.toLowerCase().split(" ").includes(key) ){
+            if( msg.content.toLowerCase().replace(/[,.!"']/,'').split(" ").includes(key) ){
                 msg.react(this.reactmap.get(key));
             }
         }
@@ -84,6 +86,55 @@ export class ReactBot implements Module {
                 }
             }
         }
+
+        const result = PROCESS(msg);
+        if(result) {
+            if(result.command === 'reporttheft') {
+                let theftreporter = msg.author.id;
+                let messages = await msg.channel.messages.fetch({
+                    limit: 30
+                })
+
+                let discoveredcrimescene = false;
+                let discoveredculprit = false;
+                let culprit: Discord.User = null;
+                let caseclosed = false;
+                for (const key of messages.keyArray().slice(1)) { 
+                    let message = messages.get(key);
+
+
+                    if (discoveredculprit) {
+                        await message.react('🥕');
+                        caseclosed = true;
+                        break;
+                    }
+
+
+                    if (!discoveredculprit && discoveredcrimescene) {
+                        if (message.reactions.cache.has('🥕')) {
+                            message.reactions.cache.get('🥕')?.remove();
+                            discoveredculprit = true;
+                            culprit = message.author;
+                            continue;
+                        }
+                    }
+
+                    if (!discoveredcrimescene && message.author.id === theftreporter && this.isChain(message.content, this.chainmap.get('🥕'))) {
+                        discoveredcrimescene = true;
+                        continue;
+                    }
+
+
+                }
+
+                if(!caseclosed) {
+                    msg.channel.send(`Unfortunately, I was unable to solve the crime.`);
+                } else {
+                    msg.channel.send(`Theft reported and solved. <@!${culprit.id}> was the culprit and is stinky.`)
+                }
+            }
+        }
+
         
     }
 }
