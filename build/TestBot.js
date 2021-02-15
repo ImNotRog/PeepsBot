@@ -38,9 +38,12 @@ class TestBot {
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
+            // let res = await SchoologyAccessor.get("/sections/2772305484/folders/4657347337")
+            // let res = await SchoologyAccessor.get("/courses/2772305484/folder/347235182")
+            // fs.writeFileSync("./temp/folderv2.json", JSON.stringify( await res.json()) );
             // console.log('hello!');
-            yield this.sheetUser.onConstruct();
-            console.log(yield this.sheetUser.bulkRead("images"));
+            // await this.sheetUser.onConstruct();
+            // console.log(await this.sheetUser.bulkRead("images"));
             // for(const subsheet of await this.sheetUser.getSubsheets("images")) {
             //     // await this.sheetUser.moveCol("images", subsheet, 6, 3);
             //     await this.sheetUser.insertCol("images", subsheet, "Caption", 6, 300);

@@ -1,6 +1,7 @@
 import crypto = require('crypto');
 import OAuth = require("oauth-1.0a");
 import nodefetch = require('node-fetch');
+import { Utilities } from './Utilities';
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -45,13 +46,27 @@ type AssignmentDataSnippetResponse = {
     id: string,
     location: string,
     title: string,
-    type: "assignment",
+    type: "assignment" | "managed_assessment" | "assessment_v2",
     document_type: string,
     completion_status: string,
     completed: number,
     body: string,
     assignment_type: string,
     web_url: string,
+}
+
+type MediaAlbumDataSnippetResponse = {
+    id: string,
+    title:string,
+    body: string,
+    type: 'media-album'
+}
+
+type DiscussionDataSnippetResponse = {
+    id: string,
+    title: string,
+    body: string,
+    type: 'discussion'
 }
 
 type FolderDataResponse = {
@@ -67,7 +82,7 @@ type FolderDataResponse = {
 
 type FolderResponse = {
     self: FolderDataResponse
-    ["folder-item"]: (FolderDataResponse | DocumentDataSnippetResponse | AssignmentDataSnippetResponse | PageDataSnippetResponse)[]
+    ["folder-item"]: SnippetResponse[]
 }
 
 type PageResponse = {
@@ -114,6 +129,27 @@ type AssignmentResponse = {
     assignment_type:string
 }
 
+type MediaAlbumResponse = {
+    id: string,
+    title:string,
+    description: string,
+    photo_count:number,
+    video_count:number,
+    audio_count:number,
+    cover_image_url:string,
+}
+
+type DiscussionResponse = {
+    id: string,
+    title: string,
+    body: string,
+    type: 'discussion',
+    require_initial_post: number
+}
+
+type SnippetResponse = (FolderDataResponse | AssignmentDataSnippetResponse | DocumentDataSnippetResponse | PageDataSnippetResponse | MediaAlbumDataSnippetResponse | DiscussionDataSnippetResponse);
+type FullReponse = (FolderResponse | AssignmentResponse | DocumentResponse | PageResponse | MediaAlbumResponse | DiscussionResponse)
+
 export class SchoologyAccessor {
 
     // BASIC METHODS
@@ -131,7 +167,6 @@ export class SchoologyAccessor {
     }
 
     static async rawGet(path){
-        
 
         if(SchoologyAccessor.num.num >= 0) {
             let awaitpromise = new Promise<void> ((r,j) => {
@@ -258,14 +293,23 @@ export class SchoologyAccessor {
         const data: AssignmentResponse = (await res.json());
         return data;
     }
+
+    static async getAlbum(sectionid: string, albumid: string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/albums/${albumid}`));
+        const data: MediaAlbumResponse = (await res.json());
+        return data;
+    }
+
+    static async getDiscussion(sectionid: string, discussionid: string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/discussions/${discussionid}`));
+        const data: DiscussionResponse = (await res.json());
+        return data;
+    }
 }
 
 setInterval(() => {
-    SchoologyAccessor.num.num = -20;
+    SchoologyAccessor.num.num = -15;
 }, 1000)
-
-type SnippetResponse = (FolderDataResponse | AssignmentDataSnippetResponse | DocumentDataSnippetResponse | PageDataSnippetResponse);
-type FullReponse = (FolderResponse | AssignmentResponse | DocumentResponse | PageResponse)
 
 export class User {
     public id: string;
@@ -370,7 +414,7 @@ export class SFile {
         if(this.cached) {
             return this.fulldatacache;
         }
-        if (this.data.type === "assignment") {
+        if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
             const me = await SchoologyAccessor.getAssignment(this.course.getData().id, this.data.id);
             this.fulldatacache = me;
             this.cached = true;
@@ -383,7 +427,19 @@ export class SFile {
             return me;
         }
         if (this.data.type === "page") {
-            const me = await SchoologyAccessor.getPage(this.course.getData().course_id, this.data.id);
+            const me = await SchoologyAccessor.getPage(this.course.getData().id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+            return me;
+        }
+        if(this.data.type === "media-album") {
+            const me = await SchoologyAccessor.getAlbum(this.course.getData().id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+            return me;
+        }
+        if(this.data.type === "discussion") {
+            const me = await SchoologyAccessor.getDiscussion(this.course.getData().id, this.data.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
@@ -398,13 +454,37 @@ export class SFile {
         }
     }
 
+    wordSearch(str:string): SFile[] {
+        let allchildren = (this.listAllChildren());
+
+        allchildren.sort((a, b) => {
+            return Utilities.RatcliffObershelpCustom(str, b.data.title) - Utilities.RatcliffObershelpCustom(str, a.data.title);
+        })
+
+        return allchildren;
+    }
+
+    find(suchthat: (sfile: SFile) => boolean): (boolean | SFile) {
+        if(suchthat(this)) {
+            return this;
+        } else if(this.type === "folder") {
+            return this.children.find(suchthat);
+        } else {
+            return false;
+        }
+    }
+
+    findall(suchthat: (sfile: SFile) => boolean): SFile[] {
+        return this.listAllChildren().filter(suchthat);
+    }
+
     async toEmbedFields(): Promise<{ name: string, value: string, inline?: boolean }[]> {
         let data = await this.getData();
         let fields = [];
         fields.push(
             {
                 name: `Name`,
-                value: `${this.name}`,
+                value: `${this.icon()} ${this.name}`,
                 inline: false
             }
         )
@@ -424,6 +504,16 @@ export class SFile {
             }
         );
 
+        if(!this.base) {
+            fields.push(
+                {
+                    name: `Parent Folder ID`,
+                    value: `${this.parent.data.id}`,
+                    inline: true
+                }
+            );
+        }
+
         if(this.data.body.length > 0) {
             fields.push(
                 {
@@ -432,9 +522,8 @@ export class SFile {
                 }
             )
         }
-
         
-        if(this.data.type === "assignment") {
+        if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
             // @ts-ignore
             let d: AssignmentResponse = data;
             fields.push(
@@ -493,18 +582,63 @@ export class SFile {
             fields.push(
                 {
                     name: `Children`,
-                    value: `${d['folder-item'].map(a => a.title).join('\n')}`,
-                    inline: true
+                    value: `${this.children.map(child => child.toString(1)).join('\n')}`,
+                    inline: false
                 }
             );
 
+        }
+
+        if (this.data.type === "media-album") {
+            // @ts-ignore
+            let d: MediaAlbumResponse = data;
+            fields.push(
+                {
+                    name: `Cover Image`,
+                    value: `${d.cover_image_url}`,
+                    inline: false
+                }
+            )
+            fields.push(
+                {
+                    name: `Audio Count`,
+                    value: `${d.audio_count}`,
+                    inline: true
+                }
+            )
+            fields.push(
+                {
+                    name: `Image Count`,
+                    value: `${d.photo_count}`,
+                    inline: true
+                }
+            )
+            fields.push(
+                {
+                    name: `Video Count`,
+                    value: `${d.video_count}`,
+                    inline: true
+                }
+            )
+        }
+
+        if (this.data.type === "discussion") {
+            // @ts-ignore
+            let d: DiscussionResponse = data;
+            fields.push(
+                {
+                    name: `Requires Post to See?`,
+                    value: `${d.require_initial_post === 1 ? "Yes" : "No"}`,
+                    inline:true
+                }
+            )
         }
         
         let fieldsfinal = [];
         for(const field of fields) {
             fieldsfinal.push({
                 name: field.name,
-                value: field.value.length > 0 ? field.value : 'N/A',
+                value: (field.value.length >= 1024 ? field.value.slice(0,1000) + '...' : field.value.length > 0 ? field.value : 'N/A').replace(/\n\n+/g,'\n'),
                 inline: field.inline
             })
         }
@@ -512,16 +646,32 @@ export class SFile {
         return fieldsfinal;
     }
 
-    async toEmbedFieldsRaw(): Promise< { name: string, value: string, inline?: boolean }[]> {
-        let data = await this.getData();
-        let fields = [];
-        for(const key of Object.keys(data)) {
-            fields.push( {
-                name: `${key}`,
-                value: typeof data[key] === "object" ? JSON.stringify(data[key]) : `${data[key]}`.length > 0 ? `${data[key]}` : `N/A`,
-                inline: true
-            });
+    icon():string {
+        switch(this.data.type) {
+            case "assessment_v2":
+            case "managed_assessment":
+            case "assignment":
+                return "🗒️";
+            case "document":
+                return "🔗";
+            case "folder":
+                return "📁";
+            case "page":
+                return "📄";
+            case "media-album":
+                return "🖼️"
+            case "discussion":
+                return "💬"
+            default:
+                return "-"
         }
-        return fields;
+    }
+
+    toString(num?:number) {
+        if( !num || (num === 0) || this.data.type !== "folder") {
+            return `${this.icon()} ${this.name} - ${this.data.id}`
+        } else {
+            return `${this.icon()} ${this.name} - ${this.data.id}\n${this.children.map(a => `--> ${a.toString(num-1)}`).join('\n')}`
+        }
     }
 }

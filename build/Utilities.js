@@ -79,7 +79,10 @@ class Utilities {
             return 0;
         let left = Utilities.RatcliffObershelpRaw(str1.slice(0, common.start1), str2.slice(0, common.start2));
         let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
-        return common.longest + left + right;
+        return common.longest + left + right - Math.abs(common.start1 - common.start2) / 200;
+    }
+    static RatcliffObershelpCustom(str1, str2) {
+        return Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length / 100);
     }
     static RatcliffObershelp(str1, str2) {
         return 2 * Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);

@@ -30,19 +30,40 @@ class SqualolBot {
             if (result) {
                 if (result.command === "search") {
                     let str = result.args.join(' ');
-                    let allchildren = (this.self.baseFolder.listAllChildren());
-                    let max = 0;
-                    let maxchild = null;
-                    for (const child of allchildren) {
-                        let num = Utilities_1.Utilities.RatcliffObershelpRaw(child.data.title.toLowerCase(), str.toLowerCase());
-                        if (num > max) {
-                            maxchild = child;
-                            max = num;
-                        }
-                    }
+                    let allchildren = this.self.baseFolder.wordSearch(str);
+                    let maxchild = allchildren[0];
+                    let max = Utilities_1.Utilities.RatcliffObershelpCustom(str, maxchild.data.title);
                     message.channel.send({
-                        embed: Object.assign({ title: `Search for "${str}"`, fields: yield maxchild.toEmbedFields() }, Utilities_1.Utilities.embedInfo(message))
+                        embed: Object.assign({ title: `Search for "${str.toUpperCase()}"`, fields: [
+                                ...yield maxchild.toEmbedFields(),
+                                {
+                                    name: `Similar Results`,
+                                    value: `The above result was ${Math.round(max * 100)}% similar.\n${allchildren.slice(1, 5).map(a => `${Math.round(Utilities_1.Utilities.RatcliffObershelpCustom(str, a.data.title) * 100)}% - ${a.toString()}`).join('\n')}`
+                                }
+                            ] }, Utilities_1.Utilities.embedInfo(message))
                     });
+                }
+                else if (result.command === "get") {
+                    let id = result.args[0];
+                    let getid = this.self.baseFolder.findall((sfile) => parseInt(sfile.data.id) === parseInt(id));
+                    if (getid.length === 0) {
+                        message.channel.send({
+                            embed: Object.assign({ title: `No file found with ID ${id}`, description: `Make sure you're using this command correctly!` }, Utilities_1.Utilities.embedInfo(message))
+                        });
+                    }
+                    else if (getid.length > 1) {
+                        message.channel.send({
+                            embed: Object.assign({ title: `More than one file found with ID ${id}`, description: `Report to Rog#7499 immediately. This is actually kind of importnat.` }, Utilities_1.Utilities.embedInfo(message))
+                        });
+                        console.trace(`Duplicate id ${id}`);
+                    }
+                    else {
+                        message.channel.send({
+                            embed: Object.assign({ title: `Search for ID ${id}`, fields: [
+                                    ...yield getid[0].toEmbedFields(),
+                                ] }, Utilities_1.Utilities.embedInfo(message))
+                        });
+                    }
                 }
             }
         });

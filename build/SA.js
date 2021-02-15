@@ -13,6 +13,7 @@ exports.SFile = exports.Course = exports.User = exports.SchoologyAccessor = void
 const crypto = require("crypto");
 const OAuth = require("oauth-1.0a");
 const nodefetch = require("node-fetch");
+const Utilities_1 = require("./Utilities");
 const dotenv = require("dotenv");
 dotenv.config();
 class SchoologyAccessor {
@@ -148,6 +149,20 @@ class SchoologyAccessor {
             return data;
         });
     }
+    static getAlbum(sectionid, albumid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/albums/${albumid}`));
+            const data = (yield res.json());
+            return data;
+        });
+    }
+    static getDiscussion(sectionid, discussionid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/discussions/${discussionid}`));
+            const data = (yield res.json());
+            return data;
+        });
+    }
 }
 exports.SchoologyAccessor = SchoologyAccessor;
 // BASIC METHODS
@@ -155,7 +170,7 @@ SchoologyAccessor.base = 'https://api.schoology.com/v1';
 SchoologyAccessor.token = { key: process.env.schoology_key, secret: process.env.schoology_secret };
 SchoologyAccessor.num = { num: 0 };
 setInterval(() => {
-    SchoologyAccessor.num.num = -20;
+    SchoologyAccessor.num.num = -15;
 }, 1000);
 class User {
     constructor(id) {
@@ -236,7 +251,7 @@ class SFile {
             if (this.cached) {
                 return this.fulldatacache;
             }
-            if (this.data.type === "assignment") {
+            if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
                 const me = yield SchoologyAccessor.getAssignment(this.course.getData().id, this.data.id);
                 this.fulldatacache = me;
                 this.cached = true;
@@ -249,7 +264,19 @@ class SFile {
                 return me;
             }
             if (this.data.type === "page") {
-                const me = yield SchoologyAccessor.getPage(this.course.getData().course_id, this.data.id);
+                const me = yield SchoologyAccessor.getPage(this.course.getData().id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                return me;
+            }
+            if (this.data.type === "media-album") {
+                const me = yield SchoologyAccessor.getAlbum(this.course.getData().id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                return me;
+            }
+            if (this.data.type === "discussion") {
+                const me = yield SchoologyAccessor.getDiscussion(this.course.getData().id, this.data.id);
                 this.fulldatacache = me;
                 this.cached = true;
                 return me;
@@ -264,13 +291,34 @@ class SFile {
             return [this, ...this.children.reduce((acc, file) => acc.concat(file.listAllChildren()), [])];
         }
     }
+    wordSearch(str) {
+        let allchildren = (this.listAllChildren());
+        allchildren.sort((a, b) => {
+            return Utilities_1.Utilities.RatcliffObershelpCustom(str, b.data.title) - Utilities_1.Utilities.RatcliffObershelpCustom(str, a.data.title);
+        });
+        return allchildren;
+    }
+    find(suchthat) {
+        if (suchthat(this)) {
+            return this;
+        }
+        else if (this.type === "folder") {
+            return this.children.find(suchthat);
+        }
+        else {
+            return false;
+        }
+    }
+    findall(suchthat) {
+        return this.listAllChildren().filter(suchthat);
+    }
     toEmbedFields() {
         return __awaiter(this, void 0, void 0, function* () {
             let data = yield this.getData();
             let fields = [];
             fields.push({
                 name: `Name`,
-                value: `${this.name}`,
+                value: `${this.icon()} ${this.name}`,
                 inline: false
             });
             fields.push({
@@ -283,13 +331,20 @@ class SFile {
                 value: `${this.data.id}`,
                 inline: true
             });
+            if (!this.base) {
+                fields.push({
+                    name: `Parent Folder ID`,
+                    value: `${this.parent.data.id}`,
+                    inline: true
+                });
+            }
             if (this.data.body.length > 0) {
                 fields.push({
                     name: `Description`,
                     value: `${this.data.body}`
                 });
             }
-            if (this.data.type === "assignment") {
+            if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
                 // @ts-ignore
                 let d = data;
                 fields.push({
@@ -331,7 +386,40 @@ class SFile {
                 });
                 fields.push({
                     name: `Children`,
-                    value: `${d['folder-item'].map(a => a.title).join('\n')}`,
+                    value: `${this.children.map(child => child.toString(1)).join('\n')}`,
+                    inline: false
+                });
+            }
+            if (this.data.type === "media-album") {
+                // @ts-ignore
+                let d = data;
+                fields.push({
+                    name: `Cover Image`,
+                    value: `${d.cover_image_url}`,
+                    inline: false
+                });
+                fields.push({
+                    name: `Audio Count`,
+                    value: `${d.audio_count}`,
+                    inline: true
+                });
+                fields.push({
+                    name: `Image Count`,
+                    value: `${d.photo_count}`,
+                    inline: true
+                });
+                fields.push({
+                    name: `Video Count`,
+                    value: `${d.video_count}`,
+                    inline: true
+                });
+            }
+            if (this.data.type === "discussion") {
+                // @ts-ignore
+                let d = data;
+                fields.push({
+                    name: `Requires Post to See?`,
+                    value: `${d.require_initial_post === 1 ? "Yes" : "No"}`,
                     inline: true
                 });
             }
@@ -339,26 +427,40 @@ class SFile {
             for (const field of fields) {
                 fieldsfinal.push({
                     name: field.name,
-                    value: field.value.length > 0 ? field.value : 'N/A',
+                    value: (field.value.length >= 1024 ? field.value.slice(0, 1000) + '...' : field.value.length > 0 ? field.value : 'N/A').replace(/\n\n+/g, '\n'),
                     inline: field.inline
                 });
             }
             return fieldsfinal;
         });
     }
-    toEmbedFieldsRaw() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.getData();
-            let fields = [];
-            for (const key of Object.keys(data)) {
-                fields.push({
-                    name: `${key}`,
-                    value: typeof data[key] === "object" ? JSON.stringify(data[key]) : `${data[key]}`.length > 0 ? `${data[key]}` : `N/A`,
-                    inline: true
-                });
-            }
-            return fields;
-        });
+    icon() {
+        switch (this.data.type) {
+            case "assessment_v2":
+            case "managed_assessment":
+            case "assignment":
+                return "🗒️";
+            case "document":
+                return "🔗";
+            case "folder":
+                return "📁";
+            case "page":
+                return "📄";
+            case "media-album":
+                return "🖼️";
+            case "discussion":
+                return "💬";
+            default:
+                return "-";
+        }
+    }
+    toString(num) {
+        if (!num || (num === 0) || this.data.type !== "folder") {
+            return `${this.icon()} ${this.name} - ${this.data.id}`;
+        }
+        else {
+            return `${this.icon()} ${this.name} - ${this.data.id}\n${this.children.map(a => `--> ${a.toString(num - 1)}`).join('\n')}`;
+        }
     }
 }
 exports.SFile = SFile;

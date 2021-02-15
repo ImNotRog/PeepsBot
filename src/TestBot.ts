@@ -2,7 +2,8 @@ import { DriveUser } from "./DriveUser";
 import { SheetsUser } from "./SheetsUser";
 import * as Discord from 'discord.js';
 import { Module } from "./Module";
-
+import { SchoologyAccessor } from './SA';
+import * as fs from "fs";
 export class TestBot implements Module {
 
     private client: Discord.Client;
@@ -42,10 +43,14 @@ export class TestBot implements Module {
     }
 
     async onConstruct(): Promise<void> {
+
+        // let res = await SchoologyAccessor.get("/sections/2772305484/folders/4657347337")
+        // let res = await SchoologyAccessor.get("/courses/2772305484/folder/347235182")
+        // fs.writeFileSync("./temp/folderv2.json", JSON.stringify( await res.json()) );
         // console.log('hello!');
 
-        await this.sheetUser.onConstruct();
-        console.log(await this.sheetUser.bulkRead("images"));
+        // await this.sheetUser.onConstruct();
+        // console.log(await this.sheetUser.bulkRead("images"));
 
         // for(const subsheet of await this.sheetUser.getSubsheets("images")) {
         //     // await this.sheetUser.moveCol("images", subsheet, 6, 3);
