@@ -17,6 +17,73 @@ const Discord = require("discord.js");
 class Utilities {
     constructor() {
     }
+    /* String Utilities */
+    static BigramsOf(str) {
+        let returnobj = [];
+        for (let i = 0; i < str.length - 1; i++) {
+            returnobj.push(str.slice(i, i + 2));
+        }
+        return returnobj;
+    }
+    static SimilarBigramsOf(str1, str2) {
+        let bigrams1 = Utilities.BigramsOf(str1);
+        let bigrams2 = Utilities.BigramsOf(str2);
+        let bigramsset = new Set(bigrams1);
+        let incommon = 0;
+        for (const bigram of bigramsset) {
+            for (const secondbigram of bigrams2) {
+                if (bigram === secondbigram) {
+                    incommon++;
+                }
+            }
+        }
+        return incommon;
+    }
+    static SorensonDice(str1, str2) {
+        return 2 * (Utilities.SimilarBigramsOf(str1.toLowerCase(), str2.toLowerCase())) / (str1.length - 1 + str2.length - 1);
+    }
+    static LongestCommonSubstring(str1, str2) {
+        let longest = 0;
+        let longestsubstr = "";
+        let start1 = 0;
+        let end1 = 0;
+        let start2 = 0;
+        let end2 = 0;
+        for (let start1t = 0; start1t < str1.length; start1t++) {
+            for (let end1t = start1t + 1; end1t <= str1.length; end1t++) {
+                let substr = str1.slice(start1t, end1t);
+                if (str2.includes(substr) && substr.length > longest) {
+                    longest = substr.length;
+                    start2 = str2.indexOf(substr);
+                    end2 = start2 + substr.length;
+                    longestsubstr = substr;
+                    start1 = start1t;
+                    end1 = end1t;
+                }
+            }
+        }
+        return {
+            longest,
+            longestsubstr,
+            start1,
+            end1,
+            start2,
+            end2
+        };
+    }
+    static RatcliffObershelpRaw(str1, str2) {
+        if (str1.length * str2.length === 0)
+            return 0;
+        let common = Utilities.LongestCommonSubstring(str1, str2);
+        if (common.longest === 0)
+            return 0;
+        let left = Utilities.RatcliffObershelpRaw(str1.slice(0, common.start1), str2.slice(0, common.start2));
+        let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
+        return common.longest + left + right;
+    }
+    static RatcliffObershelp(str1, str2) {
+        return 2 * Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
+    }
     /* Moment Utilities */
     static now() {
         return moment.tz("America/Los_Angeles").format();

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.File = exports.Course = exports.SchoologyAccessor = void 0;
+exports.SFile = exports.Course = exports.User = exports.SchoologyAccessor = void 0;
 const crypto = require("crypto");
 const OAuth = require("oauth-1.0a");
 const nodefetch = require("node-fetch");
@@ -20,11 +20,27 @@ class SchoologyAccessor {
     ;
     static get(path) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
+            let res = yield SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
+            if (!res.ok)
+                console.log(res);
+            return res;
         });
     }
     static rawGet(path) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (SchoologyAccessor.num.num >= 0) {
+                let awaitpromise = new Promise((r, j) => {
+                    let int = setInterval(() => {
+                        if (SchoologyAccessor.num.num < 0) {
+                            SchoologyAccessor.num.num++;
+                            r();
+                            clearInterval(int);
+                        }
+                    }, 1000);
+                });
+                yield awaitpromise;
+            }
+            SchoologyAccessor.num.num++;
             const url = path;
             const method = "GET";
             function hash_function_sha1(base_string, key) {
@@ -85,9 +101,9 @@ class SchoologyAccessor {
         });
     }
     // ADVANCED METHODS
-    static listCourses() {
+    static listCourses(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const res = (yield SchoologyAccessor.get("/users/2016549/sections"));
+            const res = (yield SchoologyAccessor.get(`/users/${id}/sections`));
             const data = (yield res.json()).section;
             return data;
         });
@@ -137,6 +153,29 @@ exports.SchoologyAccessor = SchoologyAccessor;
 // BASIC METHODS
 SchoologyAccessor.base = 'https://api.schoology.com/v1';
 SchoologyAccessor.token = { key: process.env.schoology_key, secret: process.env.schoology_secret };
+SchoologyAccessor.num = { num: 0 };
+setInterval(() => {
+    SchoologyAccessor.num.num = -20;
+}, 1000);
+class User {
+    constructor(id) {
+        this.id = "2016549";
+        this.courses = [];
+    }
+    onConstruct() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let courses = yield SchoologyAccessor.listCourses(this.id);
+            let promises = [];
+            for (const course of courses) {
+                let c = (new Course(course));
+                promises.push(c.onConstruct());
+                this.courses.push(c);
+            }
+            yield Promise.all(promises);
+        });
+    }
+}
+exports.User = User;
 class Course {
     constructor(data) {
         this.data = data;
@@ -147,13 +186,13 @@ class Course {
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             const baseInfo = yield SchoologyAccessor.getFolder(this.data.id);
-            this.baseFolder = new File(this, baseInfo.self);
+            this.baseFolder = new SFile(this, baseInfo.self);
             yield this.baseFolder.onConstruct();
         });
     }
 }
 exports.Course = Course;
-class File {
+class SFile {
     constructor(course, data, parent) {
         this.course = course;
         this.data = data;
@@ -167,21 +206,24 @@ class File {
             this.base = false;
         }
         this.type = this.data.type;
+        this.name = this.data.title;
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.type === "folder") {
                 const me = yield SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
-                this.fulldatacache = me;
-                this.cached = true;
-                if (me['folder-item']) {
-                    let promises = [];
-                    for (const child of me["folder-item"]) {
-                        const childfile = new File(this.course, child, this);
-                        promises.push(childfile.onConstruct());
-                        this.children.push(childfile);
+                if (me) {
+                    this.fulldatacache = me;
+                    this.cached = true;
+                    if (me['folder-item']) {
+                        let promises = [];
+                        for (const child of me["folder-item"]) {
+                            const childfile = new SFile(this.course, child, this);
+                            promises.push(childfile.onConstruct());
+                            this.children.push(childfile);
+                        }
+                        yield Promise.all(promises);
                     }
-                    yield Promise.all(promises);
                 }
             }
         });
@@ -195,7 +237,7 @@ class File {
                 return this.fulldatacache;
             }
             if (this.data.type === "assignment") {
-                const me = yield SchoologyAccessor.getAssignment(this.course.getData().course_id, this.data.id);
+                const me = yield SchoologyAccessor.getAssignment(this.course.getData().id, this.data.id);
                 this.fulldatacache = me;
                 this.cached = true;
                 return me;
@@ -214,5 +256,109 @@ class File {
             }
         });
     }
+    listAllChildren() {
+        if (this.data.type !== "folder") {
+            return [this];
+        }
+        else {
+            return [this, ...this.children.reduce((acc, file) => acc.concat(file.listAllChildren()), [])];
+        }
+    }
+    toEmbedFields() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let data = yield this.getData();
+            let fields = [];
+            fields.push({
+                name: `Name`,
+                value: `${this.name}`,
+                inline: false
+            });
+            fields.push({
+                name: `Type`,
+                value: `${this.type}`,
+                inline: true
+            });
+            fields.push({
+                name: `ID`,
+                value: `${this.data.id}`,
+                inline: true
+            });
+            if (this.data.body.length > 0) {
+                fields.push({
+                    name: `Description`,
+                    value: `${this.data.body}`
+                });
+            }
+            if (this.data.type === "assignment") {
+                // @ts-ignore
+                let d = data;
+                fields.push({
+                    name: `Assignment Type`,
+                    value: `${d.assignment_type}`,
+                    inline: true
+                });
+                fields.push({
+                    name: `Due`,
+                    value: `${d.due}`,
+                    inline: true
+                });
+                fields.push({
+                    name: `Type`,
+                    value: `${d.type}`,
+                    inline: true
+                });
+            }
+            if (this.data.type === "document") {
+                // @ts-ignore
+                let d = data;
+                fields.push({
+                    name: `Link`,
+                    value: `${d.attachments.links.link[0].url}`,
+                    inline: true
+                });
+            }
+            if (this.data.type === "page") {
+                // @ts-ignore
+                let d = data;
+            }
+            if (this.data.type === "folder") {
+                // @ts-ignore
+                let d = data;
+                fields.push({
+                    name: `Color`,
+                    value: `${d.self.color}`,
+                    inline: true
+                });
+                fields.push({
+                    name: `Children`,
+                    value: `${d['folder-item'].map(a => a.title).join('\n')}`,
+                    inline: true
+                });
+            }
+            let fieldsfinal = [];
+            for (const field of fields) {
+                fieldsfinal.push({
+                    name: field.name,
+                    value: field.value.length > 0 ? field.value : 'N/A',
+                    inline: field.inline
+                });
+            }
+            return fieldsfinal;
+        });
+    }
+    toEmbedFieldsRaw() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let data = yield this.getData();
+            let fields = [];
+            for (const key of Object.keys(data)) {
+                fields.push({
+                    name: `${key}`,
+                    value: typeof data[key] === "object" ? JSON.stringify(data[key]) : `${data[key]}`.length > 0 ? `${data[key]}` : `N/A`,
+                    inline: true
+                });
+            }
+            return fields;
+        });
+    }
 }
-exports.File = File;
+exports.SFile = SFile;

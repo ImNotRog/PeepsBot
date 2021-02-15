@@ -120,14 +120,36 @@ export class SchoologyAccessor {
 
     public static readonly base: string = 'https://api.schoology.com/v1';
     public static token = { key: process.env.schoology_key, secret: process.env.schoology_secret }
-    
+    public static num = { num: 0 };
+
     private constructor() {};
 
     static async get(path) {
-        return await SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
+        let res = await SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
+        if(!res.ok) console.log(res);
+        return res;
     }
 
     static async rawGet(path){
+        
+
+        if(SchoologyAccessor.num.num >= 0) {
+            let awaitpromise = new Promise<void> ((r,j) => {
+                let int = setInterval(() => {
+                    if(SchoologyAccessor.num.num < 0){
+                        SchoologyAccessor.num.num ++;
+                        r();
+                        clearInterval(int);
+                    }
+
+                }, 1000);
+            })
+
+            await awaitpromise;
+
+        }
+        SchoologyAccessor.num.num++;
+
         const url = path;
         const method = "GET";
 
@@ -197,8 +219,8 @@ export class SchoologyAccessor {
 
     // ADVANCED METHODS
 
-    static async listCourses() {
-        const res = (await SchoologyAccessor.get("/users/2016549/sections"));
+    static async listCourses(id:string) {
+        const res = (await SchoologyAccessor.get(`/users/${id}/sections`));
         const data: CourseResponse[] = (await res.json()).section;
         return data;
     }
@@ -238,13 +260,37 @@ export class SchoologyAccessor {
     }
 }
 
+setInterval(() => {
+    SchoologyAccessor.num.num = -20;
+}, 1000)
+
 type SnippetResponse = (FolderDataResponse | AssignmentDataSnippetResponse | DocumentDataSnippetResponse | PageDataSnippetResponse);
 type FullReponse = (FolderResponse | AssignmentResponse | DocumentResponse | PageResponse)
+
+export class User {
+    public id: string;
+    public courses: Course[];
+    constructor(id:string) {
+        this.id = "2016549";
+        this.courses = [];
+    }
+
+    async onConstruct() {
+        let courses = await SchoologyAccessor.listCourses(this.id);
+        let promises = [];
+        for(const course of courses) {
+            let c = (new Course(course));
+            promises.push(c.onConstruct());
+            this.courses.push(c);
+        }
+        await Promise.all(promises);
+    }
+}
 
 export class Course {
 
     public data: CourseResponse;
-    public baseFolder: File;
+    public baseFolder: SFile;
     
     constructor(data: CourseResponse) {
         this.data = data;
@@ -256,24 +302,25 @@ export class Course {
     
     async onConstruct() {
         const baseInfo = await SchoologyAccessor.getFolder(this.data.id);
-        this.baseFolder = new File(this, baseInfo.self);
+        this.baseFolder = new SFile(this, baseInfo.self);
         await this.baseFolder.onConstruct();
     }
 }
 
-export class File {
+export class SFile {
 
     public data: SnippetResponse;
-    public parent: File;
+    public parent: SFile;
     public base:boolean;
-    public children: File[];
+    public children: SFile[];
     public type: string;
     public course:Course;
+    public name:string;
 
     public fulldatacache: FullReponse;
     public cached:boolean;
 
-    constructor(course: Course, data: SnippetResponse, parent?:File) {
+    constructor(course: Course, data: SnippetResponse, parent?:SFile) {
         this.course = course;
         this.data = data;
         this.parent = null;
@@ -287,26 +334,32 @@ export class File {
         }
 
         this.type = this.data.type;
+        this.name = this.data.title;
     }
 
-    async onConstruct() {
-        if(this.type === "folder") {
-            const me = await SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
-            this.fulldatacache = me;
-            this.cached = true;
+    async onConstruct(): Promise<void> {
 
-            if(me['folder-item']) {
-                let promises = [];
-                for (const child of me["folder-item"]) {
-                    const childfile = new File(this.course, child, this);
-                    promises.push(childfile.onConstruct());
-                    this.children.push(childfile);
+        if (this.type === "folder") {
+            const me = await SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
+            if (me) {
+
+                this.fulldatacache = me;
+                this.cached = true;
+
+                if (me['folder-item']) {
+                    let promises = [];
+                    for (const child of me["folder-item"]) {
+                        const childfile = new SFile(this.course, child, this);
+                        promises.push(childfile.onConstruct());
+                        this.children.push(childfile);
+                    }
+                    await Promise.all(promises);
                 }
-                await Promise.all(promises);
+
             }
 
-            
         }
+        
     }
 
     getSnippet() {
@@ -318,7 +371,7 @@ export class File {
             return this.fulldatacache;
         }
         if (this.data.type === "assignment") {
-            const me = await SchoologyAccessor.getAssignment(this.course.getData().course_id, this.data.id);
+            const me = await SchoologyAccessor.getAssignment(this.course.getData().id, this.data.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
@@ -335,5 +388,140 @@ export class File {
             this.cached = true;
             return me;
         }
+    }
+
+    listAllChildren():SFile[] {
+        if(this.data.type !== "folder") {
+            return [this];
+        } else {
+            return [this, ...this.children.reduce((acc, file) => acc.concat(file.listAllChildren() ), []) ]
+        }
+    }
+
+    async toEmbedFields(): Promise<{ name: string, value: string, inline?: boolean }[]> {
+        let data = await this.getData();
+        let fields = [];
+        fields.push(
+            {
+                name: `Name`,
+                value: `${this.name}`,
+                inline: false
+            }
+        )
+        fields.push(
+            {
+                name: `Type`,
+                value: `${this.type}`,
+                inline: true
+            }
+        );
+        
+        fields.push(
+            {
+                name: `ID`,
+                value: `${this.data.id}`,
+                inline: true
+            }
+        );
+
+        if(this.data.body.length > 0) {
+            fields.push(
+                {
+                    name: `Description`,
+                    value: `${this.data.body}`
+                }
+            )
+        }
+
+        
+        if(this.data.type === "assignment") {
+            // @ts-ignore
+            let d: AssignmentResponse = data;
+            fields.push(
+                {
+                    name: `Assignment Type`,
+                    value: `${d.assignment_type}`,
+                    inline: true
+                }
+            );
+            fields.push(
+                {
+                    name: `Due`,
+                    value: `${d.due}`,
+                    inline: true
+                }
+            )
+            fields.push(
+                {
+                    name: `Type`,
+                    value: `${d.type}`,
+                    inline: true
+                }
+            )
+        }
+
+        if (this.data.type === "document") {
+            // @ts-ignore
+            let d: DocumentResponse = data;
+            fields.push(
+                {
+                    name: `Link`,
+                    value: `${d.attachments.links.link[0].url}`,
+                    inline: true
+                }
+            );
+        }
+
+        if (this.data.type === "page") {
+            // @ts-ignore
+            let d: PageResponse = data;
+            
+        }
+
+        if (this.data.type === "folder") {
+            // @ts-ignore
+            let d: FolderResponse = data;
+
+            fields.push(
+                {
+                    name: `Color`,
+                    value: `${d.self.color}`,
+                    inline: true
+                }
+            ); 
+
+            fields.push(
+                {
+                    name: `Children`,
+                    value: `${d['folder-item'].map(a => a.title).join('\n')}`,
+                    inline: true
+                }
+            );
+
+        }
+        
+        let fieldsfinal = [];
+        for(const field of fields) {
+            fieldsfinal.push({
+                name: field.name,
+                value: field.value.length > 0 ? field.value : 'N/A',
+                inline: field.inline
+            })
+        }
+        
+        return fieldsfinal;
+    }
+
+    async toEmbedFieldsRaw(): Promise< { name: string, value: string, inline?: boolean }[]> {
+        let data = await this.getData();
+        let fields = [];
+        for(const key of Object.keys(data)) {
+            fields.push( {
+                name: `${key}`,
+                value: typeof data[key] === "object" ? JSON.stringify(data[key]) : `${data[key]}`.length > 0 ? `${data[key]}` : `N/A`,
+                inline: true
+            });
+        }
+        return fields;
     }
 }

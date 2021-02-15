@@ -5,9 +5,87 @@ import moment = require("moment-timezone");
 
 // For Intellisense
 import Discord = require("discord.js");
+import { SchoologyAccessor } from "./SA";
 
 export class Utilities {
     private constructor(){
+    }
+
+    /* String Utilities */
+    public static BigramsOf(str:string) {
+        let returnobj = [];
+        for(let i = 0; i < str.length - 1; i++) {
+            returnobj.push(str.slice(i,i+2));
+        }
+        return returnobj;
+    }
+
+    public static SimilarBigramsOf(str1:string,str2:string) {
+        let bigrams1 = Utilities.BigramsOf(str1);
+        let bigrams2 = Utilities.BigramsOf(str2);
+
+        let bigramsset = new Set(bigrams1);
+        let incommon = 0;
+        for(const bigram of bigramsset) {
+            for(const secondbigram of bigrams2) {
+                if(bigram === secondbigram) {
+                    incommon ++;
+                }
+            }
+        }
+        return incommon;
+    }
+
+    public static SorensonDice(str1:string,str2:string) {
+        return 2 * (Utilities.SimilarBigramsOf(str1.toLowerCase(),str2.toLowerCase())) / (str1.length - 1 + str2.length - 1);
+    }
+
+    public static LongestCommonSubstring(str1:string, str2:string) {
+
+        let longest = 0;
+        let longestsubstr = "";
+        let start1 = 0;
+        let end1 = 0;
+        let start2 = 0;
+        let end2 = 0;
+
+        for (let start1t = 0; start1t < str1.length; start1t++) {
+            for(let end1t = start1t+1; end1t <= str1.length; end1t++) {
+                let substr = str1.slice(start1t,end1t);
+                if(str2.includes(substr) && substr.length > longest) {
+                    longest = substr.length;
+                    start2 = str2.indexOf(substr);
+                    end2 = start2 + substr.length;
+                    longestsubstr = substr;
+                    start1 = start1t;
+                    end1 = end1t;
+                }
+            }
+        }
+
+        return {
+            longest,
+            longestsubstr,
+            start1,
+            end1,
+            start2,
+            end2
+        }
+    }
+
+    public static RatcliffObershelpRaw(str1:string,str2:string) {
+        if(str1.length * str2.length === 0) return 0;
+        let common = Utilities.LongestCommonSubstring(str1,str2);
+        if(common.longest === 0) return 0;
+
+        let left = Utilities.RatcliffObershelpRaw(str1.slice(0, common.start1), str2.slice(0, common.start2));
+        let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
+
+        return common.longest + left + right;
+    }
+
+    public static RatcliffObershelp(str1:string,str2:string){
+        return 2 * Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
     }
 
     /* Moment Utilities */
