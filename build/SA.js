@@ -423,6 +423,10 @@ class SFile {
                     inline: true
                 });
             }
+            fields.push({
+                name: `Schoology Link`,
+                value: `${this.link()}`
+            });
             let fieldsfinal = [];
             for (const field of fields) {
                 fieldsfinal.push({
@@ -460,6 +464,28 @@ class SFile {
         }
         else {
             return `${this.icon()} ${this.name} - ${this.data.id}\n${this.children.map(a => `--> ${a.toString(num - 1)}`).join('\n')}`;
+        }
+    }
+    link() {
+        switch (this.data.type) {
+            case "assessment_v2":
+                return `https://pausd.schoology.com/course/${this.course.data.id}/assessments/${this.data.id}`;
+            case "managed_assessment":
+                return `https://pausd.schoology.com/course/${this.course.data.id}/common-assessment/${this.data.id}`;
+            case "assignment":
+                return `https://pausd.schoology.com/assignment/${this.data.id}/info`;
+            case "folder":
+                return `https://pausd.schoology.com/course/${this.course.data.id}/materials?f=${this.data.id}`;
+            case "page":
+                return `https://pausd.schoology.com/page/${this.data.id}`;
+            case "media-album":
+                return `https://pausd.schoology.com/album/${this.data.id}`;
+            case "document":
+                return this.parent.link();
+            case "discussion":
+                return `https://pausd.schoology.com/course/${this.course.data.id}/materials/discussion/view/${this.data.id}`;
+            default:
+                return "N/A";
         }
     }
 }
