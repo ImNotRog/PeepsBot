@@ -18,6 +18,11 @@ const ProcessMessage_1 = require("./ProcessMessage");
  */
 class SqualolBot {
     constructor() {
+        this.helpEmbed = {
+            title: "Help Squalol Bot",
+            description: `In progress!`,
+            fields: []
+        };
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {

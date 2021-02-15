@@ -14,7 +14,11 @@ export class SqualolBot implements Module {
 
     private self:Course;
     constructor() {
-        
+        this.helpEmbed = {
+            title: "Help Squalol Bot",
+            description: `In progress!`,
+            fields: []
+        }
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
