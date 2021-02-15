@@ -9,19 +9,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.File = exports.Course = exports.SchoologyAccessor = void 0;
 const crypto = require("crypto");
 const OAuth = require("oauth-1.0a");
 const nodefetch = require("node-fetch");
 const dotenv = require("dotenv");
 dotenv.config();
 class SchoologyAccessor {
-    constructor() {
-        this.base = 'https://api.schoology.com/v1';
-        this.token = { key: process.env.schoology_key, secret: process.env.schoology_secret };
-    }
-    get(path) {
+    constructor() { }
+    ;
+    static get(path) {
         return __awaiter(this, void 0, void 0, function* () {
-            const url = this.base + path;
+            return yield SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
+        });
+    }
+    static rawGet(path) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const url = path;
             const method = "GET";
             function hash_function_sha1(base_string, key) {
                 return crypto
@@ -42,9 +46,9 @@ class SchoologyAccessor {
             });
         });
     }
-    methodswithdata(path, data, method) {
+    static methodswithdata(path, data, method) {
         return __awaiter(this, void 0, void 0, function* () {
-            const url = this.base + path;
+            const url = SchoologyAccessor.base + path;
             function hash_function_sha1(base_string, key) {
                 return crypto
                     .createHmac('sha1', key)
@@ -65,20 +69,150 @@ class SchoologyAccessor {
             });
         });
     }
-    post(path, data) {
+    static post(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.methodswithdata(path, data, "POST");
+            return yield SchoologyAccessor.methodswithdata(path, data, "POST");
         });
     }
-    put(path, data) {
+    static put(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.methodswithdata(path, data, "PUT");
+            return yield SchoologyAccessor.methodswithdata(path, data, "PUT");
         });
     }
-    delete(path, data) {
+    static delete(path, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.methodswithdata(path, data, "DELETE");
+            return yield SchoologyAccessor.methodswithdata(path, data, "DELETE");
+        });
+    }
+    // ADVANCED METHODS
+    static listCourses() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get("/users/2016549/sections"));
+            const data = (yield res.json()).section;
+            return data;
+        });
+    }
+    static listAssignments(sectionid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/assignments`));
+            const data = (yield res.json()).assignment;
+            return data;
+        });
+    }
+    static getFolder(courseid, folderid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/courses/${courseid}/folder/${folderid ? folderid : ''}`));
+            try {
+                const data = (yield res.json());
+                return data;
+            }
+            catch (err) {
+                console.error(err);
+            }
+        });
+    }
+    static getPage(sectionid, pageid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/pages/${pageid}`));
+            const data = (yield res.json());
+            return data;
+        });
+    }
+    static getDocument(sectionid, documentid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/documents/${documentid}`));
+            const data = (yield res.json());
+            return data;
+        });
+    }
+    static getAssignment(sectionid, assignmentid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = (yield SchoologyAccessor.get(`/sections/${sectionid}/assignments/${assignmentid}`));
+            const data = (yield res.json());
+            return data;
         });
     }
 }
-module.exports = { SchoologyAccessor };
+exports.SchoologyAccessor = SchoologyAccessor;
+// BASIC METHODS
+SchoologyAccessor.base = 'https://api.schoology.com/v1';
+SchoologyAccessor.token = { key: process.env.schoology_key, secret: process.env.schoology_secret };
+class Course {
+    constructor(data) {
+        this.data = data;
+    }
+    getData() {
+        return this.data;
+    }
+    onConstruct() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseInfo = yield SchoologyAccessor.getFolder(this.data.id);
+            this.baseFolder = new File(this, baseInfo.self);
+            yield this.baseFolder.onConstruct();
+        });
+    }
+}
+exports.Course = Course;
+class File {
+    constructor(course, data, parent) {
+        this.course = course;
+        this.data = data;
+        this.parent = null;
+        this.base = true;
+        this.cached = false;
+        this.fulldatacache = null;
+        this.children = [];
+        if (parent) {
+            this.parent = parent;
+            this.base = false;
+        }
+        this.type = this.data.type;
+    }
+    onConstruct() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.type === "folder") {
+                const me = yield SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                if (me['folder-item']) {
+                    let promises = [];
+                    for (const child of me["folder-item"]) {
+                        const childfile = new File(this.course, child, this);
+                        promises.push(childfile.onConstruct());
+                        this.children.push(childfile);
+                    }
+                    yield Promise.all(promises);
+                }
+            }
+        });
+    }
+    getSnippet() {
+        return this.data;
+    }
+    getData() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.cached) {
+                return this.fulldatacache;
+            }
+            if (this.data.type === "assignment") {
+                const me = yield SchoologyAccessor.getAssignment(this.course.getData().course_id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                return me;
+            }
+            if (this.data.type === "document") {
+                const me = yield SchoologyAccessor.getDocument(this.course.getData().course_id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                return me;
+            }
+            if (this.data.type === "page") {
+                const me = yield SchoologyAccessor.getPage(this.course.getData().course_id, this.data.id);
+                this.fulldatacache = me;
+                this.cached = true;
+                return me;
+            }
+        });
+    }
+}
+exports.File = File;

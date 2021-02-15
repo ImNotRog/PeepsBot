@@ -5,17 +5,130 @@ import nodefetch = require('node-fetch');
 import * as dotenv from "dotenv";
 dotenv.config();
 
-class SchoologyAccessor {
 
-    private readonly base: string = 'https://api.schoology.com/v1';
-    private token: { key:string, secret:string };
+type CourseResponse = {
+    id: string,
+    course_id:string,
+    course_code: string,
+    course_title: string,
+    section_title: string,
+    profile_url: string,
+    grading_periods: string[],
+    links: {
+        self: string
+    }
+}
 
-    constructor(){
-        this.token = { key: process.env.schoology_key, secret: process.env.schoology_secret }
+type DocumentDataSnippetResponse = {
+    id: string,
+    location: string,
+    title: string,
+    type: "document",
+    document_type: string,
+    completion_status: string,
+    completed: number,
+    body: string,
+}
+
+type PageDataSnippetResponse = {
+    id: string,
+    location: string,
+    title: string,
+    type: "page",
+    document_type: string,
+    completion_status: string,
+    completed: number,
+    body: string,
+}
+
+type AssignmentDataSnippetResponse = {
+    id: string,
+    location: string,
+    title: string,
+    type: "assignment",
+    document_type: string,
+    completion_status: string,
+    completed: number,
+    body: string,
+    assignment_type: string,
+    web_url: string,
+}
+
+type FolderDataResponse = {
+    id: string,
+    location: string,
+    title: string,
+    body: string,
+    type: "folder",
+    color: string,
+    completion_status: string,
+    completed: number
+}
+
+type FolderResponse = {
+    self: FolderDataResponse
+    ["folder-item"]: (FolderDataResponse | DocumentDataSnippetResponse | AssignmentDataSnippetResponse | PageDataSnippetResponse)[]
+}
+
+type PageResponse = {
+    id: number,
+    title: string,
+    body: string,
+    inline: number,
+    created: number,
+    completed: number,
+    completion_status: string
+}
+
+type DocumentResponse = {
+    id: number,
+    title: string,
+    completed: number,
+    completion_status: string,
+    attachments: {
+        links: {
+            link: {
+                id: string,
+                type: string,
+                url: string,
+                title: string,
+                favicon: string
+            }[]
+        }
+    }
+}
+
+type AssignmentResponse = {
+    id: number,
+    title:string,
+    description:string,
+    due:string,
+    type:string,
+    grading_category: string,
+    grading_period:string,
+    completed:number,
+    allow_dropbox:number,
+    dropbox_locked:number,
+    show_rubric:boolean,
+    folder_id:string,
+    assignment_type:string
+}
+
+export class SchoologyAccessor {
+
+    // BASIC METHODS
+
+    public static readonly base: string = 'https://api.schoology.com/v1';
+    public static token = { key: process.env.schoology_key, secret: process.env.schoology_secret }
+    
+    private constructor() {};
+
+    static async get(path) {
+        return await SchoologyAccessor.rawGet(SchoologyAccessor.base + path);
     }
 
-    async get(path){
-        const url = this.base + path;
+    static async rawGet(path){
+        const url = path;
         const method = "GET";
 
         function hash_function_sha1(base_string, key) {
@@ -40,8 +153,8 @@ class SchoologyAccessor {
         });
     }
 
-    async methodswithdata(path: string,data:Object,method: string) {
-        const url = this.base + path;
+    static async methodswithdata(path: string,data:Object,method: string) {
+        const url = SchoologyAccessor.base + path;
 
         function hash_function_sha1(base_string, key) {
             return crypto
@@ -70,18 +183,157 @@ class SchoologyAccessor {
 
     }
 
-    async post(path:string,data:Object) {
-        return await this.methodswithdata(path,data,"POST");
+    static async post(path:string,data:Object) {
+        return await SchoologyAccessor.methodswithdata(path,data,"POST");
     }
 
-    async put(path:string,data:Object){
-        return await this.methodswithdata(path,data,"PUT");
+    static async put(path:string,data:Object){
+        return await SchoologyAccessor.methodswithdata(path,data,"PUT");
     }
 
-    async delete(path:string,data:Object){
-        return await this.methodswithdata(path,data,"DELETE");
+    static async delete(path:string,data:Object){
+        return await SchoologyAccessor.methodswithdata(path,data,"DELETE");
+    }
+
+    // ADVANCED METHODS
+
+    static async listCourses() {
+        const res = (await SchoologyAccessor.get("/users/2016549/sections"));
+        const data: CourseResponse[] = (await res.json()).section;
+        return data;
+    }
+
+    static async listAssignments(sectionid:string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/assignments`));
+        const data: AssignmentResponse[] = (await res.json()).assignment;
+        return data;
+    }
+
+    static async getFolder(courseid: string, folderid?: string) {
+        const res = (await SchoologyAccessor.get(`/courses/${courseid}/folder/${folderid ? folderid : ''}`));
+        try {
+            const data: FolderResponse = (await res.json());
+            return data;
+        } catch (err){
+            console.error(err);
+        }
+    }
+
+    static async getPage(sectionid: string, pageid: string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/pages/${pageid}`));
+        const data: PageResponse = (await res.json());
+        return data;
+    }
+
+    static async getDocument(sectionid: string, documentid: string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/documents/${documentid}`));
+        const data: DocumentResponse = (await res.json());
+        return data;
+    }
+
+    static async getAssignment(sectionid: string, assignmentid: string) {
+        const res = (await SchoologyAccessor.get(`/sections/${sectionid}/assignments/${assignmentid}`));
+        const data: AssignmentResponse = (await res.json());
+        return data;
     }
 }
 
-module.exports = { SchoologyAccessor };
+type SnippetResponse = (FolderDataResponse | AssignmentDataSnippetResponse | DocumentDataSnippetResponse | PageDataSnippetResponse);
+type FullReponse = (FolderResponse | AssignmentResponse | DocumentResponse | PageResponse)
 
+export class Course {
+
+    public data: CourseResponse;
+    public baseFolder: File;
+    
+    constructor(data: CourseResponse) {
+        this.data = data;
+    }
+
+    getData() {
+        return this.data;
+    }
+    
+    async onConstruct() {
+        const baseInfo = await SchoologyAccessor.getFolder(this.data.id);
+        this.baseFolder = new File(this, baseInfo.self);
+        await this.baseFolder.onConstruct();
+    }
+}
+
+export class File {
+
+    public data: SnippetResponse;
+    public parent: File;
+    public base:boolean;
+    public children: File[];
+    public type: string;
+    public course:Course;
+
+    public fulldatacache: FullReponse;
+    public cached:boolean;
+
+    constructor(course: Course, data: SnippetResponse, parent?:File) {
+        this.course = course;
+        this.data = data;
+        this.parent = null;
+        this.base = true;
+        this.cached = false;
+        this.fulldatacache = null;
+        this.children = [];
+        if(parent) {
+            this.parent = parent;
+            this.base = false;
+        }
+
+        this.type = this.data.type;
+    }
+
+    async onConstruct() {
+        if(this.type === "folder") {
+            const me = await SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+
+            if(me['folder-item']) {
+                let promises = [];
+                for (const child of me["folder-item"]) {
+                    const childfile = new File(this.course, child, this);
+                    promises.push(childfile.onConstruct());
+                    this.children.push(childfile);
+                }
+                await Promise.all(promises);
+            }
+
+            
+        }
+    }
+
+    getSnippet() {
+        return this.data;
+    }
+
+    async getData():Promise<FullReponse> {
+        if(this.cached) {
+            return this.fulldatacache;
+        }
+        if (this.data.type === "assignment") {
+            const me = await SchoologyAccessor.getAssignment(this.course.getData().course_id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+            return me;
+        }
+        if (this.data.type === "document") {
+            const me = await SchoologyAccessor.getDocument(this.course.getData().course_id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+            return me;
+        }
+        if (this.data.type === "page") {
+            const me = await SchoologyAccessor.getPage(this.course.getData().course_id, this.data.id);
+            this.fulldatacache = me;
+            this.cached = true;
+            return me;
+        }
+    }
+}

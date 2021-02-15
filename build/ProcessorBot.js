@@ -19,22 +19,36 @@ const RoleManager_1 = require("./RoleManager");
 const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
 const ImageBot_1 = require("./ImageBot");
+const SqualolBot_1 = require("./SqualolBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
-        this.prefix = "--";
-        this.littleActive = true;
-        this.trackerActive = true;
-        this.bdayActive = true;
-        this.reactActive = true;
-        this.nameChangerActive = true;
-        this.roleManagerActive = true;
-        this.scremActive = true;
-        this.synonymActive = true;
-        this.imageActive = true;
+        // private readonly prefix = "--";
+        // private readonly littleActive = true;
+        // private readonly trackerActive = true;
+        // private readonly bdayActive = true;
+        // private readonly reactActive = true;
+        // private readonly nameChangerActive = true;
+        // private readonly roleManagerActive = true;
+        // private readonly scremActive = true;
+        // private readonly synonymActive = true;
+        // private readonly imageActive = true;
+        // private readonly squalolActive = true;
+        // private readonly testActive = false;
+        // private readonly helpActive = true;
+        this.littleActive = false;
+        this.trackerActive = false;
+        this.bdayActive = false;
+        this.reactActive = false;
+        this.nameChangerActive = false;
+        this.roleManagerActive = false;
+        this.scremActive = false;
+        this.synonymActive = false;
+        this.imageActive = false;
+        this.squalolActive = true;
         this.testActive = false;
-        this.helpActive = true;
+        this.helpActive = false;
         this.modules = [];
         if (this.littleActive)
             this.modules.push(new LittleBot_1.LittleBot(auth, client));
@@ -54,6 +68,8 @@ class ProcessorBot {
             this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
+        if (this.squalolActive)
+            this.modules.push(new SqualolBot_1.SqualolBot());
         if (this.testActive)
             this.modules.push(new TestBot_1.TestBot(auth, client));
         if (this.helpActive)

@@ -10,37 +10,43 @@ import { RoleManagerBot } from "./RoleManager";
 import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
 import { ImageBot } from "./ImageBot";
+import { SqualolBot } from "./SqualolBot";
+
 import { TestBot } from "./TestBot";
+import { HelpBot } from "./HelpBot";
 
 import { Module } from "./Module";
-import { HelpBot } from "./HelpBot";
 
 export class ProcessorBot {
 
-    private readonly prefix = "--";
-    private readonly littleActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly imageActive = true;
-    private readonly testActive = false;
-    private readonly helpActive = true;
+    // private readonly prefix = "--";
+    // private readonly littleActive = true;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly imageActive = true;
+    // private readonly squalolActive = true;
 
-    // private readonly littleActive = false;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly imageActive = false;
     // private readonly testActive = false;
-    // private readonly helpActive = false;
+    // private readonly helpActive = true;
+
+    private readonly littleActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = false;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly imageActive = false;
+    private readonly squalolActive = true;
+
+    private readonly testActive = false;
+    private readonly helpActive = false;
 
     private modules: Module[];
 
@@ -61,6 +67,9 @@ export class ProcessorBot {
         if (this.scremActive) this.modules.push(new ScremBot(client));
         if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
+        if (this.squalolActive) this.modules.push(new SqualolBot())
+
+
         if (this.testActive) this.modules.push(new TestBot(auth, client));
         if (this.helpActive) this.modules.push(new HelpBot(this.modules, client));
 
