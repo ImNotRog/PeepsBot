@@ -15,6 +15,7 @@ import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
 import { ImageBot } from "./ImageBot";
 import { SqualolBot } from "./SqualolBot";
+import { GeckoInVCBot } from "./GeckoInVC"
 
 import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
@@ -32,6 +33,7 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
+    private readonly geckoInVCActive = true;
     private readonly imageActive = true;
     private readonly squalolActive = true;
 
@@ -46,7 +48,8 @@ export class ProcessorBot {
     // private readonly roleManagerActive = false;
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
-    // private readonly imageActive = true;
+    // private readonly geckoInVCActive = false;
+    // private readonly imageActive = false;
     // private readonly squalolActive = false;
 
     // private readonly testActive = false;
@@ -67,6 +70,7 @@ export class ProcessorBot {
         if (this.roleManagerActive) this.modules.push(new RoleManagerBot(client));
         if (this.scremActive) this.modules.push(new ScremBot(client));
         if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
+        if (this.geckoInVCActive) this.modules.push(new GeckoInVCBot(client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
         if (this.squalolActive) this.modules.push(new SqualolBot())
 

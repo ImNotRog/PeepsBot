@@ -225,8 +225,8 @@ class ImageBot {
             }
             else {
                 if (message.attachments.size > 0 && !message.author.bot) {
-                    yield message.react("⬆️");
-                    yield message.react("❌");
+                    message.react("⬆️");
+                    message.react("❌");
                     let filter = (reaction, user) => {
                         return ["⬆️", "❌"].includes(reaction.emoji.name) && (message.guild.member(user)).hasPermission("ADMINISTRATOR");
                     };

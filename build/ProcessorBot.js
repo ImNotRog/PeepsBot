@@ -23,6 +23,7 @@ const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
 const ImageBot_1 = require("./ImageBot");
 const SqualolBot_1 = require("./SqualolBot");
+const GeckoInVC_1 = require("./GeckoInVC");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
 class ProcessorBot {
@@ -36,6 +37,7 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
+        this.geckoInVCActive = true;
         this.imageActive = true;
         this.squalolActive = true;
         this.testActive = false;
@@ -57,6 +59,8 @@ class ProcessorBot {
             this.modules.push(new ScremBot_1.ScremBot(client));
         if (this.synonymActive)
             this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
+        if (this.geckoInVCActive)
+            this.modules.push(new GeckoInVC_1.GeckoInVCBot(client));
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
         if (this.squalolActive)
