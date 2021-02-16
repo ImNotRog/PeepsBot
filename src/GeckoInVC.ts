@@ -24,16 +24,29 @@ export class GeckoInVCBot implements Module {
         if (before.channelID === after.channelID) {
             return;
         }
+        
+        let bchannel:Discord.Channel;
+        let achannel: Discord.Channel;
+        if(before.channel != null && before.channel.guild.id !== this.FPERBIO) {
+            bchannel = null;
+        } else {
+            bchannel = before.channel;
+        }
+        if (after.channel != null && after.channel.guild.id !== this.FPERBIO) {
+            achannel = null;
+        } else {
+            achannel = after.channel;
+        }
 
         let messages:string[] = [];
-        if (before.channel == null) {
+        if (bchannel == null) {
             // Joined channel
             messages =
                 [
                     `Fek ${user.username}#${user.discriminator}!`,
                     `<:doggowave:811022887577976843>`
                 ]
-        } else if (after.channel == null) {
+        } else if (achannel == null) {
             // Left channel
             messages =
                 [
@@ -48,8 +61,8 @@ export class GeckoInVCBot implements Module {
             
         }
 
-        for(const channel of [before.channel, after.channel]) {
-            if(channel != null) {
+        for(const channel of [bchannel, achannel]) {
+            if(channel != null && channel instanceof Discord.VoiceChannel) {
                 let arr = channel.members.array();
                 if(arr.length === 1) {
                     if(channel.members.has(this.GECKO)) {
