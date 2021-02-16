@@ -1,4 +1,8 @@
 
+/**
+ * @todo Node-canvas pershlaps
+ */
+
 import Discord = require("discord.js");
 
 import { LittleBot } from "./LittleBot";

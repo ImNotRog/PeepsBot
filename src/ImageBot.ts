@@ -7,6 +7,10 @@ import { Utilities } from "./Utilities";
 import * as fs from 'fs';
 import * as https from 'https';
 
+/**
+ * @todo Fix category system
+ */
+
 export class ImageBot implements Module {
 
     private client: Discord.Client;

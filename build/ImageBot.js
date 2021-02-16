@@ -17,6 +17,9 @@ const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const fs = require("fs");
 const https = require("https");
+/**
+ * @todo Fix category system
+ */
 class ImageBot {
     constructor(auth, client) {
         this.prefix = "--";

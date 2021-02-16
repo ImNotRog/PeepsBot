@@ -125,7 +125,7 @@ class Utilities {
             const filter = (reaction, user) => {
                 let gmember = (message.guild.member(user));
                 return ([emote, downemote].includes(reaction.emoji.name)) ||
-                    (["❌"].includes(reaction.emoji.name) && gmember.hasPermission("ADMINISTRATOR"));
+                    (["❌"].includes(reaction.emoji.name) && gmember.hasPermission("ADMINISTRATOR") && !user.bot);
             };
             while (true) {
                 try {
