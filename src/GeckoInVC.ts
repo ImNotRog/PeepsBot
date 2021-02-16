@@ -39,14 +39,14 @@ export class GeckoInVCBot implements Module {
         }
 
         let messages:string[] = [];
-        if (bchannel == null) {
+        if (bchannel == null && achannel != null) {
             // Joined channel
             messages =
                 [
                     `Fek ${user.username}#${user.discriminator}!`,
                     `<:doggowave:811022887577976843>`
                 ]
-        } else if (achannel == null) {
+        } else if (achannel == null && bchannel != null) {
             // Left channel
             messages =
                 [
@@ -57,7 +57,7 @@ export class GeckoInVCBot implements Module {
                 this.geckostatus = 0;
             }
         } else {
-            // Moved channel
+            // Moved channel or two channels out of scope
             
         }
 
