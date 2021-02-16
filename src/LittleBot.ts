@@ -8,7 +8,7 @@ export class LittleBot implements Module {
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
     private cache: Map<string, any[][]>;
-    private readonly collectingChannels = ["754912483390652426", "756698378116530266"]
+    private readonly collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866"]
     private readonly prefix: string = "--";
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 

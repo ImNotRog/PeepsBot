@@ -14,7 +14,7 @@ const SheetsUser_1 = require("./SheetsUser");
 const ProcessMessage_1 = require("./ProcessMessage");
 class LittleBot {
     constructor(auth, client) {
-        this.collectingChannels = ["754912483390652426", "756698378116530266"];
+        this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866"];
         this.prefix = "--";
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
