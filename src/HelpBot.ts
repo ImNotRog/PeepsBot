@@ -80,7 +80,7 @@ export class HelpBot implements Module {
             embeds.push(this.helpEmbed);
             for (let i = 0; i < this.modules.length; i++) {
                 const module = this.modules[i];
-                if(module.available(message)) {
+                if(module.available(message) && module.helpEmbed) {
                     embeds.push(module.helpEmbed);
                 }
             }
