@@ -36,7 +36,7 @@ class ProcessorBot {
         this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
-        this.imageActive = false;
+        this.imageActive = true;
         this.squalolActive = true;
         this.testActive = false;
         this.helpActive = true;

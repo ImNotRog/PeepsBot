@@ -124,7 +124,7 @@ class Utilities {
             yield message.react("❌");
             const filter = (reaction, user) => {
                 let gmember = (message.guild.member(user));
-                return ([emote, downemote].includes(reaction.emoji.name)) ||
+                return ([emote, downemote].includes(reaction.emoji.name) && !user.bot) ||
                     (["❌"].includes(reaction.emoji.name) && gmember.hasPermission("ADMINISTRATOR") && !user.bot);
             };
             while (true) {
@@ -160,6 +160,40 @@ class Utilities {
                     yield message.edit({ embed: embed(true) });
                     return true;
                 }
+            }
+        });
+    }
+    static sendApprove(origmessage, embed, millis) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const emote = "👍";
+            const downemote = "👎";
+            let message = yield origmessage.channel.send({
+                embed
+            });
+            yield message.react(emote);
+            yield message.react(downemote);
+            const filter = (reaction, user) => {
+                return ([emote, downemote].includes(reaction.emoji.name)) && user.id === origmessage.author.id;
+            };
+            try {
+                let r = yield message.awaitReactions(filter, {
+                    max: 1,
+                    time: millis,
+                    errors: ['time']
+                });
+                if (r.first().emoji.name === emote) {
+                    message.delete();
+                    return true;
+                }
+                else {
+                    message.delete();
+                    return false;
+                }
+            }
+            catch (err) {
+                yield message.reactions.removeAll();
+                message.delete();
+                return false;
             }
         });
     }

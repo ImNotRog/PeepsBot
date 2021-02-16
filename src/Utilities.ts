@@ -139,7 +139,7 @@ export class Utilities {
 
         const filter = (reaction, user) => {
             let gmember = (message.guild.member(user));
-            return ([emote,downemote].includes(reaction.emoji.name)) || 
+            return ([emote,downemote].includes(reaction.emoji.name) && !user.bot) || 
                 (["❌"].includes(reaction.emoji.name) && gmember.hasPermission("ADMINISTRATOR") && !user.bot);
         };
 
@@ -186,6 +186,40 @@ export class Utilities {
 
         }
 
+    }
+
+    public static async sendApprove(origmessage: Discord.Message, embed: Object, millis:number) {
+        const emote = "👍"
+        const downemote = "👎"
+
+        let message = await origmessage.channel.send({
+            embed
+        });
+        await message.react(emote);
+        await message.react(downemote);
+
+        const filter = (reaction, user) => {
+            return ([emote, downemote].includes(reaction.emoji.name)) && user.id === origmessage.author.id;
+        };
+
+        try {
+            let r =  await message.awaitReactions(filter, {
+                max: 1,
+                time: millis,
+                errors: ['time']
+            })
+            if( r.first().emoji.name === emote) {
+                message.delete();
+                return true;
+            } else {
+                message.delete();
+                return false;
+            }
+        } catch (err) {
+            await message.reactions.removeAll();
+            message.delete();
+            return false;
+        }
     }
 
     /**

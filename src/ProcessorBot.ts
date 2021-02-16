@@ -32,7 +32,7 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
-    private readonly imageActive = false;
+    private readonly imageActive = true;
     private readonly squalolActive = true;
 
     private readonly testActive = false;
@@ -46,10 +46,10 @@ export class ProcessorBot {
     // private readonly roleManagerActive = false;
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
-    // private readonly imageActive = false;
+    // private readonly imageActive = true;
     // private readonly squalolActive = false;
 
-    // private readonly testActive = true;
+    // private readonly testActive = false;
     // private readonly helpActive = false;
 
     private modules: Module[];

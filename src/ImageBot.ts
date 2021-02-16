@@ -18,8 +18,7 @@ export class ImageBot implements Module {
     private driveUser: DriveUser;
     private sheetUser: SheetsUser;
 
-    private categories:Map<string,string>;
-    private categoriesSpreadsheetCache: Map<string,string[][]>;
+    private categoriesInfo: Map<string, {DID:string, sheetscache:string[][]}>;
     private readonly imagesFolder = '1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2';
     private readonly imagesSheet = '17iYieSC2zDKpxgSPqhk6fcJZQjVBvJFE5S5KS1IcON8';
 
@@ -38,8 +37,7 @@ export class ImageBot implements Module {
         map.set('images', this.imagesSheet);
         this.sheetUser = new SheetsUser(auth, map);
 
-        this.categories = new Map();
-        this.categoriesSpreadsheetCache = new Map();
+        this.categoriesInfo = new Map();
 
         this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user) });
         this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user) });
@@ -73,6 +71,10 @@ export class ImageBot implements Module {
 
     available(message: Discord.Message): boolean {
         return message.guild.id === '748669830244073533';
+    }
+
+    defaultCat(message:Discord.Message) {
+        return this.jackChannels.includes(message.channel.id) ? 'Jack' : 'Archive';
     }
 
     parseInfo(message:Discord.Message):{ cat:string, cap:string, tags: string[] } {
@@ -166,84 +168,145 @@ export class ImageBot implements Module {
             // return { cat };
         }
 
-        if (cat === '') cat = this.jackChannels.includes(message.channel.id) ? 'Jack' : 'Archive';
+        if (cat === '') cat = this.defaultCat(message);
 
         cat = this.capitilize(cat);
         
-        console.log({ cat, cap, tags });
         return { cat, cap, tags }
         
+    }
+
+    async uploadFromDiscordToDrive(message:Discord.Message, override?: {cat?:string, cap?:string, tags?:string[]}) {
+        let obj = this.parseInfo(message);
+
+        if(override) {
+            obj = {
+                ...obj,
+                ...override
+            }
+        }
+        let { cat, cap, tags } = obj;
+
+        if (!this.isCategory(cat)) {
+
+            let approved = await Utilities.sendApprove(message, {
+                title: `Create new Category "${cat}"?`,
+                description: `Make sure this is what you meant to do.`,
+                ...Utilities.embedInfo(message)
+            }, 10000);
+
+            if (approved) {
+                // New category
+                this.categoriesInfo.set(cat, {
+                    DID: await this.driveUser.createFolder(cat, this.imagesFolder),
+                    sheetscache: [[]]
+                });
+
+                await this.sheetUser.createSubsheet("images", cat, {
+                    columnResize: [200, 200, 100, 300, 200, 200, 300, 300, 100],
+                    headers: ["File Name", "M-ID", "File Type", "D-ID", "UID", "User", "Caption", "Tags", "Stars"]
+                })
+
+            } else {
+                cat = this.defaultCat(message);
+            }
+
+
+        }
+
+        await message.react('👀');
+
+        const url = message.attachments.first().url;
+
+        const filetype = url.slice(url.lastIndexOf('.') + 1);
+        console.log(`Uploading ${filetype}, category ${cat}`);
+
+        const path = `./temp/${message.id}.${filetype}`;
+
+        let p: Promise<void> = new Promise((r, j) => {
+            https.get(url, (res) => {
+                res.on('end', () => {
+                    r();
+                })
+                const writestream = fs.createWriteStream(path);
+                writestream.on('open', () => {
+                    res.pipe(writestream);
+                })
+            })
+        })
+
+        await p;
+
+        let id = await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categoriesInfo.get(cat).DID);
+
+        await this.sheetUser.add("images", cat,
+            [
+                `${message.id}.${filetype}`,
+                message.id,
+                filetype,
+                id,
+                message.author.id,
+                message.author.username + '#' + message.author.discriminator,
+                cap,
+                tags.join('|'),
+                0]);
+        this.categoriesInfo.set(cat, {
+            ... this.categoriesInfo.get(cat),
+            sheetscache: await this.sheetUser.readSheet("images", cat)
+        })
+
+        await message.reactions.removeAll();
+        await message.react('✅');
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
 
         if(this.approvedChannels.includes(message.channel.id)) {
+
             if(message.attachments.size > 0 && !message.author.bot) {
 
-                const { cat, cap, tags } = this.parseInfo(message);
+                await this.uploadFromDiscordToDrive(message);
+                
+            }
 
-                if (!this.categories.has(cat)) {
-                    // New category
-                    this.categories.set(cat, await this.driveUser.createFolder(cat,this.imagesFolder) );
+        } else {
+            if(message.attachments.size > 0 && !message.author.bot) {
+                await message.react("⬆️");
+                await message.react("❌");
 
-                    await this.sheetUser.createSubsheet("images", cat, {
-                        columnResize: [200, 200, 100, 300, 200, 200, 300, 300, 100],
-                        headers: ["File Name", "M-ID", "File Type", "D-ID", "UID", "User", "Caption", "Tags", "Stars"]
-                    })
-
+                let filter = (reaction,user) => {
+                    return ["⬆️", "❌"].includes(reaction.emoji.name) && (message.guild.member(user)).hasPermission("ADMINISTRATOR");
                 }
 
-                const url = message.attachments.first().url;
-
-                const filetype = url.slice(url.lastIndexOf('.') + 1);
-                console.log(`Uploading ${filetype}, category ${cat}`);
-
-                const path = `./temp/${message.id}.${filetype}`;
-
-                let p: Promise<void> = new Promise((r, j) => {
-                    https.get(url, (res) => {
-                        res.on('end', () => {
-                            r();
-                        })
-                        const writestream = fs.createWriteStream(path);
-                        writestream.on('open', () => {
-                            res.pipe(writestream);
-                        })
+                try {
+                    let reaction = await message.awaitReactions(filter, {
+                        max: 1,
+                        time: 30000,
+                        errors: ['time']
                     })
-                })
-
-                await p;
-
-                let id = await this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categories.get(cat));
-                
-                await this.sheetUser.add("images", cat, 
-                [
-                    `${message.id}.${filetype}`,
-                    message.id, 
-                    filetype, 
-                    id,
-                    message.author.id, 
-                    message.author.username + '#' + message.author.discriminator, 
-                    cap,
-                    tags.join('|'),
-                    0]);
-                this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
-                
+                    if (reaction.first().emoji.name === "❌") {
+                        await message.reactions.removeAll();
+                    } else {
+                        await this.uploadFromDiscordToDrive(message,{cat: "Archive", cap: message.content});
+                    }
+                } catch (err) {
+                    await message.reactions.removeAll();
+                }
             }
         }
 
         const result = PROCESS(message);
         if(result) {
-            if (this.categories.has(this.capitilize(result.command.replace(/_/g, " ")))) {
+            if (this.categoriesInfo.has(this.capitilize(result.command.replace(/_/g, " ")))) {
 
                 let time = Date.now();
                 const cat = this.capitilize(result.command.replace(/_/g, " "));
 
                 let msg = await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
 
-                let entries = this.categoriesSpreadsheetCache.get(cat).length - 1;
+                let entries = this.categoriesInfo.get(cat).sheetscache.length - 1;
                 let index = Math.floor(Math.random() * entries) + 1;
-                let row = this.categoriesSpreadsheetCache.get(cat)[index];
+                let row = this.categoriesInfo.get(cat).sheetscache[index];
                 let DID = row[3];
                 let filename = row[0];
 
@@ -288,8 +351,12 @@ export class ImageBot implements Module {
                     return;
                 }
 
+                await message.react('👀');
+
                 const {num} = await this.merge(cats[0],cats[1]);
                 await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`)
+                await message.reactions.removeAll();
+                await message.react('✅');
             }
         }
         
@@ -319,7 +386,10 @@ export class ImageBot implements Module {
             if(true) {
             // if(this.voting.includes(cat)) {
                 await this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "D-ID", "UID", "User", "Caption", "Tags", reaction.count], ["KEEP", true, "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "CHANGE"]);
-                this.categoriesSpreadsheetCache.set(cat, await this.sheetUser.readSheet("images", cat));
+                this.categoriesInfo.set(cat, {
+                    ... this.categoriesInfo.get(cat),
+                    sheetscache: await this.sheetUser.readSheet("images", cat)
+                })
             }
         }
 
@@ -331,7 +401,10 @@ export class ImageBot implements Module {
 
         for(const file of files) {
             if(file.mimeType === DriveUser.FOLDER) {
-                this.categories.set(file.name, file.id);
+                this.categoriesInfo.set(file.name, {
+                    DID: file.id,
+                    sheetscache: [[]]
+                });
             }
         }
 
@@ -343,7 +416,12 @@ export class ImageBot implements Module {
             let range = valuerange.range;
             if(range)  {
                 let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
-                this.categoriesSpreadsheetCache.set(cat, valuerange.values);
+                this.categoriesInfo.set(cat,
+                    { 
+                        ... this.categoriesInfo.get(cat),
+                        sheetscache: valuerange.values
+                    }
+                );
             }
         }
 
@@ -360,10 +438,10 @@ export class ImageBot implements Module {
     }
 
     async merge(from:string, to:string): Promise<{num:number}> {
-        let fromarr = this.categoriesSpreadsheetCache.get(from).slice(1);
+        let fromarr = this.categoriesInfo.get(from).sheetscache.slice(1);
         for(const row of fromarr) {
             let did = row[3];
-            await this.driveUser.moveFile(did, this.categories.get(to));
+            await this.driveUser.moveFile(did, this.categoriesInfo.get(to).DID);
         }
         const num = fromarr.length;
         fromarr = fromarr.map(row => {
@@ -375,10 +453,13 @@ export class ImageBot implements Module {
         });
         await this.sheetUser.bulkAdd("images", to, fromarr);
         await this.sheetUser.deleteSubSheet("images", from);
-        await this.driveUser.deleteFile(this.categories.get(from));
+        await this.driveUser.deleteFile(this.categoriesInfo.get(from).DID);
 
-        this.categories.delete(from);
-        this.categoriesSpreadsheetCache.set(to, await this.sheetUser.readSheet("images", to));
+        this.categoriesInfo.delete(from);
+        this.categoriesInfo.set(to, {
+            ...this.categoriesInfo.get(to),
+            sheetscache: await this.sheetUser.readSheet("images", to)
+        });
 
         return {num};
     }
@@ -388,11 +469,11 @@ export class ImageBot implements Module {
     }
 
     isCategory(cat:string) {
-        return this.categories.has(cat);
+        return this.categoriesInfo.has(cat);
     }
 
     listCategories():string[] {
-        return [...this.categories.keys()];
+        return [...this.categoriesInfo.keys()];
     }
     
 }
