@@ -149,7 +149,7 @@ type DiscussionResponse = {
 
 type SnippetResponse = (FolderDataResponse | AssignmentDataSnippetResponse | DocumentDataSnippetResponse | PageDataSnippetResponse | MediaAlbumDataSnippetResponse | DiscussionDataSnippetResponse);
 type FullReponse = (FolderResponse | AssignmentResponse | DocumentResponse | PageResponse | MediaAlbumResponse | DiscussionResponse)
-
+type SFileTypes = ("assignment" | "managed_assessment" | "assessment_v2" | "document" | "page" | "folder" | "media-album" | "discussion");
 export class SchoologyAccessor {
 
     // BASIC METHODS
@@ -347,7 +347,7 @@ export class Course {
     async onConstruct() {
         const baseInfo = await SchoologyAccessor.getFolder(this.data.id);
         this.baseFolder = new SFile(this, baseInfo.self);
-        await this.baseFolder.onConstruct();
+        await this.baseFolder.onConstructRecursive();
     }
 }
 
@@ -357,34 +357,45 @@ export class SFile {
     public parent: SFile;
     public base:boolean;
     public children: SFile[];
-    public type: string;
+    public type: SFileTypes;
     public course:Course;
     public name:string;
+    public id:string;
 
     public fulldatacache: FullReponse;
     public cached:boolean;
 
-    constructor(course: Course, data: SnippetResponse, parent?:SFile) {
-        this.course = course;
-        this.data = data;
-        this.parent = null;
-        this.base = true;
-        this.cached = false;
-        this.fulldatacache = null;
-        this.children = [];
-        if(parent) {
-            this.parent = parent;
-            this.base = false;
-        }
+    constructor(course:Course, data: FullReponse, type: SFileTypes)
+    constructor(course: Course, data: SnippetResponse, parent?:SFile)
+    constructor(...params:any[]) {
+        if(typeof params[2] === "string") {
 
-        this.type = this.data.type;
-        this.name = this.data.title;
+            
+        } else {
+            const [course, data, parent] = params;
+            this.course = course;
+            this.data = data;
+            this.parent = null;
+            this.base = true;
+            this.cached = false;
+            this.fulldatacache = null;
+            this.children = [];
+            if (parent) {
+                this.parent = parent;
+                this.base = false;
+            }
+
+            this.type = this.data.type;
+            this.name = this.data.title;
+            this.id = this.data.id;
+        }
+        
     }
 
-    async onConstruct(): Promise<void> {
+    async onConstructRecursive(): Promise<void> {
 
         if (this.type === "folder") {
-            const me = await SchoologyAccessor.getFolder(this.course.getData().id, this.data.id);
+            const me = await SchoologyAccessor.getFolder(this.course.getData().id, this.id);
             if (me) {
 
                 this.fulldatacache = me;
@@ -394,7 +405,7 @@ export class SFile {
                     let promises = [];
                     for (const child of me["folder-item"]) {
                         const childfile = new SFile(this.course, child, this);
-                        promises.push(childfile.onConstruct());
+                        promises.push(childfile.onConstructRecursive());
                         this.children.push(childfile);
                     }
                     await Promise.all(promises);
@@ -414,32 +425,32 @@ export class SFile {
         if(this.cached) {
             return this.fulldatacache;
         }
-        if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
-            const me = await SchoologyAccessor.getAssignment(this.course.getData().id, this.data.id);
+        if (this.type === "assignment" || this.type === "managed_assessment" || this.type === "assessment_v2") {
+            const me = await SchoologyAccessor.getAssignment(this.course.getData().id, this.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
         }
-        if (this.data.type === "document") {
-            const me = await SchoologyAccessor.getDocument(this.course.getData().course_id, this.data.id);
+        if (this.type === "document") {
+            const me = await SchoologyAccessor.getDocument(this.course.getData().course_id, this.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
         }
-        if (this.data.type === "page") {
-            const me = await SchoologyAccessor.getPage(this.course.getData().id, this.data.id);
+        if (this.type === "page") {
+            const me = await SchoologyAccessor.getPage(this.course.getData().id, this.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
         }
-        if(this.data.type === "media-album") {
-            const me = await SchoologyAccessor.getAlbum(this.course.getData().id, this.data.id);
+        if(this.type === "media-album") {
+            const me = await SchoologyAccessor.getAlbum(this.course.getData().id, this.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
         }
-        if(this.data.type === "discussion") {
-            const me = await SchoologyAccessor.getDiscussion(this.course.getData().id, this.data.id);
+        if(this.type === "discussion") {
+            const me = await SchoologyAccessor.getDiscussion(this.course.getData().id, this.id);
             this.fulldatacache = me;
             this.cached = true;
             return me;
@@ -447,7 +458,7 @@ export class SFile {
     }
 
     listAllChildren():SFile[] {
-        if(this.data.type !== "folder") {
+        if(this.type !== "folder") {
             return [this];
         } else {
             return [this, ...this.children.reduce((acc, file) => acc.concat(file.listAllChildren() ), []) ]
@@ -499,7 +510,7 @@ export class SFile {
         fields.push(
             {
                 name: `ID`,
-                value: `${this.data.id}`,
+                value: `${this.id}`,
                 inline: true
             }
         );
@@ -523,7 +534,7 @@ export class SFile {
             )
         }
         
-        if (this.data.type === "assignment" || this.data.type === "managed_assessment" || this.data.type === "assessment_v2") {
+        if (this.type === "assignment" || this.type === "managed_assessment" || this.type === "assessment_v2") {
             // @ts-ignore
             let d: AssignmentResponse = data;
             fields.push(
@@ -549,7 +560,7 @@ export class SFile {
             )
         }
 
-        if (this.data.type === "document") {
+        if (this.type === "document") {
             // @ts-ignore
             let d: DocumentResponse = data;
             fields.push(
@@ -561,13 +572,13 @@ export class SFile {
             );
         }
 
-        if (this.data.type === "page") {
+        if (this.type === "page") {
             // @ts-ignore
             let d: PageResponse = data;
             
         }
 
-        if (this.data.type === "folder") {
+        if (this.type === "folder") {
             // @ts-ignore
             let d: FolderResponse = data;
 
@@ -589,7 +600,7 @@ export class SFile {
 
         }
 
-        if (this.data.type === "media-album") {
+        if (this.type === "media-album") {
             // @ts-ignore
             let d: MediaAlbumResponse = data;
             fields.push(
@@ -622,7 +633,7 @@ export class SFile {
             )
         }
 
-        if (this.data.type === "discussion") {
+        if (this.type === "discussion") {
             // @ts-ignore
             let d: DiscussionResponse = data;
             fields.push(
@@ -652,7 +663,7 @@ export class SFile {
     }
 
     icon():string {
-        switch(this.data.type) {
+        switch(this.type) {
             case "assessment_v2":
             case "managed_assessment":
             case "assignment":
@@ -673,31 +684,31 @@ export class SFile {
     }
 
     toString(num?:number) {
-        if( !num || (num === 0) || this.data.type !== "folder") {
-            return `${this.icon()} ${this.name} - ${this.data.id}`
+        if( !num || (num === 0) || this.type !== "folder") {
+            return `${this.icon()} ${this.name} - ${this.id}`
         } else {
-            return `${this.icon()} ${this.name} - ${this.data.id}\n${this.children.map(a => `--> ${a.toString(num-1)}`).join('\n')}`
+            return `${this.icon()} ${this.name} - ${this.id}\n${this.children.map(a => `--> ${a.toString(num-1)}`).join('\n')}`
         }
     }
 
     link():string {
-        switch(this.data.type) {
+        switch(this.type) {
             case "assessment_v2":
-                return `https://pausd.schoology.com/course/${this.course.data.id}/assessments/${this.data.id}`
+                return `https://pausd.schoology.com/course/${this.course.data.id}/assessments/${this.id}`
             case "managed_assessment":
-                return `https://pausd.schoology.com/course/${this.course.data.id}/common-assessment/${this.data.id}`
+                return `https://pausd.schoology.com/course/${this.course.data.id}/common-assessment/${this.id}`
             case "assignment":
-                return `https://pausd.schoology.com/assignment/${this.data.id}/info`
+                return `https://pausd.schoology.com/assignment/${this.id}/info`
             case "folder":
-                return `https://pausd.schoology.com/course/${this.course.data.id}/materials?f=${this.data.id}`
+                return `https://pausd.schoology.com/course/${this.course.data.id}/materials?f=${this.id}`
             case "page":
-                return `https://pausd.schoology.com/page/${this.data.id}`
+                return `https://pausd.schoology.com/page/${this.id}`
             case "media-album":
-                return `https://pausd.schoology.com/album/${this.data.id}`
+                return `https://pausd.schoology.com/album/${this.id}`
             case "document":
                 return this.parent.link();
             case "discussion":
-                return `https://pausd.schoology.com/course/${this.course.data.id}/materials/discussion/view/${this.data.id}`
+                return `https://pausd.schoology.com/course/${this.course.data.id}/materials/discussion/view/${this.id}`
             default:
                 return "N/A"
         }
