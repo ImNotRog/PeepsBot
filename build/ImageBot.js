@@ -228,7 +228,7 @@ class ImageBot {
                     message.react("⬆️");
                     message.react("❌");
                     let filter = (reaction, user) => {
-                        return ["⬆️", "❌"].includes(reaction.emoji.name) && (message.guild.member(user)).hasPermission("ADMINISTRATOR");
+                        return ["⬆️", "❌"].includes(reaction.emoji.name) && (!user.bot && message.guild.member(user)).hasPermission("ADMINISTRATOR");
                     };
                     try {
                         let reaction = yield message.awaitReactions(filter, {
