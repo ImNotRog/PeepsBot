@@ -44,7 +44,7 @@ class GeckoInVCBot {
                 achannel = after.channel;
             }
             let messages = [];
-            if (bchannel == null) {
+            if (bchannel == null && achannel != null) {
                 // Joined channel
                 messages =
                     [
@@ -52,7 +52,7 @@ class GeckoInVCBot {
                         `<:doggowave:811022887577976843>`
                     ];
             }
-            else if (achannel == null) {
+            else if (achannel == null && bchannel != null) {
                 // Left channel
                 messages =
                     [
@@ -63,7 +63,7 @@ class GeckoInVCBot {
                 }
             }
             else {
-                // Moved channel
+                // Moved channel or two channels out of scope
             }
             for (const channel of [bchannel, achannel]) {
                 if (channel != null && channel instanceof Discord.VoiceChannel) {
