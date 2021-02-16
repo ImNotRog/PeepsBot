@@ -275,7 +275,7 @@ export class ImageBot implements Module {
                 message.react("❌");
 
                 let filter = (reaction,user) => {
-                    return ["⬆️", "❌"].includes(reaction.emoji.name) && (!user.bot && message.guild.member(user)).hasPermission("ADMINISTRATOR");
+                    return ["⬆️", "❌"].includes(reaction.emoji.name) && (!user.bot && ( user.id === message.author.id || message.guild.member(user).hasPermission("ADMINISTRATOR")) );
                 }
 
                 try {
