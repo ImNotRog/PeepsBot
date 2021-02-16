@@ -4,6 +4,7 @@ import * as Discord from 'discord.js';
 import { Module } from "./Module";
 import { SchoologyAccessor } from './SA';
 import * as fs from "fs";
+import { PROCESS } from "./ProcessMessage";
 export class TestBot implements Module {
 
     private client: Discord.Client;
@@ -39,7 +40,7 @@ export class TestBot implements Module {
 
     async onMessage(message: Discord.Message): Promise<void> {
         
-        
+        // console.log(PROCESS(message));
     }
 
     async onConstruct(): Promise<void> {

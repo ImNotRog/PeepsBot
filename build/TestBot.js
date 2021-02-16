@@ -34,6 +34,7 @@ class TestBot {
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
+            // console.log(PROCESS(message));
         });
     }
     onConstruct() {

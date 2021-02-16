@@ -32,7 +32,7 @@ export class ProcessorBot {
     private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
-    private readonly imageActive = true;
+    private readonly imageActive = false;
     private readonly squalolActive = true;
 
     private readonly testActive = false;
@@ -47,17 +47,14 @@ export class ProcessorBot {
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
     // private readonly imageActive = false;
-    // private readonly squalolActive = true;
+    // private readonly squalolActive = false;
 
-    // private readonly testActive = false;
+    // private readonly testActive = true;
     // private readonly helpActive = false;
 
     private modules: Module[];
 
     private client: any;
-
-    private helpEmbed: { title: string; description: string; };
-    private helpTechnicalEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
