@@ -110,6 +110,6 @@ export class TrackerBot implements Module {
                 ...Utilities.embedInfo(message)
             }
             
-        }, { allowedMentions: { parse: [] } });
+        });
     }
 }

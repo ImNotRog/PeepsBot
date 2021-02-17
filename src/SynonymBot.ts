@@ -96,7 +96,7 @@ export class SynonymBot implements Module {
                         color: 111111,
                         fields: quotes
                     }
-                }, { allowedMentions: { parse: [] } })
+                })
         }
     }
 

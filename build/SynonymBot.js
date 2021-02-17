@@ -87,7 +87,7 @@ class SynonymBot {
                             color: 111111,
                             fields: quotes
                         }
-                    }, { allowedMentions: { parse: [] } });
+                    });
             }
         });
     }

@@ -132,7 +132,7 @@ export class Utilities {
 
         let message = await origmessage.channel.send({
             embed: embed(false)
-        }, { allowedMentions: { parse: [] } });
+        });
         await message.react(emote);
         await message.react(downemote);
         await message.react("❌");
@@ -194,7 +194,7 @@ export class Utilities {
 
         let message = await origmessage.channel.send({
             embed
-        }, { allowedMentions: { parse: [] } });
+        });
         await message.react(emote);
         await message.react(downemote);
 
@@ -230,7 +230,7 @@ export class Utilities {
         if(origmessage instanceof Discord.Message) {
             let message = await origmessage.channel.send({
                 embed
-            }, { allowedMentions: { parse: [] } });
+            });
             await message.react("❌");
 
             const filter = (reaction, user) => {
@@ -302,7 +302,7 @@ export class Utilities {
             }
         })
 
-        const message = await origmessage.channel.send(embeds[0], { allowedMentions: { parse: [] } });
+        const message = await origmessage.channel.send(embeds[0]);
         // ⬅️ ❌ ➡️
         await message.react("⬅️")
         await message.react("❌")

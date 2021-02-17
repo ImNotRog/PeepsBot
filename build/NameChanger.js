@@ -219,13 +219,13 @@ class NameChangerBot {
             if (!map.has(param)) {
                 message.channel.send({
                     embed: Object.assign({ title: `Invalid Theme ${param}`, description: `That theme is not valid. Capitalization matters.` }, Utilities_1.Utilities.embedInfo(message))
-                }, { allowedMentions: { parse: [] } });
+                });
                 return false;
             }
             if (!(yield this.changeavailable())) {
                 message.channel.send({
                     embed: Object.assign({ title: `Slow Down!`, description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.` }, Utilities_1.Utilities.embedInfo(message))
-                }, { allowedMentions: { parse: [] } });
+                });
                 return false;
             }
             const arr = map.get(param);

@@ -59,7 +59,7 @@ export class CalendarBot implements Module {
         for(const id of this.bdayChannels) {
             let channel = await this.client.channels.fetch(id)
             if(channel instanceof Discord.TextChannel) {
-                channel.send({ embed }, { allowedMentions: { parse: [] } });
+                channel.send({ embed });
             }
         }
     }

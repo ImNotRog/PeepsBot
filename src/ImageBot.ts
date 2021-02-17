@@ -334,7 +334,7 @@ export class ImageBot implements Module {
 
                         ...Utilities.embedInfo(message)
                     }
-                }, { allowedMentions: { parse: [] } })
+                })
             } 
             if(result.command === 'merge') {
                 if(!message.member.hasPermission("ADMINISTRATOR")) {

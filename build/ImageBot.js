@@ -274,7 +274,7 @@ class ImageBot {
                                     value: this.listCategories().join('\n')
                                 }
                             ] }, Utilities_1.Utilities.embedInfo(message))
-                    }, { allowedMentions: { parse: [] } });
+                    });
                 }
                 if (result.command === 'merge') {
                     if (!message.member.hasPermission("ADMINISTRATOR")) {
