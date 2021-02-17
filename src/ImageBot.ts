@@ -302,7 +302,7 @@ export class ImageBot implements Module {
                 let time = Date.now();
                 const cat = this.capitilize(result.command.replace(/_/g, " "));
 
-                let msg = await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                let msg = await message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`, { allowedMentions: { parse: [] } });
 
                 let entries = this.categoriesInfo.get(cat).sheetscache.length - 1;
                 let index = Math.floor(Math.random() * entries) + 1;
@@ -316,7 +316,7 @@ export class ImageBot implements Module {
 
                 const a = new Discord.MessageAttachment(`./temp/${filename}`);
 
-                await message.channel.send(`Random image of category ${cat}`, a);
+                await message.channel.send(`Random image`, a);
                 await msg.edit(`Latency: ${Date.now() - time} ms`);
 
             } 
@@ -334,7 +334,7 @@ export class ImageBot implements Module {
 
                         ...Utilities.embedInfo(message)
                     }
-                })
+                }, { allowedMentions: { parse: [] } })
             } 
             if(result.command === 'merge') {
                 if(!message.member.hasPermission("ADMINISTRATOR")) {
@@ -347,14 +347,14 @@ export class ImageBot implements Module {
                     return;
                 }
                 if(!( this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1] )){
-                    await message.channel.send(`Invalid categories! ${cats}`)
+                    await message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } })
                     return;
                 }
 
                 await message.react('👀');
 
                 const {num} = await this.merge(cats[0],cats[1]);
-                await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`)
+                await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } })
                 await message.reactions.removeAll();
                 await message.react('✅');
             }

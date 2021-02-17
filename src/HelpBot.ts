@@ -71,7 +71,7 @@ export class HelpBot implements Module {
                     ],
                     ...Utilities.embedInfo(message)
                 }
-            })
+            }, { allowedMentions: { parse: [] } })
         }
 
         const result = PROCESS(message);

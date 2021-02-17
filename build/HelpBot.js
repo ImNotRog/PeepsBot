@@ -65,7 +65,7 @@ class HelpBot {
                                 value: `${Date.now() - message.createdTimestamp}ms`
                             }
                         ] }, Utilities_1.Utilities.embedInfo(message))
-                });
+                }, { allowedMentions: { parse: [] } });
             }
             const result = ProcessMessage_1.PROCESS(message);
             if (result && result.command === 'help') {

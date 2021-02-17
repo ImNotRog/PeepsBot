@@ -55,10 +55,10 @@ export class SynonymBot implements Module {
         const result = PROCESS(message);
         if(result) {
             if (result.command === "wfbo") {
-                message.channel.send(await this.wfbo());
+                message.channel.send(await this.wfbo(), { allowedMentions: { parse: [] } });
             }
             if (result.command === "bread") {
-                message.channel.send(await this.goodmorning());
+                message.channel.send(await this.goodmorning(), { allowedMentions: { parse: [] } });
             }
         }
     }
@@ -96,7 +96,7 @@ export class SynonymBot implements Module {
                         color: 111111,
                         fields: quotes
                     }
-                })
+                }, { allowedMentions: { parse: [] } })
         }
     }
 

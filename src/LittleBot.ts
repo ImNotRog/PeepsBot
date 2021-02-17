@@ -8,7 +8,7 @@ export class LittleBot implements Module {
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
     private cache: Map<string, any[][]>;
-    private readonly collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866"]
+    private readonly collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"]
     private readonly prefix: string = "--";
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
 
@@ -53,7 +53,7 @@ export class LittleBot implements Module {
         if(result) {
             let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
             if(this.cache.has(teach)) {
-                message.channel.send(this.randomQuote(teach));
+                message.channel.send(this.randomQuote(teach), { allowedMentions: { parse: [] } });
             }
         }
     }

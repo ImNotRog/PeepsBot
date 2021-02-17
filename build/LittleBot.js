@@ -14,7 +14,7 @@ const SheetsUser_1 = require("./SheetsUser");
 const ProcessMessage_1 = require("./ProcessMessage");
 class LittleBot {
     constructor(auth, client) {
-        this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866"];
+        this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"];
         this.prefix = "--";
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
@@ -49,7 +49,7 @@ class LittleBot {
             if (result) {
                 let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
                 if (this.cache.has(teach)) {
-                    message.channel.send(this.randomQuote(teach));
+                    message.channel.send(this.randomQuote(teach), { allowedMentions: { parse: [] } });
                 }
             }
         });

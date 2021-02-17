@@ -105,7 +105,7 @@ class TrackerBot {
                             "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
                         }
                     ] }, Utilities_1.Utilities.embedInfo(message))
-            });
+            }, { allowedMentions: { parse: [] } });
         });
     }
 }

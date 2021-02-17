@@ -118,10 +118,10 @@ class ScremBot {
                 msg = `"${msg}", 🎙️ **${author}** said calmly.`;
             let sent;
             try {
-                sent = yield message.channel.send(msg);
+                sent = yield message.channel.send(msg, { allowedMentions: { parse: [] } });
             }
             catch (err) {
-                message.channel.send(`Error: ${err}`);
+                message.channel.send(`Error: ${err}`, { allowedMentions: { parse: [] } });
                 return;
             }
             if (def) {

@@ -50,10 +50,10 @@ class SynonymBot {
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
                 if (result.command === "wfbo") {
-                    message.channel.send(yield this.wfbo());
+                    message.channel.send(yield this.wfbo(), { allowedMentions: { parse: [] } });
                 }
                 if (result.command === "bread") {
-                    message.channel.send(yield this.goodmorning());
+                    message.channel.send(yield this.goodmorning(), { allowedMentions: { parse: [] } });
                 }
             }
         });
@@ -87,7 +87,7 @@ class SynonymBot {
                             color: 111111,
                             fields: quotes
                         }
-                    });
+                    }, { allowedMentions: { parse: [] } });
             }
         });
     }

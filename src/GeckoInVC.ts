@@ -82,7 +82,7 @@ export class GeckoInVCBot implements Module {
         let channel = await this.client.channels.fetch(this.LogChannel)
         if (channel instanceof Discord.TextChannel) {
             for(const message of messages) {
-                await channel.send(message);
+                await channel.send(message, { allowedMentions: { parse: [] } });
             }
         }
 
@@ -92,7 +92,7 @@ export class GeckoInVCBot implements Module {
         const result = PROCESS(message);
         if(result) {
             if(result.command === "isgeckointhevc") {
-                message.channel.send(this.isGeckoInTheVC());
+                message.channel.send(this.isGeckoInTheVC(), { allowedMentions: { parse: [] } });
             }
         }
     }

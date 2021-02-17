@@ -104,7 +104,7 @@ export class ProcessorBot {
             } catch(err) {
                 console.log("Ruh roh! Error in module " + mod);
                 console.error(err);
-                message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`);
+                message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
             }
         }
         

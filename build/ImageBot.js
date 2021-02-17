@@ -253,7 +253,7 @@ class ImageBot {
                 if (this.categoriesInfo.has(this.capitilize(result.command.replace(/_/g, " ")))) {
                     let time = Date.now();
                     const cat = this.capitilize(result.command.replace(/_/g, " "));
-                    let msg = yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                    let msg = yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`, { allowedMentions: { parse: [] } });
                     let entries = this.categoriesInfo.get(cat).sheetscache.length - 1;
                     let index = Math.floor(Math.random() * entries) + 1;
                     let row = this.categoriesInfo.get(cat).sheetscache[index];
@@ -263,7 +263,7 @@ class ImageBot {
                         yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
                     }
                     const a = new Discord.MessageAttachment(`./temp/${filename}`);
-                    yield message.channel.send(`Random image of category ${cat}`, a);
+                    yield message.channel.send(`Random image`, a);
                     yield msg.edit(`Latency: ${Date.now() - time} ms`);
                 }
                 if (result.command === 'imagecategories') {
@@ -274,7 +274,7 @@ class ImageBot {
                                     value: this.listCategories().join('\n')
                                 }
                             ] }, Utilities_1.Utilities.embedInfo(message))
-                    });
+                    }, { allowedMentions: { parse: [] } });
                 }
                 if (result.command === 'merge') {
                     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -287,12 +287,12 @@ class ImageBot {
                         return;
                     }
                     if (!(this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1])) {
-                        yield message.channel.send(`Invalid categories! ${cats}`);
+                        yield message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } });
                         return;
                     }
                     yield message.react('👀');
                     const { num } = yield this.merge(cats[0], cats[1]);
-                    yield message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`);
+                    yield message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } });
                     yield message.reactions.removeAll();
                     yield message.react('✅');
                 }

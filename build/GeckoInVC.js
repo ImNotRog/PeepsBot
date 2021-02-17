@@ -85,7 +85,7 @@ class GeckoInVCBot {
             let channel = yield this.client.channels.fetch(this.LogChannel);
             if (channel instanceof Discord.TextChannel) {
                 for (const message of messages) {
-                    yield channel.send(message);
+                    yield channel.send(message, { allowedMentions: { parse: [] } });
                 }
             }
         });
@@ -95,7 +95,7 @@ class GeckoInVCBot {
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
                 if (result.command === "isgeckointhevc") {
-                    message.channel.send(this.isGeckoInTheVC());
+                    message.channel.send(this.isGeckoInTheVC(), { allowedMentions: { parse: [] } });
                 }
             }
         });

@@ -123,9 +123,9 @@ export class ScremBot implements Module {
         if (!def) msg = `"${msg}", 🎙️ **${author}** said calmly.`
         let sent;
         try {
-            sent = await message.channel.send(msg);
+            sent = await message.channel.send(msg, { allowedMentions: { parse: [] } });
         } catch (err) {
-            message.channel.send(`Error: ${err}`)
+            message.channel.send(`Error: ${err}`, { allowedMentions: { parse: [] } })
             return;
         }
 

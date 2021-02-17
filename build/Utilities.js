@@ -118,7 +118,7 @@ class Utilities {
             const downemote = "👎";
             let message = yield origmessage.channel.send({
                 embed: embed(false)
-            });
+            }, { allowedMentions: { parse: [] } });
             yield message.react(emote);
             yield message.react(downemote);
             yield message.react("❌");
@@ -169,7 +169,7 @@ class Utilities {
             const downemote = "👎";
             let message = yield origmessage.channel.send({
                 embed
-            });
+            }, { allowedMentions: { parse: [] } });
             yield message.react(emote);
             yield message.react(downemote);
             const filter = (reaction, user) => {
@@ -205,7 +205,7 @@ class Utilities {
             if (origmessage instanceof Discord.Message) {
                 let message = yield origmessage.channel.send({
                     embed
-                });
+                }, { allowedMentions: { parse: [] } });
                 yield message.react("❌");
                 const filter = (reaction, user) => {
                     return ['❌'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
@@ -268,7 +268,7 @@ class Utilities {
                     };
                 }
             });
-            const message = yield origmessage.channel.send(embeds[0]);
+            const message = yield origmessage.channel.send(embeds[0], { allowedMentions: { parse: [] } });
             // ⬅️ ❌ ➡️
             yield message.react("⬅️");
             yield message.react("❌");

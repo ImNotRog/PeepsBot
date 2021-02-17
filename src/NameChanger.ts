@@ -246,7 +246,7 @@ export class NameChangerBot implements Module {
                     description: `That theme is not valid. Capitalization matters.`,
                     ...Utilities.embedInfo(message)
                 }
-            });
+            }, { allowedMentions: { parse: [] } });
             return false;
         }
 
@@ -257,7 +257,7 @@ export class NameChangerBot implements Module {
                     description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.`,
                     ...Utilities.embedInfo(message)
                 }
-            });
+            }, { allowedMentions: { parse: [] } });
             return false;
         }
 

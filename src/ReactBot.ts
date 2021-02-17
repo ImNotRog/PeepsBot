@@ -128,9 +128,9 @@ export class ReactBot implements Module {
                 }
 
                 if(!caseclosed) {
-                    msg.channel.send(`Unfortunately, I was unable to solve the crime.`);
+                    msg.channel.send(`Unfortunately, I was unable to solve the crime.`, { allowedMentions: { parse: [] } });
                 } else {
-                    msg.channel.send(`Theft reported and solved. ${culprit.username}#${culprit.discriminator} was the culprit and is stinky.`)
+                    msg.channel.send(`Theft reported and solved. ${culprit.username}#${culprit.discriminator} was the culprit and is stinky.`, { allowedMentions: { parse: [] } })
                 }
             }
         }
