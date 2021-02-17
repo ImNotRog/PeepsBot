@@ -74,8 +74,13 @@ class LittleBot {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.sheetsUser.onConstruct();
             let subsheets = (yield this.sheetsUser.getSubsheets("quotes"));
-            for (const subsheet of subsheets) {
-                this.cache.set(subsheet, yield this.sheetsUser.readSheet("quotes", subsheet));
+            let valueranges = yield this.sheetsUser.bulkRead("quotes");
+            for (const valuerange of valueranges) {
+                let range = valuerange.range;
+                if (range) {
+                    let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
+                    this.cache.set(cat, valuerange.values);
+                }
             }
             for (const id of this.collectingChannels) {
                 let channel = yield this.client.channels.fetch(id);

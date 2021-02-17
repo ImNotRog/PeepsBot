@@ -42,7 +42,6 @@ export class LittleBot implements Module {
             ]
         }
     }
-
     
     available(message: Discord.Message): boolean {
         return true;
@@ -77,8 +76,14 @@ export class LittleBot implements Module {
         await this.sheetsUser.onConstruct();
         let subsheets = (await this.sheetsUser.getSubsheets("quotes"));
 
-        for( const subsheet of subsheets ) {
-            this.cache.set(subsheet, await this.sheetsUser.readSheet("quotes", subsheet));
+        let valueranges = await this.sheetsUser.bulkRead("quotes");
+
+        for (const valuerange of valueranges) {
+            let range = valuerange.range;
+            if (range) {
+                let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
+                this.cache.set(cat, valuerange.values);
+            }
         }
 
         for (const id of this.collectingChannels) {
