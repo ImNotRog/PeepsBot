@@ -329,5 +329,8 @@ class Utilities {
                 "icon_url": message.author.displayAvatarURL()
             } });
     }
+    static capitilize(str) {
+        return str[0].toUpperCase() + str.slice(1).toLowerCase();
+    }
 }
 exports.Utilities = Utilities;

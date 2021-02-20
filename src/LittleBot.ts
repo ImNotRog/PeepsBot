@@ -54,7 +54,21 @@ export class LittleBot implements Module {
             if(this.cache.has(teach)) {
                 message.channel.send(this.randomQuote(teach), { allowedMentions: { parse: [] } });
             }
+
+            if(result.command === "quotescache" && result.args.length === 1) {
+                const a = Utilities.capitilize(result.args[0]);
+                if(this.cache.has(a)) {
+                    message.channel.send({
+                        embed: {
+                            title: `Quotes Cache for ${a}`,
+                            description: `${this.cache.get(a).map(a => a.join(' - ')).join('\n')}`,
+                            ...Utilities.embedInfo(message)
+                        }
+                    })
+                }
+            }
         }
+
     }
 
     async addQuote(quote:string, teacher:string, stars:number) {
@@ -134,7 +148,6 @@ export class LittleBot implements Module {
 
     }
     
-
     randomQuote(teacher:string):string {
         let total = 0;
         let cache = this.cache.get(teacher);

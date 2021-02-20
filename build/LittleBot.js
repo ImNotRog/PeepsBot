@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LittleBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
+const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
 class LittleBot {
     constructor(auth, client) {
@@ -50,6 +51,14 @@ class LittleBot {
                 let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
                 if (this.cache.has(teach)) {
                     message.channel.send(this.randomQuote(teach), { allowedMentions: { parse: [] } });
+                }
+                if (result.command === "quotescache" && result.args.length === 1) {
+                    const a = Utilities_1.Utilities.capitilize(result.args[0]);
+                    if (this.cache.has(a)) {
+                        message.channel.send({
+                            embed: Object.assign({ title: `Quotes Cache for ${a}`, description: `${this.cache.get(a).map(a => a.join(' - ')).join('\n')}` }, Utilities_1.Utilities.embedInfo(message))
+                        });
+                    }
                 }
             }
         });
