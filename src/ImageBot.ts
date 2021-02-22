@@ -358,6 +358,16 @@ export class ImageBot implements Module {
                 await message.reactions.removeAll();
                 await message.react('✅');
             }
+
+            if (["images"].includes(result.command)) {
+                message.channel.send({
+                    embed: {
+                        title: `Images`,
+                        description: `[Link](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
+                        ...Utilities.embedInfo(message)
+                    }
+                })
+            }
         }
         
     }
