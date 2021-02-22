@@ -52,16 +52,21 @@ export class LittleBot implements Module {
         if(result) {
             let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
             if(this.cache.has(teach)) {
-                message.channel.send(this.randomQuote(teach), { allowedMentions: { parse: [] } });
+                if (teach === "Little" || message.guild.id === '748669830244073533') {
+                    let q = this.randomQuote(teach);
+
+                    message.channel.send(q.length < 400 ? q : q.slice(0, 400) + '... [quote truncated]', { allowedMentions: { parse: [] } });
+                }
             }
 
             if(result.command === "quotescache" && result.args.length === 1) {
                 const a = Utilities.capitilize(result.args[0]);
                 if(this.cache.has(a)) {
+                    let str = this.cache.get(a).map(a => a.map(b => b.slice(0, 100)).join(' - ')).join('\n');
                     message.channel.send({
                         embed: {
                             title: `Quotes Cache for ${a}`,
-                            description: `${this.cache.get(a).map(a => a.join(' - ')).join('\n')}`,
+                            description: `${str.length < 1000 ? str : str.slice(0,1000) + '... [truncated]'}`,
                             ...Utilities.embedInfo(message)
                         }
                     })
