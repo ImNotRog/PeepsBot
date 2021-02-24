@@ -36,6 +36,8 @@ function PROCESS(msg) {
         }
         if (arg.length > 0)
             args.push(arg);
+        if (args.length == 0)
+            return null;
         const command = args.shift().toLowerCase();
         return { command, args };
     }
