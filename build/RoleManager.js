@@ -18,10 +18,10 @@ class RoleManagerBot {
         this.approvedChannels = ["750804960333135914", "748670606085587060"];
         this.fperbio = "748669830244073533";
         this.entrancechannel = "750186607352479755";
-        this.messageids = ["786059131806023742", "786061717108293714"];
+        this.messageids = ["815007707467612221", "815007708528377867"];
         this.numvotes = 3;
         this.prefix = `--`;
-        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵`.split(` `);
+        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵 🇶 🇷`.split(` `);
         this.client = client;
         this.client.on("messageReactionAdd", (reaction, user) => {
             if (user instanceof Discord.User) {
@@ -80,7 +80,7 @@ class RoleManagerBot {
                 if (result.command === "editrole") {
                     this.editRole(message, result.args);
                 }
-                if (result.command === "recacheroles") {
+                if (result.command === "cacheroles") {
                     this.cacheRoles();
                 }
             }
@@ -112,7 +112,7 @@ class RoleManagerBot {
             yield (this.server.roles.fetch());
             this.roles = this.server.roles.cache;
             this.roles.sort((a, b) => b.position - a.position);
-            this.colorroles = this.roles.filter((role) => role.color !== 0).array();
+            this.colorroles = this.roles.filter((role) => role.color !== 0 && !role.name.toLowerCase().includes("booster")).array();
             let i = 0;
             this.roledivs = [];
             while (i < this.colorroles.length) {
@@ -124,13 +124,16 @@ class RoleManagerBot {
                 let length = currroles.length;
                 let cols = 3;
                 let parts = Array(cols).fill(0).map((zero, index) => currroles.slice(index * length / cols, (index + 1) * length / cols));
-                // @ts-ignore
-                parts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.join("\n") }; });
-                this.messages[i].edit({
+                let newparts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.join("\n") }; });
+                let alphalength = this.roledivs[i].length;
+                for (let j = 0; j < alphalength; j++) {
+                    this.messages[i].react(this.alpha[j]);
+                }
+                this.messages[i].edit('', {
                     embed: {
                         title: `React for Roles`,
                         color: '#fffffe',
-                        fields: parts
+                        fields: newparts
                     }
                 });
             }
@@ -257,6 +260,8 @@ class RoleManagerBot {
                 if (reaction.message.id === messageid) {
                     let num = this.alpha.indexOf(reaction.emoji.name);
                     let member = yield this.server.members.fetch(user);
+                    if (num === -1)
+                        return;
                     member.roles.remove(this.roledivs[i][num]);
                 }
             }

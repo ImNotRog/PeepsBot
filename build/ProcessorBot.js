@@ -24,24 +24,40 @@ const SynonymBot_1 = require("./SynonymBot");
 const ImageBot_1 = require("./ImageBot");
 const SqualolBot_1 = require("./SqualolBot");
 const GeckoInVC_1 = require("./GeckoInVC");
+const EmoteBot_1 = require("./EmoteBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        this.littleActive = true;
-        this.trackerActive = true;
-        this.bdayActive = true;
-        this.reactActive = true;
-        this.nameChangerActive = true;
+        // private readonly littleActive = true;
+        // private readonly trackerActive = true;
+        // private readonly bdayActive = true;
+        // private readonly reactActive = true;
+        // private readonly nameChangerActive = true;
+        // private readonly roleManagerActive = false;
+        // private readonly scremActive = true;
+        // private readonly synonymActive = true;
+        // private readonly geckoInVCActive = true;
+        // private readonly imageActive = true;
+        // private readonly squalolActive = true;
+        // private readonly emojiActive = true;
+        // private readonly testActive = false;
+        // private readonly helpActive = true;
+        this.littleActive = false;
+        this.trackerActive = false;
+        this.bdayActive = false;
+        this.reactActive = false;
+        this.nameChangerActive = false;
         this.roleManagerActive = true;
-        this.scremActive = true;
-        this.synonymActive = true;
-        this.geckoInVCActive = true;
-        this.imageActive = true;
-        this.squalolActive = true;
+        this.scremActive = false;
+        this.synonymActive = false;
+        this.geckoInVCActive = false;
+        this.imageActive = false;
+        this.squalolActive = false;
+        this.emojiActive = false;
         this.testActive = false;
-        this.helpActive = true;
+        this.helpActive = false;
         this.modules = [];
         if (this.littleActive)
             this.modules.push(new LittleBot_1.LittleBot(auth, client));
@@ -61,6 +77,8 @@ class ProcessorBot {
             this.modules.push(new SynonymBot_1.SynonymBot(MW, client));
         if (this.geckoInVCActive)
             this.modules.push(new GeckoInVC_1.GeckoInVCBot(client));
+        if (this.emojiActive)
+            this.modules.push(new EmoteBot_1.EmoteBot(auth, client));
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
         if (this.squalolActive)
@@ -70,9 +88,6 @@ class ProcessorBot {
         if (this.helpActive)
             this.modules.push(new HelpBot_1.HelpBot(this.modules, client));
         this.client = client;
-        this.client.on("message", (message) => {
-            this.onMessage(message);
-        });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -81,6 +96,9 @@ class ProcessorBot {
                 allpromises.push(mod.onConstruct());
             }
             yield Promise.all(allpromises);
+            this.client.on("message", (message) => {
+                this.onMessage(message);
+            });
         });
     }
     onMessage(message) {

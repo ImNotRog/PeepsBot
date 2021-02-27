@@ -427,6 +427,15 @@ export class SheetsUser {
         return res.data.values;
     }
 
+    async clearSheet(sheetname:string,subsheetname:string,range?:string) {
+        let info = this.map.get(sheetname);
+        
+        await this.sheets.spreadsheets.values.clear({
+            spreadsheetId: info.id,
+            range: range ? `${subsheetname}!${range}` : subsheetname
+        });
+    }
+
     async createSubsheet(sheetname: string, subsheetname: string, format: { tabColor?: string, columnResize: (number | string)[], headers: string[] }) {
         let requests = [];
 

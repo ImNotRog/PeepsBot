@@ -415,6 +415,15 @@ class SheetsUser {
             return res.data.values;
         });
     }
+    clearSheet(sheetname, subsheetname, range) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let info = this.map.get(sheetname);
+            yield this.sheets.spreadsheets.values.clear({
+                spreadsheetId: info.id,
+                range: range ? `${subsheetname}!${range}` : subsheetname
+            });
+        });
+    }
     createSubsheet(sheetname, subsheetname, format) {
         return __awaiter(this, void 0, void 0, function* () {
             let requests = [];
