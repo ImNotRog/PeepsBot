@@ -16,8 +16,7 @@ const fs = require("fs");
 const Utilities_1 = require("./Utilities");
 class PianoManBot {
     constructor(client) {
-        // private pianoManChannel = '748669830244073536';
-        this.pianoManChannel = '750804960333135914'; // OVERRIDE
+        this.pianoManChannel = '748669830244073536';
         this.client = client;
     }
     onConstruct() {
