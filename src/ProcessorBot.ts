@@ -48,14 +48,14 @@ export class ProcessorBot {
     private readonly bdayActive = false;
     private readonly reactActive = false;
     private readonly nameChangerActive = false;
-    private readonly roleManagerActive = true;
+    private readonly roleManagerActive = false;
     private readonly scremActive = false;
     private readonly synonymActive = false;
     private readonly geckoInVCActive = false;
     private readonly imageActive = false;
     private readonly squalolActive = false;
     private readonly emojiActive = false;
-    private readonly pianoManActive = false;
+    private readonly pianoManActive = true;
 
     private readonly testActive = false;
     private readonly helpActive = false;

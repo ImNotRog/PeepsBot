@@ -73,23 +73,38 @@ export class Utilities {
         }
     }
 
-    public static RatcliffObershelpRaw(str1:string,str2:string) {
+    public static RatcliffObershelpRaw(str1: string, str2: string) {
+        if (str1.length * str2.length === 0) return 0;
+        let common = Utilities.LongestCommonSubstring(str1, str2);
+        if (common.longest === 0) return 0;
+
+        let left = Utilities.RatcliffObershelpRaw(str1.slice(0, common.start1), str2.slice(0, common.start2));
+        let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
+
+        return common.longest + left + right;
+    }
+
+    public static RatcliffObershelpOrig(str1: string, str2: string) {
+        return 2 * Utilities.RatcliffObershelpRaw(str1.replace(/['"\.,;!?]/g, '').toLowerCase(), str2.replace(/['"\.,;!?]/g, '').toLowerCase()) / (str1.length + str2.length);
+    }
+
+    public static RatcliffObershelpRawModified(str1:string,str2:string) {
         if(str1.length * str2.length === 0) return 0;
         let common = Utilities.LongestCommonSubstring(str1,str2);
         if(common.longest === 0) return 0;
 
-        let left = Utilities.RatcliffObershelpRaw(str1.slice(0, common.start1), str2.slice(0, common.start2));
-        let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
+        let left = Utilities.RatcliffObershelpRawModified(str1.slice(0, common.start1), str2.slice(0, common.start2));
+        let right = Utilities.RatcliffObershelpRawModified(str1.slice(common.end1), str2.slice(common.end2));
 
         return common.longest + left + right - Math.abs(common.start1 - common.start2) / 200;
     }
 
     public static RatcliffObershelpCustom(str1: string, str2: string) {
-        return Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length / 100);
+        return Utilities.RatcliffObershelpRawModified(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length / 100);
     }
 
     public static RatcliffObershelp(str1:string,str2:string){
-        return 2 * Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
+        return 2 * Utilities.RatcliffObershelpRawModified(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
     }
 
     /* Moment Utilities */

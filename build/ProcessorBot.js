@@ -50,14 +50,14 @@ class ProcessorBot {
         this.bdayActive = false;
         this.reactActive = false;
         this.nameChangerActive = false;
-        this.roleManagerActive = true;
+        this.roleManagerActive = false;
         this.scremActive = false;
         this.synonymActive = false;
         this.geckoInVCActive = false;
         this.imageActive = false;
         this.squalolActive = false;
         this.emojiActive = false;
-        this.pianoManActive = false;
+        this.pianoManActive = true;
         this.testActive = false;
         this.helpActive = false;
         this.modules = [];

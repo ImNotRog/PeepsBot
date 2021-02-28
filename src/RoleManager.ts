@@ -28,13 +28,13 @@ export class RoleManagerBot implements Module {
         this.client = client;
 
         this.client.on("messageReactionAdd", (reaction,user) => {
-            if(user instanceof Discord.User) {
+            if(user instanceof Discord.User && user.id !== this.client.user.id) {
                 this.onReactAdd(reaction, user)
             }
         })
 
         this.client.on("messageReactionRemove", (reaction, user) => {
-            if (user instanceof Discord.User) {
+            if (user instanceof Discord.User && user.id !== this.client.user.id) {
                 this.onReactRemove(reaction, user)
             }
         })
