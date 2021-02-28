@@ -6,6 +6,7 @@ import { PROCESS } from "./ProcessMessage";
 import { Utilities } from "./Utilities";
 
 export class RoleManagerBot implements Module {
+    public name: "Role Manager Bot";
 
     private client:Discord.Client;
     private readonly approvedChannels = ["750804960333135914", "748670606085587060"];

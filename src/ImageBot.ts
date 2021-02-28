@@ -12,6 +12,7 @@ import * as https from 'https';
  */
 
 export class ImageBot implements Module {
+    public name: "Image Bot";
 
     private client: Discord.Client;
     private readonly prefix: string = "--";

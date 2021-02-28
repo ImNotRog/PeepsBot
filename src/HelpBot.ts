@@ -4,6 +4,8 @@ import { PROCESS } from "./ProcessMessage";
 import { Utilities } from "./Utilities"
 
 export class HelpBot implements Module {
+    public name: "Help Bot";
+
     public helpTechnicalEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
     private readonly prefix = "--";
 

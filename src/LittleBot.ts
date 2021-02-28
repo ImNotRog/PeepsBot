@@ -5,6 +5,8 @@ import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class LittleBot implements Module {
+    public name: "Quotes Bot";
+
     private sheetsUser: SheetsUser;
     private client: Discord.Client;
     private cache: Map<string, any[][]>;

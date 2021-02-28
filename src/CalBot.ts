@@ -11,6 +11,7 @@ import { Module } from "./Module";
  */
 
 export class CalendarBot implements Module {
+    public name: "Calendar Bot";
 
     private sheetsUser:SheetsUser;
     private prefix = `--`;

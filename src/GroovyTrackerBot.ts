@@ -5,6 +5,8 @@ import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class TrackerBot implements Module {
+    public name: "Groovy Tracker Bot";
+
     private sheetsUser: SheetsUser;
     private musicBots: string[];
     private prefix: string = "--";

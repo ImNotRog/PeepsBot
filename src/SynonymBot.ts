@@ -7,6 +7,7 @@ import { Module } from './Module';
 import { PROCESS } from './ProcessMessage';
 
 export class SynonymBot implements Module {
+    public name: "Synonym Bot";
 
     private readonly prefix = '--';
     private apikey: string;
