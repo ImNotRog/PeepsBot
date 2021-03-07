@@ -42,7 +42,7 @@ export class EmoteBot implements Module {
                 await this.sheetsUser.clearSheet('data', 'Data');
                 await this.sheetsUser.bulkUpdateRows("data", "Data", this.toShortArray().map((row, i) => { return { row, num: i } }))
             }
-            if(result.command === "runpurge") {
+            if(result.command === "runpurge" && message.member.hasPermission('ADMINISTRATOR')) {
                 let channel = await this.client.channels.fetch("751552954518994965");
 
                 let list = this.leastUsed(parseInt(result.args[0]) || 10);

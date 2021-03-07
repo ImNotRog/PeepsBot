@@ -41,7 +41,7 @@ class EmoteBot {
                     yield this.sheetsUser.clearSheet('data', 'Data');
                     yield this.sheetsUser.bulkUpdateRows("data", "Data", this.toShortArray().map((row, i) => { return { row, num: i }; }));
                 }
-                if (result.command === "runpurge") {
+                if (result.command === "runpurge" && message.member.hasPermission('ADMINISTRATOR')) {
                     let channel = yield this.client.channels.fetch("751552954518994965");
                     let list = this.leastUsed(parseInt(result.args[0]) || 10);
                     let emotelist = list.map((val, i) => `${this.alpha[i]}: <:${val.identifier}>`);
