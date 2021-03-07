@@ -10,10 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmoteBot = void 0;
+const discord_js_1 = require("discord.js");
 const ProcessMessage_1 = require("./ProcessMessage");
 const SheetsUser_1 = require("./SheetsUser");
 class EmoteBot {
     constructor(auth, client) {
+        this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵 🇶 🇷 🇸 🇹 🇺 🇻 🇼 🇽 🇾 🇿`.split(` `);
         this.client = client;
         let m = new Map();
         m.set("data", "1CeljfBu-3afIfd43F5pTFWOKPIoxE8O5qlJr34XBiCI");
@@ -39,9 +41,29 @@ class EmoteBot {
                     yield this.sheetsUser.clearSheet('data', 'Data');
                     yield this.sheetsUser.bulkUpdateRows("data", "Data", this.toShortArray().map((row, i) => { return { row, num: i }; }));
                 }
-                if (result.command === "brrr") {
-                    message.react("✅");
-                    console.log(this.leastUsed());
+                if (result.command === "runpurge") {
+                    let channel = yield this.client.channels.fetch("751552954518994965");
+                    let list = this.leastUsed(parseInt(result.args[0]) || 10);
+                    let emotelist = list.map((val, i) => `${this.alpha[i]}: <:${val.identifier}>`);
+                    let len = emotelist.length;
+                    let columns = [];
+                    let numcolumns = 3;
+                    for (let i = 0; i < numcolumns; i++) {
+                        columns.push(emotelist.slice(len / numcolumns * i, len / numcolumns * (i + 1)).join('\n'));
+                    }
+                    // message.channel.send(emotelist);
+                    let embed = {
+                        title: `Emote Purge`,
+                        description: `You have a voice, but no one cares. That's why you should vote for emotes that you think should **NOT** be purged.`,
+                        fields: columns.map((col, i) => { return { name: `Column ${i + 1}`, value: col, inline: true }; }),
+                        color: 1111111
+                    };
+                    if (channel instanceof discord_js_1.TextChannel) {
+                        let message = yield channel.send({ embed });
+                        for (let i = 0; i < len; i++) {
+                            message.react(this.alpha[i]);
+                        }
+                    }
                 }
             }
         });
@@ -125,7 +147,7 @@ class EmoteBot {
         for (const key of this.emoteCount.keys()) {
             allemotes.push(this.emoteCount.get(key));
         }
-        allemotes = allemotes.filter((a) => !a.identifier.startsWith("a:"));
+        allemotes = allemotes.filter((a) => !a.identifier.startsWith("a:") && !a.identifier.startsWith("02"));
         // allemotes = allemotes.sort((a,b) => a.overall() - b.overall());
         let allmin = [];
         let emoteset = new Set(allemotes);
