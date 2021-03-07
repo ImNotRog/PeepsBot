@@ -363,9 +363,8 @@ export class ImageBot implements Module {
             if (["images"].includes(result.command)) {
                 message.channel.send({
                     embed: {
-                        title: `Images`,
-                        description: `[Link](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
-                        ...Utilities.embedInfo(message)
+                        description: `[Link to the images.](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
+                        color: 1111111
                     }
                 })
             }

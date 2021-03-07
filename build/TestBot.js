@@ -50,6 +50,17 @@ class TestBot {
             //     await this.sheetUser.insertCol("images", subsheet, "Caption", 6, 300);
             //     await this.sheetUser.insertCol("images", subsheet, "Tags", 7, 300);
             // }
+            // let fpbg = await this.client.guilds.fetch("748669830244073533");
+            // let existence = fpbg.roles.cache.find(a => a.name === "you exist!");
+            // console.log(existence)
+            // let members = await fpbg.members.fetch();
+            // console.log(members.size);
+            // for(const k of members.keyArray()) {
+            //     const user = members.get(k);
+            //     if(!user.user.bot) {
+            //         await user.roles.add(existence);
+            //     }
+            // }
         });
     }
 }

@@ -78,7 +78,7 @@ export class ProcessorBot {
         if (this.synonymActive) this.modules.push(new SynonymBot(MW, client));
         if (this.geckoInVCActive) this.modules.push(new GeckoInVCBot(client));
         if (this.emojiActive) this.modules.push(new EmoteBot(auth, client));
-        if (this.pianoManActive) this.modules.push(new PianoManBot(client));
+        if (this.pianoManActive) this.modules.push(new PianoManBot(auth, client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
         if (this.squalolActive) this.modules.push(new SqualolBot());
 

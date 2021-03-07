@@ -68,7 +68,7 @@ class ProcessorBot {
         if (this.emojiActive)
             this.modules.push(new EmoteBot_1.EmoteBot(auth, client));
         if (this.pianoManActive)
-            this.modules.push(new PianoManBot_1.PianoManBot(client));
+            this.modules.push(new PianoManBot_1.PianoManBot(auth, client));
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
         if (this.squalolActive)

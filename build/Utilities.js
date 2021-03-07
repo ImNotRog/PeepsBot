@@ -81,8 +81,26 @@ class Utilities {
         let right = Utilities.RatcliffObershelpRaw(str1.slice(common.end1), str2.slice(common.end2));
         return common.longest + left + right;
     }
+    static sanitize(str) {
+        str = str.replace(/['"\.,;!?]/g, '').toLowerCase();
+        let newstr = str[0];
+        for (let i = 1; i < str.length; i++) {
+            if (str[i] === str[i - 1]) {
+                if (i < str.length - 1 && str[i + 1] === str[i]) {
+                    // Is repeat and cringe
+                    continue;
+                }
+                if (i > 1 && str[i] === str[i - 2]) {
+                    //Is repeat and cringe
+                    continue;
+                }
+            }
+            newstr += str[i];
+        }
+        return newstr;
+    }
     static RatcliffObershelpOrig(str1, str2) {
-        return 2 * Utilities.RatcliffObershelpRaw(str1.replace(/['"\.,;!?]/g, '').toLowerCase(), str2.replace(/['"\.,;!?]/g, '').toLowerCase()) / (str1.length + str2.length);
+        return 2 * Utilities.RatcliffObershelpRaw(Utilities.sanitize(str1), Utilities.sanitize(str2)) / (Utilities.sanitize(str1).length + Utilities.sanitize(str2).length);
     }
     static RatcliffObershelpRawModified(str1, str2) {
         if (str1.length * str2.length === 0)

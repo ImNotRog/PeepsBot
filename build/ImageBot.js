@@ -298,7 +298,10 @@ class ImageBot {
                 }
                 if (["images"].includes(result.command)) {
                     message.channel.send({
-                        embed: Object.assign({ title: `Images`, description: `[Link](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)` }, Utilities_1.Utilities.embedInfo(message))
+                        embed: {
+                            description: `[Link to the images.](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
+                            color: 1111111
+                        }
                     });
                 }
             }

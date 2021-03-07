@@ -78,9 +78,8 @@ export class LittleBot implements Module {
             if (["quotes", "quotesheet", "quotessheet"].includes(result.command) && message.guild.id === '748669830244073533') {
                 message.channel.send({
                     embed: {
-                        title: `Quotes Sheet`,
-                        description: `[Link](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=1331218902)`,
-                        ...Utilities.embedInfo(message)
+                        description: `[Link to the quotes.](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=1331218902)`,
+                        color: 1111111
                     }
                 }) 
             }
