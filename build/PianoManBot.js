@@ -93,7 +93,7 @@ class PianoManBot {
                     let m;
                     try {
                         m = yield channel.awaitMessages((message) => {
-                            let stuff = Utilities_1.Utilities.RatcliffObershelpOrig(lines[currlinenumber], message.content);
+                            let stuff = Utilities_1.Utilities.RatcliffObershelpNoRepeats(lines[currlinenumber], message.content);
                             // console.log(`Received! Stuff: ${stuff}`);
                             if (message.content.startsWith("--hint")) {
                                 return true;

@@ -95,7 +95,7 @@ export class PianoManBot implements Module {
                 let m: Discord.Collection<string, Discord.Message>;
                 try {
                     m = await channel.awaitMessages((message: Discord.Message) => {
-                        let stuff = Utilities.RatcliffObershelpOrig(lines[currlinenumber], message.content);
+                        let stuff = Utilities.RatcliffObershelpNoRepeats(lines[currlinenumber], message.content);
                         // console.log(`Received! Stuff: ${stuff}`);
 
                         if(message.content.startsWith("--hint")) {

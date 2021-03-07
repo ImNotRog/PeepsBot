@@ -18,6 +18,7 @@ import { SqualolBot } from "./SqualolBot";
 import { GeckoInVCBot } from "./GeckoInVC";
 import { EmoteBot } from "./EmoteBot";
 import { PianoManBot } from "./PianoManBot";
+import { CipherBot } from "./CipherBot"
 
 import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
@@ -40,6 +41,7 @@ export class ProcessorBot {
     private readonly squalolActive = true;
     private readonly emojiActive = true;
     private readonly pianoManActive = true;
+    private readonly cipherActive = true;
 
     private readonly testActive = false;
     private readonly helpActive = true;
@@ -56,7 +58,8 @@ export class ProcessorBot {
     // private readonly imageActive = false;
     // private readonly squalolActive = false;
     // private readonly emojiActive = false;
-    // private readonly pianoManActive = true;
+    // private readonly pianoManActive = false;
+    // private readonly cipherActive = false;
 
     // private readonly testActive = false;
     // private readonly helpActive = false;
@@ -79,6 +82,7 @@ export class ProcessorBot {
         if (this.geckoInVCActive) this.modules.push(new GeckoInVCBot(client));
         if (this.emojiActive) this.modules.push(new EmoteBot(auth, client));
         if (this.pianoManActive) this.modules.push(new PianoManBot(auth, client));
+        if (this.cipherActive) this.modules.push(new CipherBot(client));
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
         if (this.squalolActive) this.modules.push(new SqualolBot());
 

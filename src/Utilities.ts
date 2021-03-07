@@ -84,7 +84,7 @@ export class Utilities {
         return common.longest + left + right;
     }
 
-    public static sanitize(str:string) {
+    public static sanitizerepeats(str:string) {
         str = str.replace(/['"\.,;!?]/g, '').toLowerCase();
         
         let newstr = str[0];
@@ -104,8 +104,8 @@ export class Utilities {
         return newstr;
     }
 
-    public static RatcliffObershelpOrig(str1: string, str2: string) {
-        return 2 * Utilities.RatcliffObershelpRaw(Utilities.sanitize(str1), Utilities.sanitize(str2)) / (Utilities.sanitize(str1).length + Utilities.sanitize(str2).length);
+    public static RatcliffObershelpNoRepeats(str1: string, str2: string) {
+        return 2 * Utilities.RatcliffObershelpRaw(Utilities.sanitizerepeats(str1), Utilities.sanitizerepeats(str2)) / (Utilities.sanitizerepeats(str1).length + Utilities.sanitizerepeats(str2).length);
     }
 
     public static RatcliffObershelpRawModified(str1:string,str2:string) {
@@ -124,7 +124,7 @@ export class Utilities {
     }
 
     public static RatcliffObershelp(str1:string,str2:string){
-        return 2 * Utilities.RatcliffObershelpRawModified(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
+        return 2 * Utilities.RatcliffObershelpRaw(str1.toLowerCase(), str2.toLowerCase()) / (str1.length + str2.length);
     }
 
     /* Moment Utilities */
