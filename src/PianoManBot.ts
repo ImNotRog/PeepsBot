@@ -19,8 +19,8 @@ export class PianoManBot implements Module {
     async onConstruct() {
         this.lines = fs.readFileSync("./src/data/lyrics.txt").toString().split('\n').filter(a => !a.startsWith("*"));
 
-        // nodecron.schedule("0 21 * * 6", () => {
-        nodecron.schedule("30 18 * * 6", () => {
+        nodecron.schedule("0 21 * * 6", () => {
+        // nodecron.schedule("30 18 * * 6", () => {
             this.pianoMan();
             console.log("Piano Man!");
         },
