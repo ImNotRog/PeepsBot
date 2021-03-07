@@ -25,6 +25,8 @@ class PianoManBot {
             nodecron.schedule("0 21 * * 6", () => {
                 this.pianoMan();
                 console.log("Piano Man!");
+            }, {
+                timezone: `America/Los_Angeles`
             });
         });
     }
