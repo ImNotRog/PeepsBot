@@ -59,6 +59,7 @@ export class PianoManBot implements Module {
 
             if (result.command === "sing") {
                 if (this.spam.includes(message.id) || message.member.hasPermission("ADMINISTRATOR")) {
+                    this.sheetsUser.setUpSheet("songs");
                     if( (await this.sheetsUser.getSubsheets("songs")).includes(result.args[0]) ) {
                         this.singSheet(message.channel, result.args[0]);
                     } else {
