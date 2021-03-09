@@ -45,7 +45,7 @@ export class GeckoInVCBot implements Module {
             messages =
                 [
                     `Fek ${user.username}#${user.discriminator}!`,
-                    `<:doggowave:811022887577976843>`
+                    `<:doggowave:818606299180695562>`
                 ]
         } else if (achannel == null && bchannel != null) {
             // Left channel
