@@ -27,6 +27,7 @@ const GeckoInVC_1 = require("./GeckoInVC");
 const EmoteBot_1 = require("./EmoteBot");
 const PianoManBot_1 = require("./PianoManBot");
 const CipherBot_1 = require("./CipherBot");
+const HugBot_1 = require("./HugBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
 class ProcessorBot {
@@ -46,6 +47,7 @@ class ProcessorBot {
         this.emojiActive = true;
         this.pianoManActive = true;
         this.cipherActive = true;
+        this.hugActive = true;
         this.testActive = false;
         this.helpActive = true;
         this.modules = [];
@@ -73,6 +75,8 @@ class ProcessorBot {
             this.modules.push(new PianoManBot_1.PianoManBot(auth, client));
         if (this.cipherActive)
             this.modules.push(new CipherBot_1.CipherBot(client));
+        if (this.hugActive)
+            this.modules.push(new HugBot_1.HugBot());
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
         if (this.squalolActive)

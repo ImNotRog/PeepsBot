@@ -19,6 +19,7 @@ import { GeckoInVCBot } from "./GeckoInVC";
 import { EmoteBot } from "./EmoteBot";
 import { PianoManBot } from "./PianoManBot";
 import { CipherBot } from "./CipherBot"
+import { HugBot } from "./HugBot";
 
 import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
@@ -42,6 +43,7 @@ export class ProcessorBot {
     private readonly emojiActive = true;
     private readonly pianoManActive = true;
     private readonly cipherActive = true;
+    private readonly hugActive = true;
 
     private readonly testActive = false;
     private readonly helpActive = true;
@@ -60,6 +62,7 @@ export class ProcessorBot {
     // private readonly emojiActive = false;
     // private readonly pianoManActive = false;
     // private readonly cipherActive = false;
+    // private readonly hugActive = true;
 
     // private readonly testActive = false;
     // private readonly helpActive = false;
@@ -83,6 +86,7 @@ export class ProcessorBot {
         if (this.emojiActive) this.modules.push(new EmoteBot(auth, client));
         if (this.pianoManActive) this.modules.push(new PianoManBot(auth, client));
         if (this.cipherActive) this.modules.push(new CipherBot(client));
+        if (this.hugActive) this.modules.push(new HugBot());
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
         if (this.squalolActive) this.modules.push(new SqualolBot());
 
