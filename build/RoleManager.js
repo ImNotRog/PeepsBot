@@ -112,7 +112,7 @@ class RoleManagerBot {
             yield (this.server.roles.fetch());
             this.roles = this.server.roles.cache;
             this.roles.sort((a, b) => b.position - a.position);
-            this.colorroles = this.roles.filter((role) => role.color !== 0 && !role.name.toLowerCase().includes("booster")).array();
+            this.colorroles = this.roles.filter((role) => role.color !== 0 && !role.name.toLowerCase().includes("booster") && !role.name.toLowerCase().includes("chry")).array();
             let i = 0;
             this.roledivs = [];
             while (i < this.colorroles.length) {
