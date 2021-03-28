@@ -42,7 +42,7 @@ export class PianoManBot implements Module {
     async onConstruct() {
         await this.sheetsUser.onConstruct();
 
-        nodecron.schedule("0 21 * * 6", () => {
+        nodecron.schedule("0 20 * * 6", () => {
         // nodecron.schedule("30 18 * * 6", () => {
             this.pianoMan();
             console.log("Piano Man!");

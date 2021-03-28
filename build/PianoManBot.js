@@ -41,7 +41,7 @@ class PianoManBot {
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.sheetsUser.onConstruct();
-            nodecron.schedule("0 21 * * 6", () => {
+            nodecron.schedule("0 20 * * 6", () => {
                 // nodecron.schedule("30 18 * * 6", () => {
                 this.pianoMan();
                 console.log("Piano Man!");
