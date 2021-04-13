@@ -13,6 +13,7 @@ exports.LittleBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
+const fs = require("fs");
 class LittleBot {
     constructor(auth, client) {
         this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"];
@@ -94,7 +95,7 @@ class LittleBot {
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.sheetsUser.onConstruct();
-            let subsheets = (yield this.sheetsUser.getSubsheets("quotes"));
+            fs.writeFileSync("./temp/test.txt", (yield this.sheetsUser.getSubsheets("quotes")).join("\n"));
             let valueranges = yield this.sheetsUser.bulkRead("quotes");
             for (const valuerange of valueranges) {
                 let range = valuerange.range;

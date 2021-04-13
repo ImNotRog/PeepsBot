@@ -89,9 +89,13 @@ class SheetsUser {
     }
     bulkRead(sheetname) {
         return __awaiter(this, void 0, void 0, function* () {
+            // console.log((await this.getSubsheets(sheetname)).find(a => a.includes("ICE4113")));
             let res = yield this.sheets.spreadsheets.values.batchGet({
                 spreadsheetId: this.map.get(sheetname).id,
-                ranges: yield this.getSubsheets(sheetname),
+                ranges: (yield this.getSubsheets(sheetname)).map(a => {
+                    // console.log(a);
+                    return a;
+                }),
             });
             return res.data.valueRanges;
         });

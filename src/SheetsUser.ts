@@ -5,7 +5,7 @@ export class SheetsUser {
     private sheets: sheets_v4.Sheets;
     private setup: boolean;
     private readonly alphabet: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private map: Map<string, { id: string, sheets: Map<string, string> }>;
+    public map: Map<string, { id: string, sheets: Map<string, string> }>;
 
     constructor(auth, sheetIdMap?: Map<string, string>) {
         this.sheets = google.sheets({ version: 'v4', auth });
@@ -90,9 +90,13 @@ export class SheetsUser {
     }
 
     async bulkRead(sheetname:string) {
+        // console.log((await this.getSubsheets(sheetname)).find(a => a.includes("ICE4113")));
         let res = await this.sheets.spreadsheets.values.batchGet({
             spreadsheetId: this.map.get(sheetname).id,
-            ranges: await this.getSubsheets(sheetname),
+            ranges: (await this.getSubsheets(sheetname)).map(a => {
+                // console.log(a);
+                return a;
+            }),
         })
         return res.data.valueRanges;
     }

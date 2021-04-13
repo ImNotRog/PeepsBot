@@ -3,7 +3,7 @@ import { Utilities } from "./Utilities";
 import Discord = require("discord.js");
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
-
+import * as fs from "fs";
 export class LittleBot implements Module {
     public name: "Quotes Bot";
 
@@ -104,7 +104,7 @@ export class LittleBot implements Module {
     async onConstruct(): Promise<void> {
 
         await this.sheetsUser.onConstruct();
-        let subsheets = (await this.sheetsUser.getSubsheets("quotes"));
+        fs.writeFileSync("./temp/test.txt", (await this.sheetsUser.getSubsheets("quotes")).join("\n"));
 
         let valueranges = await this.sheetsUser.bulkRead("quotes");
 
