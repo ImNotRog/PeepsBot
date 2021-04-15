@@ -90,13 +90,9 @@ export class SheetsUser {
     }
 
     async bulkRead(sheetname:string) {
-        // console.log((await this.getSubsheets(sheetname)).find(a => a.includes("ICE4113")));
         let res = await this.sheets.spreadsheets.values.batchGet({
             spreadsheetId: this.map.get(sheetname).id,
-            ranges: (await this.getSubsheets(sheetname)).map(a => {
-                // console.log(a);
-                return a;
-            }),
+            ranges: (await this.getSubsheets(sheetname)).map(a => `'${a}'`),
         })
         return res.data.valueRanges;
     }
@@ -426,7 +422,7 @@ export class SheetsUser {
         let info = this.map.get(sheetname);
         let res = await this.sheets.spreadsheets.values.get({
             spreadsheetId: info.id,
-            range: range ? `${subsheetname}!${range}` : subsheetname
+            range: range ? `'${subsheetname}'!${range}` : `'${subsheetname}'`
         })
         return res.data.values;
     }
@@ -436,7 +432,7 @@ export class SheetsUser {
         
         await this.sheets.spreadsheets.values.clear({
             spreadsheetId: info.id,
-            range: range ? `${subsheetname}!${range}` : subsheetname
+            range: range ? `'${subsheetname}'!${range}` : `'${subsheetname}'`
         });
     }
 

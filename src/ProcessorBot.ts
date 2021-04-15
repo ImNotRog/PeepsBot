@@ -48,7 +48,7 @@ export class ProcessorBot {
     private readonly testActive = false;
     private readonly helpActive = true;
 
-    // private readonly littleActive = false;
+    // private readonly littleActive = true;
     // private readonly trackerActive = false;
     // private readonly bdayActive = false;
     // private readonly reactActive = false;
@@ -62,7 +62,7 @@ export class ProcessorBot {
     // private readonly emojiActive = false;
     // private readonly pianoManActive = false;
     // private readonly cipherActive = false;
-    // private readonly hugActive = true;
+    // private readonly hugActive = false;
 
     // private readonly testActive = false;
     // private readonly helpActive = false;

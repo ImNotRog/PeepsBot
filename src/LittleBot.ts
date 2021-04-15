@@ -88,6 +88,7 @@ export class LittleBot implements Module {
     }
 
     async addQuote(quote:string, teacher:string, stars:number) {
+        // console.log({quote,teacher,stars})
         if(this.cache.has(teacher)) {
             await this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
             this.cache.set(teacher, await this.sheetsUser.readSheet("quotes", teacher));
@@ -95,7 +96,7 @@ export class LittleBot implements Module {
             await this.sheetsUser.createSubsheet( "quotes", teacher, {
                 columnResize: [800,100],
                 headers: ["Quote", "Number"]
-            })
+            });
             await this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
             this.cache.set(teacher, await this.sheetsUser.readSheet("quotes", teacher));
         }

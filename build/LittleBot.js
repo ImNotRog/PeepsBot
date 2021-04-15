@@ -78,6 +78,7 @@ class LittleBot {
     }
     addQuote(quote, teacher, stars) {
         return __awaiter(this, void 0, void 0, function* () {
+            // console.log({quote,teacher,stars})
             if (this.cache.has(teacher)) {
                 yield this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
                 this.cache.set(teacher, yield this.sheetsUser.readSheet("quotes", teacher));
