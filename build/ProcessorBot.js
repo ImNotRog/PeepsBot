@@ -119,7 +119,7 @@ class ProcessorBot {
             });
             console.log("Fetching mounted commmands...");
             this.mountedCommands = yield this.getMountedCommands();
-            console.log(this.mountedCommands);
+            // console.log(this.mountedCommands);
             // Clear commands
             if (this.clearCommands) {
                 console.log("Deleting slash commands...");
@@ -130,7 +130,7 @@ class ProcessorBot {
             console.log("Registering commands...");
             // Mount commands
             this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list, ...mod.commands] : list, []);
-            // await this.MountAllCommands();
+            yield this.MountAllCommands();
             // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {

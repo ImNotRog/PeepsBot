@@ -116,7 +116,7 @@ export class ProcessorBot {
 
         console.log("Fetching mounted commmands...")
         this.mountedCommands = await this.getMountedCommands();
-        console.log(this.mountedCommands);
+        // console.log(this.mountedCommands);
 
         // Clear commands
         if(this.clearCommands) {
@@ -132,7 +132,7 @@ export class ProcessorBot {
         // Mount commands
         this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list,...mod.commands] : list, []);
 
-        // await this.MountAllCommands();
+        await this.MountAllCommands();
 
         // Handle calls
 
