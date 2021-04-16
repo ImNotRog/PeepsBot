@@ -30,26 +30,45 @@ const CipherBot_1 = require("./CipherBot");
 const HugBot_1 = require("./HugBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
+const ProcessMessage_1 = require("./ProcessMessage");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        this.littleActive = true;
-        this.trackerActive = true;
-        this.bdayActive = true;
-        this.reactActive = true;
-        this.nameChangerActive = true;
-        this.roleManagerActive = true;
-        this.scremActive = true;
-        this.synonymActive = true;
-        this.geckoInVCActive = true;
-        this.imageActive = true;
-        this.squalolActive = true;
-        this.emojiActive = true;
-        this.pianoManActive = true;
-        this.cipherActive = true;
+        // private readonly littleActive = true;
+        // private readonly trackerActive = true;
+        // private readonly bdayActive = true;
+        // private readonly reactActive = true;
+        // private readonly nameChangerActive = true;
+        // private readonly roleManagerActive = true;
+        // private readonly scremActive = true;
+        // private readonly synonymActive = true;
+        // private readonly geckoInVCActive = true;
+        // private readonly imageActive = true;
+        // private readonly squalolActive = true;
+        // private readonly emojiActive = true;
+        // private readonly pianoManActive = true;
+        // private readonly cipherActive = true;
+        // private readonly hugActive = true;
+        // private readonly testActive = true;
+        // private readonly helpActive = true;
+        this.littleActive = false;
+        this.trackerActive = false;
+        this.bdayActive = false;
+        this.reactActive = false;
+        this.nameChangerActive = false;
+        this.roleManagerActive = false;
+        this.scremActive = false;
+        this.synonymActive = false;
+        this.geckoInVCActive = false;
+        this.imageActive = false;
+        this.squalolActive = false;
+        this.emojiActive = false;
+        this.pianoManActive = false;
+        this.cipherActive = false;
         this.hugActive = true;
-        this.testActive = true;
-        this.helpActive = true;
+        this.testActive = false;
+        this.helpActive = false;
+        this.clearCommands = false;
         this.modules = [];
         if (this.littleActive)
             this.modules.push(new LittleBot_1.LittleBot(auth, client));
@@ -98,48 +117,29 @@ class ProcessorBot {
             this.client.on("message", (message) => {
                 this.onMessage(message);
             });
-            console.log("Deleting slash commands...");
-            let allDeletePromises = [];
-            for (const guild of this.client.guilds.cache.values()) {
-                // @ts-ignore
-                const existingcommands = yield this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
-                if (existingcommands) {
-                    for (const command of existingcommands) {
-                        // console.log(command);
-                        // @ts-ignore
-                        let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
-                        allDeletePromises.push(currDeletePromise);
+            // Clear commands
+            if (this.clearCommands) {
+                console.log("Deleting slash commands...");
+                let allDeletePromises = [];
+                for (const guild of this.client.guilds.cache.values()) {
+                    // @ts-ignore
+                    const existingcommands = yield this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
+                    if (existingcommands) {
+                        for (const command of existingcommands) {
+                            // console.log(command);
+                            // @ts-ignore
+                            let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
+                            allDeletePromises.push(currDeletePromise);
+                        }
                     }
                 }
+                yield Promise.all(allDeletePromises);
             }
-            yield Promise.all(allDeletePromises);
-            console.log("All promises deleted, starting to register commands...");
+            console.log("Starting to register commands...");
+            // Mount commands
             this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list, ...mod.commands] : list, []);
-            let allCommandPromises = [];
-            for (const guild of this.client.guilds.cache.values()) {
-                for (const command of this.commands) {
-                    if ((command.available && command.available(guild))) {
-                        // @ts-ignore
-                        let newCommandPromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands.post({
-                            data: {
-                                name: command.name,
-                                description: command.description,
-                                options: command.parameters.map(parameter => {
-                                    return {
-                                        name: parameter.name,
-                                        description: parameter.description,
-                                        required: parameter.required,
-                                        type: parameter.type === "string" ? 3 : 4
-                                    };
-                                })
-                            }
-                        });
-                        allCommandPromises.push(newCommandPromise);
-                    }
-                }
-            }
-            yield Promise.all(allCommandPromises);
-            // console.log(this.commands);
+            yield this.MountAllCommands();
+            // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
                 const { name, options } = interaction.data;
@@ -162,6 +162,45 @@ class ProcessorBot {
             }));
         });
     }
+    MountCommandOnServer(command, guildID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // @ts-ignore
+            yield this.client.api.applications(this.client.user.id).guilds(guildID).commands.post({
+                data: {
+                    name: command.name,
+                    description: command.description,
+                    options: command.parameters.map(parameter => {
+                        return {
+                            name: parameter.name,
+                            description: parameter.description,
+                            required: parameter.required,
+                            type: parameter.type === "string" ? 3 : 4
+                        };
+                    })
+                }
+            });
+        });
+    }
+    MountCommand(command) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let allCommandPromises = [];
+            for (const guild of this.client.guilds.cache.values()) {
+                if ((command.available && command.available(guild))) {
+                    allCommandPromises.push(this.MountCommandOnServer(command, guild.id));
+                }
+            }
+            yield Promise.all(allCommandPromises);
+        });
+    }
+    MountAllCommands() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let allCommandPromises = [];
+            for (const command of this.commands) {
+                allCommandPromises.push(this.MountCommand(command));
+            }
+            yield Promise.all(allCommandPromises);
+        });
+    }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             for (const mod of this.modules) {
@@ -175,6 +214,39 @@ class ProcessorBot {
                         console.log("Ruh roh! Error in module " + mod);
                         console.error(err);
                         message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
+                    }
+                }
+            }
+            const result = ProcessMessage_1.PROCESS(message);
+            if (result) {
+                let c = this.commands.find(command => command.name.toLowerCase() === result.command.toLowerCase());
+                if (c) {
+                    let args = result.args;
+                    let validargs = true;
+                    if (!(args.length >= c.parameters.filter(a => a.required).length && args.length <= c.parameters.length))
+                        validargs = false;
+                    else {
+                        for (let i = 0; i < c.parameters.length; i++) {
+                            if (i >= args.length)
+                                break;
+                            if (c.parameters[i].type === "number") {
+                                if (isNaN(parseInt(args[i]))) {
+                                    validargs = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (validargs) {
+                        yield message.channel.send(c.callback(...args));
+                    }
+                    else {
+                        yield message.channel.send({
+                            embed: {
+                                description: `Invalid Arguments to command ${c.name}. It accepts parameters of the form: \n${this.prefix}${c.name} ${c.parameters.map(param => param.required ? `[**${param.name}**]` : `[Optional: **${param.name}]`).join(' ')}`,
+                                color: 1111111
+                            }
+                        });
                     }
                 }
             }

@@ -25,47 +25,50 @@ import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
 
 import { Module, Command } from "./Module";
+import { PROCESS } from "./ProcessMessage";
 
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly littleActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly geckoInVCActive = true;
-    private readonly imageActive = true;
-    private readonly squalolActive = true;
-    private readonly emojiActive = true;
-    private readonly pianoManActive = true;
-    private readonly cipherActive = true;
-    private readonly hugActive = true;
-
-    private readonly testActive = true;
-    private readonly helpActive = true;
-
-    // private readonly littleActive = false;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly squalolActive = false;
-    // private readonly emojiActive = false;
-    // private readonly pianoManActive = false;
-    // private readonly cipherActive = false;
-    // private readonly hugActive = false;
+    // private readonly littleActive = true;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly geckoInVCActive = true;
+    // private readonly imageActive = true;
+    // private readonly squalolActive = true;
+    // private readonly emojiActive = true;
+    // private readonly pianoManActive = true;
+    // private readonly cipherActive = true;
+    // private readonly hugActive = true;
 
     // private readonly testActive = true;
-    // private readonly helpActive = false;
+    // private readonly helpActive = true;
+
+    private readonly littleActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = false;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly geckoInVCActive = false;
+    private readonly imageActive = false;
+    private readonly squalolActive = false;
+    private readonly emojiActive = false;
+    private readonly pianoManActive = false;
+    private readonly cipherActive = false;
+    private readonly hugActive = true;
+
+    private readonly testActive = false;
+    private readonly helpActive = false;
+
+    private readonly clearCommands = false;
 
     private modules: Module[];
     private commands: Command[];
@@ -110,56 +113,36 @@ export class ProcessorBot {
             this.onMessage(message)
         });
 
-        console.log("Deleting slash commands...");
-        let allDeletePromises = [];
-        for(const guild of this.client.guilds.cache.values() ) {
-            // @ts-ignore
-            const existingcommands = await this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
-            if(existingcommands) {
-                for (const command of existingcommands) {
-                    // console.log(command);
-                    // @ts-ignore
-                    let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
-                    allDeletePromises.push(currDeletePromise);
+        // Clear commands
+        if(this.clearCommands) {
+            console.log("Deleting slash commands...");
+            let allDeletePromises = [];
+            for (const guild of this.client.guilds.cache.values()) {
+                // @ts-ignore
+                const existingcommands = await this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
+                if (existingcommands) {
+                    for (const command of existingcommands) {
+                        // console.log(command);
+                        // @ts-ignore
+                        let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
+                        allDeletePromises.push(currDeletePromise);
+                    }
                 }
-            }
-            
 
+
+            }
+
+            await Promise.all(allDeletePromises);
         }
         
-        await Promise.all(allDeletePromises);
+        console.log("Starting to register commands...")
 
-        console.log("All promises deleted, starting to register commands...")
-
+        // Mount commands
         this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list,...mod.commands] : list, []);
 
-        let allCommandPromises = [];
-        for(const guild of this.client.guilds.cache.values()) {
-            for(const command of this.commands) {
-                if( (command.available && command.available(guild) ) ) {
-                    // @ts-ignore
-                    let newCommandPromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands.post({
-                        data: {
-                            name: command.name,
-                            description: command.description,
-                            options: command.parameters.map(parameter => {
-                                return {
-                                    name: parameter.name,
-                                    description: parameter.description,
-                                    required: parameter.required,
-                                    type: parameter.type === "string" ? 3 : 4
-                                }
-                            })
-                        }
-                    });
-                    allCommandPromises.push(newCommandPromise);
-                }
-            }
-        }
+        await this.MountAllCommands();
 
-        await Promise.all(allCommandPromises);
-
-        // console.log(this.commands);
+        // Handle calls
 
         // @ts-ignore
         this.client.ws.on("INTERACTION_CREATE", async (interaction) => {
@@ -184,6 +167,42 @@ export class ProcessorBot {
 
     }
 
+    async MountCommandOnServer(command: Command, guildID: string) {
+        // @ts-ignore
+        await this.client.api.applications(this.client.user.id).guilds(guildID).commands.post({
+            data: {
+                name: command.name,
+                description: command.description,
+                options: command.parameters.map(parameter => {
+                    return {
+                        name: parameter.name,
+                        description: parameter.description,
+                        required: parameter.required,
+                        type: parameter.type === "string" ? 3 : 4
+                    }
+                })
+            }
+        });
+    }
+
+    async MountCommand(command: Command)  {
+        let allCommandPromises = [];
+        for (const guild of this.client.guilds.cache.values()) {
+            if ((command.available && command.available(guild))) {
+                allCommandPromises.push(this.MountCommandOnServer(command, guild.id));
+            }
+        }
+        await Promise.all(allCommandPromises);
+    }
+
+    async MountAllCommands()  {
+        let allCommandPromises = [];
+        for(const command of this.commands) {
+            allCommandPromises.push(this.MountCommand(command));
+        }
+        await Promise.all(allCommandPromises);
+    }
+
     async onMessage(message: Discord.Message) {
         
         for (const mod of this.modules) {
@@ -196,6 +215,43 @@ export class ProcessorBot {
                     console.error(err);
                     message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
                 }
+            }
+        }
+
+        const result = PROCESS(message);
+
+        if(result) {
+            let c = this.commands.find(command => command.name.toLowerCase() === result.command.toLowerCase());
+
+            if(c) {
+                let args = result.args;
+                let validargs = true;
+                if(!( args.length >= c.parameters.filter(a => a.required).length && args.length <= c.parameters.length )) validargs = false;
+                else {
+                    for(let i = 0; i < c.parameters.length; i++) {
+                        if(i >= args.length) break;
+
+                        if(c.parameters[i].type === "number") {
+                            if (isNaN(parseInt(args[i]))) {
+                                validargs = false;
+                                break;
+                            }
+                        }
+                        
+                    }
+                }
+
+                if(validargs) {
+                    await message.channel.send( c.callback(...args) );
+                } else {
+                    await message.channel.send({
+                        embed: {
+                            description: `Invalid Arguments to command ${c.name}. It accepts parameters of the form: \n${this.prefix}${c.name} ${c.parameters.map(param => param.required ? `[**${param.name}**]` : `[Optional: **${param.name}]`).join(' ')}`,
+                            color: 1111111
+                        }
+                    })
+                }
+
             }
         }
         
