@@ -72,6 +72,7 @@ export class ProcessorBot {
 
     private modules: Module[];
     private commands: Command[];
+    private mountedCommands: MountedCommand[];
 
     private client: Discord.Client;
 
@@ -113,34 +114,25 @@ export class ProcessorBot {
             this.onMessage(message)
         });
 
+        console.log("Fetching mounted commmands...")
+        this.mountedCommands = await this.getMountedCommands();
+        console.log(this.mountedCommands);
+
         // Clear commands
         if(this.clearCommands) {
             console.log("Deleting slash commands...");
-            let allDeletePromises = [];
-            for (const guild of this.client.guilds.cache.values()) {
-                // @ts-ignore
-                const existingcommands = await this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
-                if (existingcommands) {
-                    for (const command of existingcommands) {
-                        // console.log(command);
-                        // @ts-ignore
-                        let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
-                        allDeletePromises.push(currDeletePromise);
-                    }
-                }
-
-
-            }
-
-            await Promise.all(allDeletePromises);
+            await this.deleteMountedCommandsByCondition((command, index) => true);
         }
         
-        console.log("Starting to register commands...")
+        // console.log("deleting hug");
+        // await this.deleteMountedCommandsByCondition((command, index) => command.name === "hug");
+        
+        console.log("Registering commands...")
 
         // Mount commands
         this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list,...mod.commands] : list, []);
 
-        await this.MountAllCommands();
+        // await this.MountAllCommands();
 
         // Handle calls
 
@@ -185,6 +177,21 @@ export class ProcessorBot {
         });
     }
 
+    async MountCommandsOnServer(guildID:string) {
+        if( this.client.guilds.cache.has(guildID)){
+            let guild = this.client.guilds.cache.get(guildID);
+            let allCommandPromises = [];
+            for(const command of this.commands) {
+                if ((command.available && command.available(guild))) {
+                    allCommandPromises.push(this.MountCommandOnServer(command, guild.id));
+                }
+            }
+            await Promise.all(allCommandPromises);
+        } else {
+            throw "Guild not found!";
+        }
+    }
+
     async MountCommand(command: Command)  {
         let allCommandPromises = [];
         for (const guild of this.client.guilds.cache.values()) {
@@ -201,6 +208,50 @@ export class ProcessorBot {
             allCommandPromises.push(this.MountCommand(command));
         }
         await Promise.all(allCommandPromises);
+    }
+
+    async deleteMountedCommand(commandObj: MountedCommand) {
+        // @ts-ignore
+        await this.client.api.applications(this.client.user.id).guilds(commandObj.guild_id).commands(commandObj.id).delete();
+    }
+
+    async deleteMountedCommandsByCondition(cond: (mc: MountedCommand, index: number) => boolean) {
+        
+        let indicesToDelete = [];
+        for(let index = 0; index < this.mountedCommands.length; index++) {
+            if(cond(this.mountedCommands[index], index)) {
+                indicesToDelete.push(index);
+            }
+        }
+
+        let allpromises = [];
+        for(const index of indicesToDelete) {
+            allpromises.push( this.deleteMountedCommand(this.mountedCommands[index]) );
+        }
+        await Promise.all(allpromises);
+
+        let newMountedCommands = [];
+        for(let i = 0; i < this.mountedCommands.length; i++) {
+            if(!indicesToDelete.includes(i)) {
+                newMountedCommands.push(this.mountedCommands[i]);
+            }
+        }
+        this.mountedCommands = newMountedCommands;
+    } 
+
+    async getMountedCommandsOnServer(guildID: string): Promise<MountedCommand[]> {
+        // @ts-ignore
+        return await this.client.api.applications(this.client.user.id).guilds(guildID).commands.get();
+    }
+
+    async getMountedCommands(): Promise<MountedCommand[]> {
+        let allGetPromises = [];
+        for (const guild of this.client.guilds.cache.values()) {
+            allGetPromises.push(this.getMountedCommandsOnServer(guild.id));
+        }
+
+        let allGot = await Promise.all(allGetPromises);
+        return allGot.reduce((a,b) => [...a,...b], []);
     }
 
     async onMessage(message: Discord.Message) {
@@ -275,3 +326,5 @@ export class ProcessorBot {
     }
 
 }
+
+type MountedCommand = { id: string, application_id: string, name: string, description: string, version: string, guild_id: string };

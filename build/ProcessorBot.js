@@ -117,28 +117,20 @@ class ProcessorBot {
             this.client.on("message", (message) => {
                 this.onMessage(message);
             });
+            console.log("Fetching mounted commmands...");
+            this.mountedCommands = yield this.getMountedCommands();
+            console.log(this.mountedCommands);
             // Clear commands
             if (this.clearCommands) {
                 console.log("Deleting slash commands...");
-                let allDeletePromises = [];
-                for (const guild of this.client.guilds.cache.values()) {
-                    // @ts-ignore
-                    const existingcommands = yield this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
-                    if (existingcommands) {
-                        for (const command of existingcommands) {
-                            // console.log(command);
-                            // @ts-ignore
-                            let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
-                            allDeletePromises.push(currDeletePromise);
-                        }
-                    }
-                }
-                yield Promise.all(allDeletePromises);
+                yield this.deleteMountedCommandsByCondition((command, index) => true);
             }
-            console.log("Starting to register commands...");
+            // console.log("deleting hug");
+            // await this.deleteMountedCommandsByCondition((command, index) => command.name === "hug");
+            console.log("Registering commands...");
             // Mount commands
             this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list, ...mod.commands] : list, []);
-            yield this.MountAllCommands();
+            // await this.MountAllCommands();
             // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
@@ -181,6 +173,23 @@ class ProcessorBot {
             });
         });
     }
+    MountCommandsOnServer(guildID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.client.guilds.cache.has(guildID)) {
+                let guild = this.client.guilds.cache.get(guildID);
+                let allCommandPromises = [];
+                for (const command of this.commands) {
+                    if ((command.available && command.available(guild))) {
+                        allCommandPromises.push(this.MountCommandOnServer(command, guild.id));
+                    }
+                }
+                yield Promise.all(allCommandPromises);
+            }
+            else {
+                throw "Guild not found!";
+            }
+        });
+    }
     MountCommand(command) {
         return __awaiter(this, void 0, void 0, function* () {
             let allCommandPromises = [];
@@ -199,6 +208,50 @@ class ProcessorBot {
                 allCommandPromises.push(this.MountCommand(command));
             }
             yield Promise.all(allCommandPromises);
+        });
+    }
+    deleteMountedCommand(commandObj) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // @ts-ignore
+            yield this.client.api.applications(this.client.user.id).guilds(commandObj.guild_id).commands(commandObj.id).delete();
+        });
+    }
+    deleteMountedCommandsByCondition(cond) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let indicesToDelete = [];
+            for (let index = 0; index < this.mountedCommands.length; index++) {
+                if (cond(this.mountedCommands[index], index)) {
+                    indicesToDelete.push(index);
+                }
+            }
+            let allpromises = [];
+            for (const index of indicesToDelete) {
+                allpromises.push(this.deleteMountedCommand(this.mountedCommands[index]));
+            }
+            yield Promise.all(allpromises);
+            let newMountedCommands = [];
+            for (let i = 0; i < this.mountedCommands.length; i++) {
+                if (!indicesToDelete.includes(i)) {
+                    newMountedCommands.push(this.mountedCommands[i]);
+                }
+            }
+            this.mountedCommands = newMountedCommands;
+        });
+    }
+    getMountedCommandsOnServer(guildID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // @ts-ignore
+            return yield this.client.api.applications(this.client.user.id).guilds(guildID).commands.get();
+        });
+    }
+    getMountedCommands() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let allGetPromises = [];
+            for (const guild of this.client.guilds.cache.values()) {
+                allGetPromises.push(this.getMountedCommandsOnServer(guild.id));
+            }
+            let allGot = yield Promise.all(allGetPromises);
+            return allGot.reduce((a, b) => [...a, ...b], []);
         });
     }
     onMessage(message) {
