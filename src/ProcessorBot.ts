@@ -24,52 +24,53 @@ import { HugBot } from "./HugBot";
 import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
 
-import { Module } from "./Module";
+import { Module, Command } from "./Module";
 
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly littleActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly geckoInVCActive = true;
-    private readonly imageActive = true;
-    private readonly squalolActive = true;
-    private readonly emojiActive = true;
-    private readonly pianoManActive = true;
-    private readonly cipherActive = true;
-    private readonly hugActive = true;
-
-    private readonly testActive = false;
-    private readonly helpActive = true;
-
     // private readonly littleActive = true;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly squalolActive = false;
-    // private readonly emojiActive = false;
-    // private readonly pianoManActive = false;
-    // private readonly cipherActive = false;
-    // private readonly hugActive = false;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly geckoInVCActive = true;
+    // private readonly imageActive = true;
+    // private readonly squalolActive = true;
+    // private readonly emojiActive = true;
+    // private readonly pianoManActive = true;
+    // private readonly cipherActive = true;
+    // private readonly hugActive = true;
 
     // private readonly testActive = false;
-    // private readonly helpActive = false;
+    // private readonly helpActive = true;
+
+    private readonly littleActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = false;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly geckoInVCActive = false;
+    private readonly imageActive = false;
+    private readonly squalolActive = false;
+    private readonly emojiActive = false;
+    private readonly pianoManActive = false;
+    private readonly cipherActive = false;
+    private readonly hugActive = false;
+
+    private readonly testActive = true;
+    private readonly helpActive = false;
 
     private modules: Module[];
+    private commands: Command[];
 
-    private client: any;
+    private client: Discord.Client;
 
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
@@ -108,6 +109,76 @@ export class ProcessorBot {
         this.client.on("message", (message) => {
             this.onMessage(message)
         });
+
+        console.log("Deleting slash commands...");
+        let allDeletePromises = [];
+        for(const guild of this.client.guilds.cache.values() ) {
+            // @ts-ignore
+            const existingcommands = await this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
+            for (const command of existingcommands) {
+                // console.log(command);
+                // @ts-ignore
+                let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
+                allDeletePromises.push(currDeletePromise);
+            }
+
+        }
+        
+        await Promise.all(allDeletePromises);
+
+        console.log("All promises deleted, starting to register commands...")
+
+        this.commands = this.modules.reduce((list, mod) => [...list,...mod.commands], []);
+
+        let allCommandPromises = [];
+        for(const guild of this.client.guilds.cache.values()) {
+            for(const command of this.commands) {
+                if( (command.available && command.available(guild) ) ) {
+                    // @ts-ignore
+                    let newCommandPromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands.post({
+                        data: {
+                            name: command.name,
+                            description: command.description,
+                            options: command.parameters.map(parameter => {
+                                return {
+                                    name: parameter.name,
+                                    description: parameter.description,
+                                    required: parameter.required,
+                                    type: parameter.type === "string" ? 3 : 4
+                                }
+                            })
+                        }
+                    });
+                    allCommandPromises.push(newCommandPromise);
+                }
+            }
+        }
+
+        await Promise.all(allCommandPromises);
+
+        // console.log(this.commands);
+
+        // @ts-ignore
+        this.client.ws.on("INTERACTION_CREATE", async (interaction) => {
+            const { name, options } = interaction.data;
+            const command = name.toLowerCase();
+            
+            let c = this.commands.find(c => c.name.toLowerCase() === command);
+            if(c) {
+                let returnval = c.callback( ...(!options ? [] : options.map(option => option.value)));
+                if(typeof returnval !== "string") throw "Something happened!";
+                // @ts-ignore
+                this.client.api.interactions(interaction.id, interaction.token).callback.post({
+                    data: {
+                        type: 4,
+                        data: {
+                            content: returnval
+                        }
+                    }
+                })
+            }
+        })
+
     }
 
     async onMessage(message: Discord.Message) {
@@ -120,7 +191,7 @@ export class ProcessorBot {
                 } catch (err) {
                     console.log("Ruh roh! Error in module " + mod);
                     console.error(err);
-                    message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
+                    message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
                 }
             }
         }
@@ -137,7 +208,7 @@ export class ProcessorBot {
                 } catch (err) {
                     console.log("Ruh roh! Error in module " + mod);
                     console.error(err);
-                    reaction.message.channel.send(`Error: ${err}. Please report to @Rog#7499. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
+                    reaction.message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
                 }
             }
         }

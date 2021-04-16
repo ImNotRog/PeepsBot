@@ -63,7 +63,7 @@ export class SqualolBot implements Module {
                     message.channel.send({
                         embed: {
                             title: `More than one file found with ID ${id}`,
-                            description: `Report to Rog#7499 immediately. This is actually kind of importnat.`,
+                            description: `Report to Rog#2597 immediately. This is actually kind of importnat.`,
                             ...Utilities.embedInfo(message)
                         }
                     })

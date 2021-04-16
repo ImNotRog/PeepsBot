@@ -35,11 +35,11 @@ export class HelpBot implements Module {
             fields: [
                 {
                     name: `Contact Me!`,
-                    value: `Rog#7499 is the owner of this bot. Contact him to add to your server or sign channels up for alerts.`
+                    value: `Rog#2597 is the owner of this bot. Contact him to add to your server or sign channels up for alerts.`
                 },
                 {
                     name: `Invite Link`,
-                    value: `Not available, ask Rog#7499 for one. This is a mainly private bot.`
+                    value: `Not available, ask Rog#2597 for one. This is a mainly private bot.`
                 },
                 {
                     name: `Github`,

@@ -130,7 +130,7 @@ export class Utilities {
     /* Moment Utilities */
 
     public static now() {
-        return moment.tz("America/Los_Angeles").format();
+        return Date.now();
     }
 
     public static getTodayStr(){

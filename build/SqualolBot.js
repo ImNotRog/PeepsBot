@@ -53,7 +53,7 @@ class SqualolBot {
                     }
                     else if (getid.length > 1) {
                         message.channel.send({
-                            embed: Object.assign({ title: `More than one file found with ID ${id}`, description: `Report to Rog#7499 immediately. This is actually kind of importnat.` }, Utilities_1.Utilities.embedInfo(message))
+                            embed: Object.assign({ title: `More than one file found with ID ${id}`, description: `Report to Rog#2597 immediately. This is actually kind of importnat.` }, Utilities_1.Utilities.embedInfo(message))
                         });
                         console.trace(`Duplicate id ${id}`);
                     }

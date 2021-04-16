@@ -120,7 +120,7 @@ class Utilities {
     }
     /* Moment Utilities */
     static now() {
-        return moment.tz("America/Los_Angeles").format();
+        return Date.now();
     }
     static getTodayStr() {
         return moment.tz("America/Los_Angeles").format("MM/DD/YYYY");

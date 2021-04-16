@@ -10,8 +10,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/node": "^14.14.41",
     "crypto": "^1.0.1",
-    "discord.js": "^12.3.1",
+    "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
     "firebase-admin": "^9.3.0",
     "fs": "0.0.1-security",
