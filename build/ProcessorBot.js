@@ -114,7 +114,7 @@ class ProcessorBot {
             }
             yield Promise.all(allDeletePromises);
             console.log("All promises deleted, starting to register commands...");
-            this.commands = this.modules.reduce((list, mod) => [...list, ...mod.commands], []);
+            this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list, ...mod.commands] : list, []);
             let allCommandPromises = [];
             for (const guild of this.client.guilds.cache.values()) {
                 for (const command of this.commands) {
