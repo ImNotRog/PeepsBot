@@ -115,12 +115,15 @@ export class ProcessorBot {
         for(const guild of this.client.guilds.cache.values() ) {
             // @ts-ignore
             const existingcommands = await this.client.api.applications(this.client.user.id).guilds(guild.id).commands.get();
-            for (const command of existingcommands) {
-                // console.log(command);
-                // @ts-ignore
-                let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
-                allDeletePromises.push(currDeletePromise);
+            if(existingcommands) {
+                for (const command of existingcommands) {
+                    // console.log(command);
+                    // @ts-ignore
+                    let currDeletePromise = this.client.api.applications(this.client.user.id).guilds(guild.id).commands(command.id).delete();
+                    allDeletePromises.push(currDeletePromise);
+                }
             }
+            
 
         }
         
