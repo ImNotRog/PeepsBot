@@ -85,11 +85,12 @@ class TestBot {
             // let allemotes = [...fpbg.emojis.cache.values()].filter(emote => !emote.animated).slice(40,50);
             // const announce = await this.client.channels.fetch("751552954518994965");
             // if(announce instanceof Discord.TextChannel) {
-            //     // let msg = await announce.send(`${allemotes.map(emote => `<:${emote.name}:${emote.id}>`).join(" ")}`);
-            //     // for(const emote of allemotes) {
-            //         // msg.react(emote.id);
-            //     // }
-            //     await announce.send("Voting concludes Friday 5pm PST promptly.")
+            // let msg = await announce.send(`${allemotes.map(emote => `<:${emote.name}:${emote.id}>`).join(" ")}`);
+            // for(const emote of allemotes) {
+            //     msg.react(emote.id);
+            // }
+            // await announce.send(`It is with great sadness that I must announce the recent passing of 23 emotes, all of which received 2 or less votes on the previous poll. Their reactions have been removed out of respect for their legacy. Tragically, these 23 emotes will not be the last. This is the purge part 2, and I sadly do not doubt the existence of a part 3. REACT WITH ANY EMOTE THAT YOU WANT TO STAY. Reacting with all emotes is equivalent to doing nothing.`)
+            // await announce.send("Voting concludes Monday 5pm PST promptly.")
             // }
             // const getapp = (guildID) => {
             //     //@ts-ignore
