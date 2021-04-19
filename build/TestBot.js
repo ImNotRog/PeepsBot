@@ -86,17 +86,24 @@ class TestBot {
                 available: () => true
             },
             {
-                name: "Image",
+                name: "ImageTest",
                 description: "Image testing",
                 parameters: [],
-                callback: () => {
+                slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
                     // let embed = new Discord.MessageEmbed();
-                    const a = new Discord.MessageAttachment(`./temp/DOG.jpg`);
-                    return {
-                        content: "Test",
-                        files: a
-                    };
-                },
+                    yield invoke("Processing...");
+                    const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
+                    yield channel.send(a);
+                    // invoke({
+                    //     content: "Test",
+                    //     files: a
+                    // })
+                }),
+                regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                    yield message.channel.send("Processing...");
+                    const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
+                    yield message.channel.send(a);
+                }),
                 available: () => true
             }
         ];

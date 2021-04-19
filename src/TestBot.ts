@@ -92,16 +92,24 @@ export class TestBot implements Module {
                 available: () => true
             },
             {
-                name: "Image",
+                name: "ImageTest",
                 description: "Image testing",
                 parameters: [],
-                callback: () => {
+                slashCallback: async (invoke, channel, user) => {
                     // let embed = new Discord.MessageEmbed();
-                    const a = new Discord.MessageAttachment(`./temp/DOG.jpg`);
-                    return {
-                        content: "Test",
-                        files: a
-                    }
+                    await invoke("Processing...");
+
+                    const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
+                    await channel.send(a);
+                    // invoke({
+                    //     content: "Test",
+                    //     files: a
+                    // })
+                },
+                regularCallback: async (message) => {
+                    await message.channel.send("Processing...");
+                    const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
+                    await message.channel.send(a);
                 },
                 available: () => true
             }

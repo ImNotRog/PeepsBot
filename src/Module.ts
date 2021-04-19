@@ -13,15 +13,40 @@ export interface Module {
     parent?: ProcessorBot;
 }
 
-export type Command = {
+// export type Command = {
+//     name: string;
+//     description: string;
+//     parameters: {
+//         name: string, 
+//         description:string,
+//         required: boolean,
+//         type: "string" | "number";
+//     }[];
+//     callback: (...params: any[]) => SlashResponseResolvable;
+//     available?: (guild: Discord.Guild) => boolean;
+// }
+export type Command = RegularCommand | ComplexCommand;
+
+type BaseCommand = {
     name: string;
     description: string;
     parameters: {
-        name: string, 
-        description:string,
+        name: string,
+        description: string,
         required: boolean,
         type: "string" | "number";
     }[];
-    callback: (...params: any[]) => string|{embed: Object}|{ content: string|{embed: Object}, files: Object };
-    available?: (guild: Discord.Guild) => boolean;
+    // callback: (...params: any[]) => SlashResponseResolvable;
+    available: (guild: Discord.Guild) => boolean;
 }
+
+type RegularCommand = BaseCommand & {
+    callback: (...params: any[]) => SlashResponseResolvable;
+}
+
+type ComplexCommand = BaseCommand & {
+    slashCallback: ( invoke: (response: SlashResponseResolvable) => Promise<void>, channel: Discord.TextChannel, user: Discord.User, ...params: any[]) => any;
+    regularCallback: ( message: Discord.Message, ...params: any[] ) => any;
+}
+
+export type SlashResponseResolvable = string | { embed: Object } | { content: string | { embed: Object }, files: Object };;

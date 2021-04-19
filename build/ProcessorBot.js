@@ -35,41 +35,41 @@ const ProcessMessage_1 = require("./ProcessMessage");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        // private readonly littleActive = true;
-        // private readonly trackerActive = true;
-        // private readonly bdayActive = true;
-        // private readonly reactActive = true;
-        // private readonly nameChangerActive = true;
-        // private readonly roleManagerActive = true;
-        // private readonly scremActive = true;
-        // private readonly synonymActive = true;
-        // private readonly geckoInVCActive = true;
-        // private readonly imageActive = true;
-        // private readonly squalolActive = true;
-        // private readonly emojiActive = true;
-        // private readonly pianoManActive = true;
-        // private readonly cipherActive = true;
-        // private readonly hugActive = true;
-        // private readonly testActive = true;
-        // private readonly helpActive = true;
-        this.littleActive = false;
-        this.trackerActive = false;
-        this.bdayActive = false;
-        this.reactActive = false;
-        this.nameChangerActive = false;
-        this.roleManagerActive = false;
-        this.scremActive = false;
-        this.synonymActive = false;
-        this.geckoInVCActive = false;
-        this.imageActive = false;
-        this.squalolActive = false;
-        this.emojiActive = false;
-        this.pianoManActive = false;
-        this.cipherActive = false;
-        this.hugActive = false;
+        this.littleActive = true;
+        this.trackerActive = true;
+        this.bdayActive = true;
+        this.reactActive = true;
+        this.nameChangerActive = true;
+        this.roleManagerActive = true;
+        this.scremActive = true;
+        this.synonymActive = true;
+        this.geckoInVCActive = true;
+        this.imageActive = true;
+        this.squalolActive = true;
+        this.emojiActive = true;
+        this.pianoManActive = true;
+        this.cipherActive = true;
+        this.hugActive = true;
         this.testActive = true;
-        this.helpActive = false;
-        this.clearCommands = false;
+        this.helpActive = true;
+        // private readonly littleActive = false;
+        // private readonly trackerActive = false;
+        // private readonly bdayActive = false;
+        // private readonly reactActive = false;
+        // private readonly nameChangerActive = false;
+        // private readonly roleManagerActive = false;
+        // private readonly scremActive = false;
+        // private readonly synonymActive = false;
+        // private readonly geckoInVCActive = false;
+        // private readonly imageActive = false;
+        // private readonly squalolActive = false;
+        // private readonly emojiActive = false;
+        // private readonly pianoManActive = false;
+        // private readonly cipherActive = false;
+        // private readonly hugActive = false;
+        // private readonly testActive = true;
+        // private readonly helpActive = false;
+        this.clearCommands = true;
         this.modules = [];
         if (this.littleActive)
             this.modules.push(new LittleBot_1.LittleBot(auth, client));
@@ -142,36 +142,52 @@ class ProcessorBot {
                 const command = name.toLowerCase();
                 let c = this.commands.find(c => c.name.toLowerCase() === command);
                 if (c) {
-                    let returnchannel = this.client.channels.resolve(interaction.channel_id);
-                    if (!(returnchannel instanceof Discord.TextChannel))
-                        throw "Something went horribly wrong.";
-                    let returnval = c.callback(...(!options ? [] : options.map(option => option.value)));
-                    let apimessage;
-                    // if (typeof returnval !== "string") throw "Something happened!";
-                    if (typeof returnval === "object" && "content" in returnval) {
-                        apimessage = Discord.APIMessage.create(returnchannel, 
-                        // @ts-ignore
-                        returnval.content);
+                    if ("callback" in c) {
+                        yield this.ResolveInteraction(interaction, c.callback(...(!options ? [] : options.map(option => option.value))));
                     }
                     else {
-                        apimessage = Discord.APIMessage.create(returnchannel, 
-                        // @ts-ignore
-                        returnval);
-                    }
-                    let adf = yield apimessage.resolveData().resolveFiles();
-                    let { data, files } = adf;
-                    // @ts-ignore
-                    yield this.client.api.interactions(interaction.id, interaction.token).callback.post({
-                        data: {
-                            type: 4,
-                            data: Object.assign(Object.assign({}, data), { files, allowed_mentions: { parse: [] } })
-                        }
-                    });
-                    if (typeof returnval === "object" && "content" in returnval) {
-                        returnchannel.send(returnval.files);
+                        let returnchannel = this.client.channels.resolve(interaction.channel_id);
+                        if (!(returnchannel instanceof Discord.TextChannel))
+                            throw "Something went horribly wrong.";
+                        let user = yield this.client.users.fetch(interaction.member.user.id);
+                        // let member = returnchannel.guild.member(user);
+                        c.slashCallback((returnval) => __awaiter(this, void 0, void 0, function* () {
+                            yield this.ResolveInteraction(interaction, returnval);
+                        }), returnchannel, user, ...(!options ? [] : options.map(option => option.value)));
                     }
                 }
             }));
+        });
+    }
+    ResolveInteraction(interaction, returnval) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let returnchannel = this.client.channels.resolve(interaction.channel_id);
+            if (!(returnchannel instanceof Discord.TextChannel))
+                throw "Something went horribly wrong.";
+            let apimessage;
+            // if (typeof returnval !== "string") throw "Something happened!";
+            if (typeof returnval === "object" && "content" in returnval) {
+                apimessage = Discord.APIMessage.create(returnchannel, 
+                // @ts-ignore
+                returnval.content);
+            }
+            else {
+                apimessage = Discord.APIMessage.create(returnchannel, 
+                // @ts-ignore
+                returnval);
+            }
+            let adf = yield apimessage.resolveData().resolveFiles();
+            let { data, files } = adf;
+            // @ts-ignore
+            yield this.client.api.interactions(interaction.id, interaction.token).callback.post({
+                data: {
+                    type: 4,
+                    data: Object.assign(Object.assign({}, data), { files, allowed_mentions: { parse: [] } })
+                }
+            });
+            if (typeof returnval === "object" && "content" in returnval) {
+                returnchannel.send(returnval.files);
+            }
         });
     }
     MountCommandOnServer(command, guildID) {
@@ -311,13 +327,18 @@ class ProcessorBot {
                         }
                     }
                     if (validargs) {
-                        let returnval = c.callback(...args);
-                        if (typeof returnval === "object" && "content" in returnval) {
-                            yield message.channel.send(returnval.content, returnval.files);
+                        if ("callback" in c) {
+                            let returnval = c.callback(...args);
+                            if (typeof returnval === "object" && "content" in returnval) {
+                                yield message.channel.send(returnval.content, returnval.files);
+                            }
+                            else {
+                                // @ts-ignore
+                                yield message.channel.send(returnval);
+                            }
                         }
                         else {
-                            // @ts-ignore
-                            yield message.channel.send(returnval);
+                            c.regularCallback(message, ...args);
                         }
                     }
                     else {
