@@ -74,6 +74,36 @@ export class TestBot implements Module {
                 available: (guild) => {
                     return guild.id === "832413831845249075"
                 }
+            },
+            {
+                name: "Embed",
+                description: "Embed testing",
+                parameters: [],
+                callback: () => {
+                    // let embed = new Discord.MessageEmbed();
+                    
+                    return {
+                        embed: {
+                            description: "This is a test.",
+                            color: 1111111
+                        }
+                    }
+                },
+                available: () => true
+            },
+            {
+                name: "Image",
+                description: "Image testing",
+                parameters: [],
+                callback: () => {
+                    // let embed = new Discord.MessageEmbed();
+                    const a = new Discord.MessageAttachment(`./temp/DOG.jpg`);
+                    return {
+                        content: "Test",
+                        files: a
+                    }
+                },
+                available: () => true
             }
         ]
     }

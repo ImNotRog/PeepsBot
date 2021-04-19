@@ -30,45 +30,45 @@ import { PROCESS } from "./ProcessMessage";
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly littleActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly geckoInVCActive = true;
-    private readonly imageActive = true;
-    private readonly squalolActive = true;
-    private readonly emojiActive = true;
-    private readonly pianoManActive = true;
-    private readonly cipherActive = true;
-    private readonly hugActive = true;
-
-    private readonly testActive = true;
-    private readonly helpActive = true;
-
-    // private readonly littleActive = false;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly squalolActive = false;
-    // private readonly emojiActive = false;
-    // private readonly pianoManActive = false;
-    // private readonly cipherActive = false;
+    // private readonly littleActive = true;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly geckoInVCActive = true;
+    // private readonly imageActive = true;
+    // private readonly squalolActive = true;
+    // private readonly emojiActive = true;
+    // private readonly pianoManActive = true;
+    // private readonly cipherActive = true;
     // private readonly hugActive = true;
 
-    // private readonly testActive = false;
-    // private readonly helpActive = false;
+    // private readonly testActive = true;
+    // private readonly helpActive = true;
 
-    private readonly clearCommands = true;
+    private readonly littleActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = false;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly geckoInVCActive = false;
+    private readonly imageActive = false;
+    private readonly squalolActive = false;
+    private readonly emojiActive = false;
+    private readonly pianoManActive = false;
+    private readonly cipherActive = false;
+    private readonly hugActive = false;
+
+    private readonly testActive = true;
+    private readonly helpActive = false;
+
+    private readonly clearCommands = false;
 
     private modules: Module[];
     private commands: Command[];
@@ -104,6 +104,11 @@ export class ProcessorBot {
     }
 
     async onConstruct() {
+
+        for(const mod of this.modules) {
+            mod.parent = this;
+        }
+
         let allpromises = [];
         for (const mod of this.modules) {
             if(mod.onConstruct) allpromises.push(mod.onConstruct());
@@ -143,17 +148,48 @@ export class ProcessorBot {
             
             let c = this.commands.find(c => c.name.toLowerCase() === command);
             if(c) {
+
+                let returnchannel = this.client.channels.resolve(interaction.channel_id);
+                if (!(returnchannel instanceof Discord.TextChannel)) throw "Something went horribly wrong.";
+
+    
                 let returnval = c.callback( ...(!options ? [] : options.map(option => option.value)));
-                if(typeof returnval !== "string") throw "Something happened!";
+
+                let apimessage: Discord.APIMessage;
+
+                // if (typeof returnval !== "string") throw "Something happened!";
+                if (typeof returnval === "object" && "content" in returnval) {
+                    apimessage = Discord.APIMessage.create(
+                        returnchannel,
+                        // @ts-ignore
+                        returnval.content
+                    );
+                } else {
+                    apimessage = Discord.APIMessage.create(
+                        returnchannel,
+                        // @ts-ignore
+                        returnval
+                    );
+                }
+                
+                let adf = await apimessage.resolveData().resolveFiles();
+                let { data, files } = adf;
+                
                 // @ts-ignore
-                this.client.api.interactions(interaction.id, interaction.token).callback.post({
+                await this.client.api.interactions(interaction.id, interaction.token).callback.post({
                     data: {
                         type: 4,
                         data: {
-                            content: returnval
+                            ...data,
+                            files,
+                            allowed_mentions: { parse: [] }
                         }
                     }
                 })
+
+                if (typeof returnval === "object" && "content" in returnval) {
+                    returnchannel.send( returnval.files );
+                }
             }
         })
 
@@ -293,7 +329,14 @@ export class ProcessorBot {
                 }
 
                 if(validargs) {
-                    await message.channel.send( c.callback(...args) );
+                    let returnval = c.callback(...args);
+                    if(typeof returnval === "object" && "content" in returnval) {
+                        await message.channel.send(returnval.content, returnval.files);
+                    } else {
+                        // @ts-ignore
+                        await message.channel.send(returnval);
+                    }
+                    
                 } else {
                     await message.channel.send({
                         embed: {

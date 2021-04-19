@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestBot = void 0;
 const DriveUser_1 = require("./DriveUser");
 const SheetsUser_1 = require("./SheetsUser");
+const Discord = require("discord.js");
 class TestBot {
     constructor(auth, client) {
         this.prefix = "--";
@@ -68,6 +69,35 @@ class TestBot {
                 available: (guild) => {
                     return guild.id === "832413831845249075";
                 }
+            },
+            {
+                name: "Embed",
+                description: "Embed testing",
+                parameters: [],
+                callback: () => {
+                    // let embed = new Discord.MessageEmbed();
+                    return {
+                        embed: {
+                            description: "This is a test.",
+                            color: 1111111
+                        }
+                    };
+                },
+                available: () => true
+            },
+            {
+                name: "Image",
+                description: "Image testing",
+                parameters: [],
+                callback: () => {
+                    // let embed = new Discord.MessageEmbed();
+                    const a = new Discord.MessageAttachment(`./temp/DOG.jpg`);
+                    return {
+                        content: "Test",
+                        files: a
+                    };
+                },
+                available: () => true
             }
         ];
     }
