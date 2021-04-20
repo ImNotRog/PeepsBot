@@ -29,13 +29,13 @@ export class ReactBot implements Module {
                     method: "CONTAINS"
                 }
             ]);
-        this.chainmap.set("776525118330503189",
-            [
-                {
-                    value: "f",
-                    method: "ONLY"
-                }
-            ]);
+        // this.chainmap.set("776525118330503189",
+        //     [
+        //         {
+        //             value: "f",
+        //             method: "ONLY"
+        //         }
+        //     ]);
 
         // More code here
         // @todo Carrot steal
