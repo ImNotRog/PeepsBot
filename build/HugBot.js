@@ -67,6 +67,15 @@ class HugBot {
                     const id = Math.floor(Math.random() * this.gifs.length);
                     return this.gifs[id];
                 }
+            },
+            {
+                name: "Gyrate",
+                description: "Rotate. Revolve. Turn. Whirl. Spin. Pivot. Swivel. Twirl. Gyrate.",
+                parameters: [],
+                available: (guild) => true,
+                callback: () => {
+                    return 'https://tenor.com/view/peach-goma-gif-19918534';
+                }
             }
         ];
     }

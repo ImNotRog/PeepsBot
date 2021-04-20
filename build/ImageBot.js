@@ -34,8 +34,6 @@ class ImageBot {
         map.set('images', this.imagesSheet);
         this.sheetUser = new SheetsUser_1.SheetsUser(auth, map);
         this.categoriesInfo = new Map();
-        this.client.on("messageReactionAdd", (reaction, user) => { this.onReaction(reaction, user); });
-        this.client.on("messageReactionRemove", (reaction, user) => { this.onReaction(reaction, user); });
         this.helpEmbed = {
             title: `Help - Image Bot`,
             description: `A bot that archives images in certain channels, then adds them to Google Drive for storage.`,
@@ -158,30 +156,51 @@ class ImageBot {
         cat = this.capitilize(cat);
         return { cat, cap, tags };
     }
+    createNewCategory(cat) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // New category
+            this.categoriesInfo.set(cat, {
+                DID: yield this.driveUser.createFolder(cat, this.imagesFolder),
+                sheetscache: [[]]
+            });
+            yield this.sheetUser.createSubsheet("images", cat, {
+                columnResize: [200, 200, 100, 300, 200, 200, 300, 300],
+                headers: ["File Name", "M-ID", "File Type", "D-ID", "UID", "User", "Caption", "Tags"]
+            });
+        });
+    }
     uploadFromDiscordToDrive(message, override) {
         return __awaiter(this, void 0, void 0, function* () {
+            //  Parse info from message
             let obj = this.parseInfo(message);
+            // Overrides
             if (override) {
                 obj = Object.assign(Object.assign({}, obj), override);
             }
             let { cat, cap, tags } = obj;
+            // New category
             if (!this.isCategory(cat)) {
-                let approved = yield Utilities_1.Utilities.sendApprove(message, Object.assign({ title: `Create new Category "${cat}"?`, description: `Make sure this is what you meant to do.` }, Utilities_1.Utilities.embedInfo(message)), 10000);
+                let approved = [...cat].every(char => " abcdefghijklmnopqrstuvwxyz0123456789".includes(char));
                 if (approved) {
-                    // New category
-                    this.categoriesInfo.set(cat, {
-                        DID: yield this.driveUser.createFolder(cat, this.imagesFolder),
-                        sheetscache: [[]]
-                    });
-                    yield this.sheetUser.createSubsheet("images", cat, {
-                        columnResize: [200, 200, 100, 300, 200, 200, 300, 300, 100],
-                        headers: ["File Name", "M-ID", "File Type", "D-ID", "UID", "User", "Caption", "Tags", "Stars"]
+                    yield this.createNewCategory(cat);
+                    message.channel.send({
+                        embed: {
+                            description: `Created new category ${cat}.`,
+                            color: 1111111
+                        }
                     });
                 }
                 else {
+                    message.channel.send({
+                        embed: {
+                            description: "Invalid category. Categories must only include letters, spaces, and numbers. Uploaded image to default category.",
+                            color: 1111111
+                        }
+                    });
                     cat = this.defaultCat(message);
                 }
             }
+            // Eyes
             yield message.react('👀');
             const url = message.attachments.first().url;
             const filetype = url.slice(url.lastIndexOf('.') + 1);
@@ -200,6 +219,7 @@ class ImageBot {
             });
             yield p;
             let id = yield this.driveUser.uploadFile(`${message.id}.${filetype}`, path, this.categoriesInfo.get(cat).DID);
+            // oh lord 
             yield this.sheetUser.add("images", cat, [
                 `${message.id}.${filetype}`,
                 message.id,
@@ -208,8 +228,7 @@ class ImageBot {
                 message.author.id,
                 message.author.username + '#' + message.author.discriminator,
                 cap,
-                tags.join('|'),
-                0
+                tags.join('|')
             ]);
             this.categoriesInfo.set(cat, Object.assign(Object.assign({}, this.categoriesInfo.get(cat)), { sheetscache: yield this.sheetUser.readSheet("images", cat) }));
             yield message.reactions.removeAll();
@@ -244,7 +263,11 @@ class ImageBot {
                         }
                     }
                     catch (err) {
-                        yield message.reactions.removeAll();
+                        // Another horrible try catch because yes
+                        try {
+                            yield message.reactions.removeAll();
+                        }
+                        catch (err) { }
                     }
                 }
             }
@@ -310,26 +333,17 @@ class ImageBot {
     inCache(filename) {
         return fs.existsSync(`./temp/${filename}`);
     }
-    onReaction(reaction, user) {
+    randomImage(cat) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.approvedChannels.indexOf(reaction.message.channel.id) === -1)
-                return;
-            try {
-                yield reaction.fetch();
+            let entries = this.categoriesInfo.get(cat).sheetscache.length - 1;
+            let index = Math.floor(Math.random() * entries) + 1;
+            let row = this.categoriesInfo.get(cat).sheetscache[index];
+            let DID = row[3];
+            let filename = row[0];
+            if (!this.inCache(filename)) {
+                yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
             }
-            catch (error) {
-                console.error('Something went wrong when fetching the message: ', error);
-                return;
-            }
-            if (reaction.emoji.name === "👍" && reaction.message.attachments.size > 0) {
-                const { cat } = this.parseInfo(reaction.message);
-                console.log(`${reaction.message.id} has ${reaction.count} in category ${cat}`);
-                if (true) {
-                    // if(this.voting.includes(cat)) {
-                    yield this.sheetUser.addWithoutDuplicates("images", cat, ["File Name", reaction.message.id, "File Type", "D-ID", "UID", "User", "Caption", "Tags", reaction.count], ["KEEP", true, "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "KEEP", "CHANGE"]);
-                    this.categoriesInfo.set(cat, Object.assign(Object.assign({}, this.categoriesInfo.get(cat)), { sheetscache: yield this.sheetUser.readSheet("images", cat) }));
-                }
-            }
+            return new Discord.MessageAttachment(`./temp/${filename}`);
         });
     }
     onConstruct() {
@@ -359,6 +373,33 @@ class ImageBot {
                     limit: 90
                 });
             }
+            this.commands = [
+                {
+                    name: "Image",
+                    description: "Returns a random image from a category",
+                    parameters: [
+                        {
+                            name: "Category",
+                            description: "Category of the image",
+                            required: true,
+                            type: "string"
+                        }
+                    ],
+                    slashCallback: (invoke, channel, user, category) => __awaiter(this, void 0, void 0, function* () {
+                        if (this.categoriesInfo.has(this.capitilize(category.replace(/_/g, " ")))) {
+                            // let time = Date.now();
+                            const cat = this.capitilize(category.replace(/_/g, " "));
+                            invoke(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                            const a = yield this.randomImage(cat);
+                            yield channel.send(`Random image`, a);
+                            // await msg.edit(`Latency: ${Date.now() - time} ms`);
+                        }
+                    }),
+                    regularCallback: (message, category) => {
+                    },
+                    available: (guild) => guild.id === "748669830244073533"
+                }
+            ];
         });
     }
     merge(from, to) {
