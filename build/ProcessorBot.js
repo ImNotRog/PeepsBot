@@ -23,11 +23,11 @@ const RoleManager_1 = require("./RoleManager");
 const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
 const ImageBot_1 = require("./ImageBot");
-const SqualolBot_1 = require("./SqualolBot");
+// import { SqualolBot } from "./SqualolBot";
 const GeckoInVC_1 = require("./GeckoInVC");
 const EmoteBot_1 = require("./EmoteBot");
 const PianoManBot_1 = require("./PianoManBot");
-const CipherBot_1 = require("./CipherBot");
+// import { CipherBot } from "./CipherBot"
 const HugBot_1 = require("./HugBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
@@ -45,10 +45,9 @@ class ProcessorBot {
         this.synonymActive = true;
         this.geckoInVCActive = true;
         this.imageActive = true;
-        this.squalolActive = true;
+        // private readonly squalolActive = true;
         this.emojiActive = true;
         this.pianoManActive = true;
-        this.cipherActive = true;
         this.hugActive = true;
         this.testActive = true;
         this.helpActive = true;
@@ -65,7 +64,6 @@ class ProcessorBot {
         // private readonly squalolActive = false;
         // private readonly emojiActive = false;
         // private readonly pianoManActive = false;
-        // private readonly cipherActive = false;
         // private readonly hugActive = false;
         // private readonly testActive = true;
         // private readonly helpActive = false;
@@ -93,14 +91,11 @@ class ProcessorBot {
             this.modules.push(new EmoteBot_1.EmoteBot(auth, client));
         if (this.pianoManActive)
             this.modules.push(new PianoManBot_1.PianoManBot(auth, client));
-        if (this.cipherActive)
-            this.modules.push(new CipherBot_1.CipherBot(client));
         if (this.hugActive)
             this.modules.push(new HugBot_1.HugBot());
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
-        if (this.squalolActive)
-            this.modules.push(new SqualolBot_1.SqualolBot());
+        // if (this.squalolActive) this.modules.push(new SqualolBot());
         if (this.testActive)
             this.modules.push(new TestBot_1.TestBot(auth, client));
         if (this.helpActive)
