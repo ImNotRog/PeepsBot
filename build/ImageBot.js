@@ -202,6 +202,42 @@ class ImageBot {
                     },
                     available: (guild) => guild.id === "748669830244073533"
                 },
+                {
+                    textOnly: true,
+                    name: "Merge",
+                    description: "Merges two image categories (MOD ONLY)",
+                    parameters: [
+                        {
+                            name: "From",
+                            description: "The category to merge FROM",
+                            required: true,
+                            type: "string"
+                        },
+                        {
+                            name: "To",
+                            description: "The category to merge TO",
+                            required: true,
+                            type: "string"
+                        }
+                    ],
+                    available: (guild) => guild.id === "748669830244073533",
+                    callback: (message, from, to) => __awaiter(this, void 0, void 0, function* () {
+                        if (!message.member.hasPermission("ADMINISTRATOR")) {
+                            yield message.channel.send(`You must have permission ADMINISTRATOR!`);
+                            return;
+                        }
+                        let cats = [from, to].map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
+                        if (!(this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1])) {
+                            yield message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } });
+                            return;
+                        }
+                        yield message.react('👀');
+                        const { num } = yield this.merge(cats[0], cats[1]);
+                        yield message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } });
+                        yield message.reactions.removeAll();
+                        yield message.react('✅');
+                    })
+                },
                 // other
                 this.categoryCommand("Dog", "Dog"),
                 this.categoryCommand("Archive", "Archive", (guild) => guild.id === "748669830244073533"),
@@ -418,26 +454,6 @@ class ImageBot {
             }
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
-                if (result.command === 'merge') {
-                    if (!message.member.hasPermission("ADMINISTRATOR")) {
-                        yield message.channel.send(`You must have permission ADMINISTRATOR!`);
-                        return;
-                    }
-                    let cats = result.args.slice(0, 2).map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
-                    if (cats.length < 2) {
-                        yield message.channel.send(`Invalid parameters! You must include two categories, the first one from, the second one to.`);
-                        return;
-                    }
-                    if (!(this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1])) {
-                        yield message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } });
-                        return;
-                    }
-                    yield message.react('👀');
-                    const { num } = yield this.merge(cats[0], cats[1]);
-                    yield message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } });
-                    yield message.reactions.removeAll();
-                    yield message.react('✅');
-                }
             }
         });
     }

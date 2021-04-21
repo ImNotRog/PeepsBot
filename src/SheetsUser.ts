@@ -56,7 +56,7 @@ export class SheetsUser {
 
     async deleteSubSheet(sheetname: string, subsheetname: string) {
         let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
-        console.trace(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`)
+        console.log(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`)
         let reqs = [];
 
 

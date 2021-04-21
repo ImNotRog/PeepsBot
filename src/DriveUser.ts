@@ -43,7 +43,7 @@ export class DriveUser {
         await this.drive.files.delete({
             fileId
         })
-        console.trace(`DRIVE FILE DELETED: ${fileId}`)
+        console.log(`DRIVE FILE DELETED: ${fileId}`)
     }
 
     async moveFile(fileId:string, folderid:string) {

@@ -41,7 +41,7 @@ class DriveUser {
             yield this.drive.files.delete({
                 fileId
             });
-            console.trace(`DRIVE FILE DELETED: ${fileId}`);
+            console.log(`DRIVE FILE DELETED: ${fileId}`);
         });
     }
     moveFile(fileId, folderid) {

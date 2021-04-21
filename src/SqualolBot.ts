@@ -67,7 +67,7 @@ export class SqualolBot implements Module {
                             ...Utilities.embedInfo(message)
                         }
                     })
-                    console.trace(`Duplicate id ${id}`);
+                    console.log(`Duplicate id ${id}`);
                 } else {
                     message.channel.send({
                         embed: {

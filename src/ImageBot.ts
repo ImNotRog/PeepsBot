@@ -251,6 +251,45 @@ export class ImageBot implements Module {
                 },
                 available: (guild) => guild.id === "748669830244073533"
             },
+            {
+                textOnly: true,
+                name: "Merge",
+                description: "Merges two image categories (MOD ONLY)",
+                parameters: [
+                    {
+                        name: "From",
+                        description: "The category to merge FROM",
+                        required: true,
+                        type: "string"
+                    },
+                    {
+                        name: "To",
+                        description: "The category to merge TO",
+                        required: true,
+                        type: "string"
+                    }
+                ],
+                available: (guild) => guild.id === "748669830244073533",
+                callback: async (message: Discord.Message, from:string, to:string) => {
+                    if (!message.member.hasPermission("ADMINISTRATOR")) {
+                        await message.channel.send(`You must have permission ADMINISTRATOR!`)
+                        return;
+                    }
+                    let cats = [from, to].map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
+                    
+                    if (!(this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1])) {
+                        await message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } })
+                        return;
+                    }
+
+                    await message.react('👀');
+
+                    const { num } = await this.merge(cats[0], cats[1]);
+                    await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } })
+                    await message.reactions.removeAll();
+                    await message.react('✅');
+                }
+            },
 
             // other
             this.categoryCommand("Dog", "Dog"),
@@ -505,28 +544,7 @@ export class ImageBot implements Module {
 
         const result = PROCESS(message);
         if(result) {
-            if(result.command === 'merge') {
-                if(!message.member.hasPermission("ADMINISTRATOR")) {
-                    await message.channel.send(`You must have permission ADMINISTRATOR!`)
-                    return;
-                }
-                let cats = result.args.slice(0,2).map(a => a.replace(/_/g, ' ')).map(a => this.capitilize(a));
-                if(cats.length < 2) {
-                    await message.channel.send(`Invalid parameters! You must include two categories, the first one from, the second one to.`)
-                    return;
-                }
-                if(!( this.isCategory(cats[0]) && this.isCategory(cats[1]) && cats[0] !== cats[1] )){
-                    await message.channel.send(`Invalid categories! ${cats}`, { allowedMentions: { parse: [] } })
-                    return;
-                }
-
-                await message.react('👀');
-
-                const {num} = await this.merge(cats[0],cats[1]);
-                await message.channel.send(`Success! ${num} images merged from ${cats[0]} into ${cats[1]}!`, { allowedMentions: { parse: [] } })
-                await message.reactions.removeAll();
-                await message.react('✅');
-            }
+            
         }
         
     }
@@ -548,8 +566,6 @@ export class ImageBot implements Module {
 
         return new Discord.MessageAttachment(`./temp/${filename}`);
     }
-
-    
 
     async merge(from:string, to:string): Promise<{num:number}> {
         let fromarr = this.categoriesInfo.get(from).sheetscache.slice(1);

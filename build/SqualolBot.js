@@ -55,7 +55,7 @@ class SqualolBot {
                         message.channel.send({
                             embed: Object.assign({ title: `More than one file found with ID ${id}`, description: `Report to Rog#2597 immediately. This is actually kind of importnat.` }, Utilities_1.Utilities.embedInfo(message))
                         });
-                        console.trace(`Duplicate id ${id}`);
+                        console.log(`Duplicate id ${id}`);
                     }
                     else {
                         message.channel.send({

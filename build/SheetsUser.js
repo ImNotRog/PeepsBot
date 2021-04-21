@@ -59,7 +59,7 @@ class SheetsUser {
     deleteSubSheet(sheetname, subsheetname) {
         return __awaiter(this, void 0, void 0, function* () {
             let subsheetid = this.map.get(sheetname).sheets.get(subsheetname);
-            console.trace(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`);
+            console.log(`SUBSHEET DELETED: ${sheetname} - ${subsheetname}`);
             let reqs = [];
             reqs.push({
                 "deleteSheet": {
