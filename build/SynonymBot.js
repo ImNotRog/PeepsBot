@@ -14,7 +14,6 @@ const nodefetch = require("node-fetch");
 const Discord = require("discord.js");
 const cron = require("node-cron");
 const famous = require("./data/famous-people.json");
-const ProcessMessage_1 = require("./ProcessMessage");
 class SynonymBot {
     constructor(MW, client) {
         this.prefix = '--';
@@ -41,22 +40,29 @@ class SynonymBot {
                 },
             ]
         };
+        this.commands = [
+            {
+                name: "wfbo",
+                description: "Preposterous boast yet alas.",
+                available: () => true,
+                parameters: [],
+                callback: () => __awaiter(this, void 0, void 0, function* () {
+                    return yield this.wfbo();
+                })
+            },
+            {
+                name: "bread",
+                description: "\"Good morning epic gamer's let's get the bread\", but even more cursed.",
+                available: () => true,
+                parameters: [],
+                callback: () => __awaiter(this, void 0, void 0, function* () {
+                    return yield this.goodmorning();
+                })
+            }
+        ];
     }
     available(message) {
         return true;
-    }
-    onMessage(message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                if (result.command === "wfbo") {
-                    message.channel.send(yield this.wfbo(), { allowedMentions: { parse: [] } });
-                }
-                if (result.command === "bread") {
-                    message.channel.send(yield this.goodmorning(), { allowedMentions: { parse: [] } });
-                }
-            }
-        });
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {

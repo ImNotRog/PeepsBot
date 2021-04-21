@@ -3,7 +3,7 @@ import * as nodefetch from 'node-fetch';
 import * as Discord from 'discord.js';
 import * as cron from "node-cron";
 import * as famous from "./data/famous-people.json";
-import { Module } from './Module';
+import { Command, Module } from './Module';
 import { PROCESS } from './ProcessMessage';
 
 export class SynonymBot implements Module {
@@ -16,6 +16,8 @@ export class SynonymBot implements Module {
     private goodmorningchannels: string[];
     private famouspeople: string[];
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+
+    public commands: Command[];
 
     constructor(MW:string, client: Discord.Client) {
         this.apikey = MW;
@@ -45,25 +47,33 @@ export class SynonymBot implements Module {
 
             ]
         }
+
+        this.commands = [
+            {
+                name: "wfbo",
+                description: "Preposterous boast yet alas.",
+                available: () => true,
+                parameters: [],
+                callback: async () => {
+                    return await this.wfbo();
+                }
+            },
+            {
+                name: "bread",
+                description: "\"Good morning epic gamer's let's get the bread\", but even more cursed.",
+                available: () => true,
+                parameters: [],
+                callback: async () => {
+                    return await this.goodmorning();
+                }
+            }
+        ]
     }
 
     available(message: Discord.Message): boolean {
         return true;
     }
     
-
-    async onMessage(message: Discord.Message): Promise<void> {
-        const result = PROCESS(message);
-        if(result) {
-            if (result.command === "wfbo") {
-                message.channel.send(await this.wfbo(), { allowedMentions: { parse: [] } });
-            }
-            if (result.command === "bread") {
-                message.channel.send(await this.goodmorning(), { allowedMentions: { parse: [] } });
-            }
-        }
-    }
-
     async onConstruct(): Promise<void> {
 
         await this.goodmorning();

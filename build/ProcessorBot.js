@@ -139,7 +139,7 @@ class ProcessorBot {
                         return;
                     }
                     else if ("callback" in c) {
-                        yield this.ResolveInteraction(interaction, c.callback(...(!options ? [] : options.map(option => option.value))));
+                        yield this.ResolveInteraction(interaction, yield c.callback(...(!options ? [] : options.map(option => option.value))));
                     }
                     else {
                         let returnchannel = this.client.channels.resolve(interaction.channel_id);
@@ -331,7 +331,7 @@ class ProcessorBot {
                             c.callback(message, ...args);
                         }
                         else if ("callback" in c) {
-                            let returnval = c.callback(...args);
+                            let returnval = yield c.callback(...args);
                             if (typeof returnval === "object" && "content" in returnval) {
                                 if (typeof returnval.content === "string")
                                     yield message.channel.send(returnval.content.replace(/\@/g, ''), returnval.files);

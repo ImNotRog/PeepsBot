@@ -39,7 +39,7 @@ type AdvancedEmbedCommand = BaseCommand & {
 }
 
 type RegularCommand = BaseCommand & {
-    callback: (...params: any[]) => SlashResponseResolvable;
+    callback: (...params: any[]) => SlashResponseResolvable|Promise<SlashResponseResolvable>;
 }
 
 type ComplexCommand = BaseCommand & {

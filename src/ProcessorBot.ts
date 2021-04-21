@@ -148,7 +148,7 @@ export class ProcessorBot {
                 if("textOnly" in c) {
                     return;
                 } else if("callback" in c) {
-                    await this.ResolveInteraction(interaction, c.callback(...(!options ? [] : options.map(option => option.value))));
+                    await this.ResolveInteraction(interaction, await c.callback(...(!options ? [] : options.map(option => option.value))));
                 } else {
                     let returnchannel = this.client.channels.resolve(interaction.channel_id);
                     if (!(returnchannel instanceof Discord.TextChannel)) throw "Something went horribly wrong.";
@@ -347,7 +347,7 @@ export class ProcessorBot {
                     if("textOnly" in c) {
                         c.callback(message, ...args);
                     } else if("callback" in c) {
-                        let returnval = c.callback(...args);
+                        let returnval = await c.callback(...args);
                         if (typeof returnval === "object" && "content" in returnval) {
                             if (typeof returnval.content === "string") await message.channel.send(returnval.content.replace(/\@/g, ''), returnval.files);
                             else await message.channel.send(returnval.content, returnval.files);
