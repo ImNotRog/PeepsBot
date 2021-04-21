@@ -40,7 +40,6 @@ export class ProcessorBot {
     private readonly synonymActive = true;
     private readonly geckoInVCActive = true;
     private readonly imageActive = true;
-    // private readonly squalolActive = true;
     private readonly emojiActive = true;
     private readonly pianoManActive = true;
     private readonly hugActive = true;
@@ -57,13 +56,12 @@ export class ProcessorBot {
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
     // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly squalolActive = false;
+    // private readonly imageActive = true;
     // private readonly emojiActive = false;
     // private readonly pianoManActive = false;
-    // private readonly hugActive = false;
+    // private readonly hugActive = true;
 
-    // private readonly testActive = true;
+    // private readonly testActive = false;
     // private readonly helpActive = false;
 
     private readonly clearCommands = true;
