@@ -16,7 +16,7 @@ export class ReactBot implements Module {
         this.reactmap.set("checkpoint", "788460631715348480");
         this.reactmap.set("cer", "788461210609647646");
         this.reactmap.set("pain", "776522384642932766");
-        this.reactmap.set("fperbio", "776522302669062154");
+        // this.reactmap.set("fperbio", "776522302669062154");
         // this.reactmap.set("hw", "755144784083026101");
         this.reactmap.set("jack", "783125462045032498");
         this.reactmap.set("tired", "783452754625429504");
