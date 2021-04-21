@@ -349,10 +349,11 @@ export class ProcessorBot {
                     } else if("callback" in c) {
                         let returnval = c.callback(...args);
                         if (typeof returnval === "object" && "content" in returnval) {
-                            await message.channel.send(returnval.content, returnval.files);
+                            if (typeof returnval.content === "string") await message.channel.send(returnval.content.replace(/\@/g, ''), returnval.files);
+                            else await message.channel.send(returnval.content, returnval.files);
                         } else {
                             // @ts-ignore
-                            await message.channel.send(returnval);
+                            await message.channel.send(returnval, {allowedMentions: {parse: []}});
                         }
                     } else {
                         c.regularCallback(message, ...args);

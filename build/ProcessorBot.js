@@ -333,11 +333,14 @@ class ProcessorBot {
                         else if ("callback" in c) {
                             let returnval = c.callback(...args);
                             if (typeof returnval === "object" && "content" in returnval) {
-                                yield message.channel.send(returnval.content, returnval.files);
+                                if (typeof returnval.content === "string")
+                                    yield message.channel.send(returnval.content.replace(/\@/g, ''), returnval.files);
+                                else
+                                    yield message.channel.send(returnval.content, returnval.files);
                             }
                             else {
                                 // @ts-ignore
-                                yield message.channel.send(returnval);
+                                yield message.channel.send(returnval, { allowedMentions: { parse: [] } });
                             }
                         }
                         else {
