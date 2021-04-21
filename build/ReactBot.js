@@ -17,7 +17,7 @@ class ReactBot {
         this.reactmap.set("little", "754075455304499211");
         this.reactmap.set("trg", "788460256052117524");
         this.reactmap.set("checkpoint", "788460631715348480");
-        this.reactmap.set("cer", "788461210609647646");
+        // this.reactmap.set("cer", "788461210609647646");
         this.reactmap.set("pain", "776522384642932766");
         // this.reactmap.set("fperbio", "776522302669062154");
         // this.reactmap.set("hw", "755144784083026101");
