@@ -58,8 +58,8 @@ export class TestBot implements Module {
                     }
                 ],
                 callback: (phrase: string) => {
-                    // return phrase;
-                    return "No.";
+                    return phrase;
+                    // return "No.";
                 },
                 available: (guild) => {
                     return guild.id === "832413831845249075"

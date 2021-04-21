@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GeckoInVCBot = void 0;
 const Discord = require("discord.js");
-const ProcessMessage_1 = require("./ProcessMessage");
 class GeckoInVCBot {
     constructor(client) {
         this.LogChannel = "755528072597471243";
@@ -22,6 +21,17 @@ class GeckoInVCBot {
         this.client.on("voiceStateUpdate", (a, b) => {
             this.handleVoiceUpdate(a, b);
         });
+        this.commands = [
+            {
+                name: "IsGeckoInTheVC",
+                description: "owo",
+                available: (guild) => guild.id === "748669830244073533",
+                parameters: [],
+                callback: () => {
+                    return this.isGeckoInTheVC();
+                }
+            }
+        ];
     }
     handleVoiceUpdate(before, after) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -86,16 +96,6 @@ class GeckoInVCBot {
             if (channel instanceof Discord.TextChannel) {
                 for (const message of messages) {
                     yield channel.send(message, { allowedMentions: { parse: [] } });
-                }
-            }
-        });
-    }
-    onMessage(message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                if (result.command === "isgeckointhevc") {
-                    message.channel.send(this.isGeckoInTheVC(), { allowedMentions: { parse: [] } });
                 }
             }
         });

@@ -4,11 +4,8 @@ import { Utilities } from './Utilities';
 
 import { scheduleJob } from "node-schedule";
 import { tz } from "moment-timezone";
-import { Module } from "./Module";
+import { Command, Module } from "./Module";
 
-/**
- * @todo Add spreadsheet link
- */
 
 export class CalendarBot implements Module {
     public name: "Calendar Bot";
@@ -18,13 +15,13 @@ export class CalendarBot implements Module {
     private bdayChannels: string[] = ["748669830244073536"];
     private client: Discord.Client;
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    public commands: Command[];
 
     constructor(auth, client: Discord.Client) {
 
         let currmap = new Map();
         currmap.set("peeps", "1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k");
         this.sheetsUser = new SheetsUser(auth, currmap);
-
 
         // this.bdayChannels = ["750804960333135914"]; // Redirect
         this.client = client;
@@ -35,8 +32,23 @@ export class CalendarBot implements Module {
             fields: []
         }
         
+        this.commands = [
+            {
+                name: "CalendarSheet",
+                description: "Returns the link to the (soon to be deprecated) PEEPS Calendar.",
+                callback: () => {
+                    return {
+                        embed: {
+                            description: "[Link to the Calendar Sheet](https://docs.google.com/spreadsheets/d/1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k/edit#gid=0)",
+                            color: 1111111
+                        }
+                    }
+                },
+                parameters: [],
+                available: (guild) => guild.id === "748669830244073533"
+            }
+        ]
     }
-
     
     available(message: Discord.Message): boolean {
         return message.guild.id === '748669830244073533';

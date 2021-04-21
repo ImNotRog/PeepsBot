@@ -39,7 +39,7 @@ export class ProcessorBot {
     private readonly scremActive = true;
     private readonly synonymActive = true;
     private readonly geckoInVCActive = true;
-    private readonly imageActive = false;
+    private readonly imageActive = true;
     private readonly emojiActive = true;
     private readonly pianoManActive = true;
     private readonly hugActive = true;
@@ -56,10 +56,10 @@ export class ProcessorBot {
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
     // private readonly geckoInVCActive = false;
-    // private readonly imageActive = true;
+    // private readonly imageActive = false;
     // private readonly emojiActive = false;
     // private readonly pianoManActive = false;
-    // private readonly hugActive = true;
+    // private readonly hugActive = false;
 
     // private readonly testActive = false;
     // private readonly helpActive = false;
@@ -322,7 +322,7 @@ export class ProcessorBot {
         const result = PROCESS(message);
 
         if(result) {
-            let c = this.commands.find(command => command.name.toLowerCase() === result.command.toLowerCase());
+            let c = this.commands.filter(c => c.available && c.available(message.guild)).find(command => command.name.toLowerCase() === result.command.toLowerCase());
 
             if(c) {
                 let args = result.args;

@@ -1,5 +1,5 @@
 import * as Discord from "discord.js";
-import { Module } from "./Module";
+import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class GeckoInVCBot implements Module {
@@ -10,12 +10,25 @@ export class GeckoInVCBot implements Module {
     private readonly GECKO = "526863414635790356";
     private readonly FPERBIO = "748669830244073533";
     private geckostatus = 0;
+    commands: Command[];
 
     constructor(client: Discord.Client) {
         this.client = client;
         this.client.on("voiceStateUpdate", (a, b) => {
             this.handleVoiceUpdate(a, b);
         })
+
+        this.commands = [
+            {
+                name: "IsGeckoInTheVC",
+                description: "owo",
+                available: (guild) => guild.id === "748669830244073533",
+                parameters: [],
+                callback: () => {
+                    return this.isGeckoInTheVC()
+                }
+            }
+        ]
     }
 
     async handleVoiceUpdate(before: Discord.VoiceState, after: Discord.VoiceState) {
@@ -87,15 +100,6 @@ export class GeckoInVCBot implements Module {
             }
         }
 
-    }
-
-    async onMessage(message: Discord.Message): Promise<void> {
-        const result = PROCESS(message);
-        if(result) {
-            if(result.command === "isgeckointhevc") {
-                message.channel.send(this.isGeckoInTheVC(), { allowedMentions: { parse: [] } });
-            }
-        }
     }
 
     async onConstruct(): Promise<void> {

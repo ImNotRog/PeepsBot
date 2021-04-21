@@ -15,9 +15,6 @@ const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const node_schedule_1 = require("node-schedule");
 const moment_timezone_1 = require("moment-timezone");
-/**
- * @todo Add spreadsheet link
- */
 class CalendarBot {
     constructor(auth, client) {
         this.prefix = `--`;
@@ -32,6 +29,22 @@ class CalendarBot {
             description: `Issues a friendly reminder whenever it's someone's birthday.`,
             fields: []
         };
+        this.commands = [
+            {
+                name: "CalendarSheet",
+                description: "Returns the link to the (soon to be deprecated) PEEPS Calendar.",
+                callback: () => {
+                    return {
+                        embed: {
+                            description: "[Link to the Calendar Sheet](https://docs.google.com/spreadsheets/d/1m-w9iB40s2f5dWaauQR_gNm88g1j4prdajBWVGG12_k/edit#gid=0)",
+                            color: 1111111
+                        }
+                    };
+                },
+                parameters: [],
+                available: (guild) => guild.id === "748669830244073533"
+            }
+        ];
     }
     available(message) {
         return message.guild.id === '748669830244073533';

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CipherBot = void 0;
 const discord_js_1 = require("discord.js");
 const ProcessMessage_1 = require("./ProcessMessage");
+// DEPRECATED
 class CipherBot {
     constructor(client) {
         this.name = "Cipher Bot";

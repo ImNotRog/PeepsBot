@@ -44,7 +44,7 @@ class ProcessorBot {
         this.scremActive = true;
         this.synonymActive = true;
         this.geckoInVCActive = true;
-        this.imageActive = false;
+        this.imageActive = true;
         this.emojiActive = true;
         this.pianoManActive = true;
         this.hugActive = true;
@@ -59,10 +59,10 @@ class ProcessorBot {
         // private readonly scremActive = false;
         // private readonly synonymActive = false;
         // private readonly geckoInVCActive = false;
-        // private readonly imageActive = true;
+        // private readonly imageActive = false;
         // private readonly emojiActive = false;
         // private readonly pianoManActive = false;
-        // private readonly hugActive = true;
+        // private readonly hugActive = false;
         // private readonly testActive = false;
         // private readonly helpActive = false;
         this.clearCommands = true;
@@ -308,7 +308,7 @@ class ProcessorBot {
             }
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
-                let c = this.commands.find(command => command.name.toLowerCase() === result.command.toLowerCase());
+                let c = this.commands.filter(c => c.available && c.available(message.guild)).find(command => command.name.toLowerCase() === result.command.toLowerCase());
                 if (c) {
                     let args = result.args;
                     let validargs = true;

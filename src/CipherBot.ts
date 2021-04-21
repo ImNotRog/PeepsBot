@@ -2,6 +2,7 @@ import { Client, Message, MessageReaction, TextChannel, User } from "discord.js"
 import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
+// DEPRECATED
 export class CipherBot implements Module {
     name = "Cipher Bot";
     zwj = "‍";

@@ -13,7 +13,7 @@ export class DriveUser {
         this.drive = google.drive({ version: 'v3', auth });
     }
 
-    async onConstruct() {
+    private async onConstruct() {
         // const res = await this.drive.files.list({
         //     pageSize: 10,
         //     fields: 'nextPageToken, files(id, name)',
