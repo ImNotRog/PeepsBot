@@ -44,7 +44,7 @@ class ProcessorBot {
         this.scremActive = true;
         this.synonymActive = true;
         this.geckoInVCActive = true;
-        this.imageActive = true;
+        this.imageActive = false;
         this.emojiActive = true;
         this.pianoManActive = true;
         this.hugActive = true;
@@ -133,9 +133,12 @@ class ProcessorBot {
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
                 const { name, options } = interaction.data;
                 const command = name.toLowerCase();
-                let c = this.commands.find(c => c.name.toLowerCase() === command);
+                let c = this.commands.filter(c => !("textOnly" in c)).find(c => c.name.toLowerCase() === command);
                 if (c) {
-                    if ("callback" in c) {
+                    if ("textOnly" in c) {
+                        return;
+                    }
+                    else if ("callback" in c) {
                         yield this.ResolveInteraction(interaction, c.callback(...(!options ? [] : options.map(option => option.value))));
                     }
                     else {
@@ -208,7 +211,7 @@ class ProcessorBot {
                 let guild = this.client.guilds.cache.get(guildID);
                 let allCommandPromises = [];
                 for (const command of this.commands) {
-                    if ((command.available && command.available(guild))) {
+                    if (!("textOnly" in command) && (command.available && command.available(guild))) {
                         allCommandPromises.push(this.MountCommandOnServer(command, guild.id));
                     }
                 }
@@ -221,6 +224,8 @@ class ProcessorBot {
     }
     MountCommand(command) {
         return __awaiter(this, void 0, void 0, function* () {
+            if ("textOnly" in command)
+                throw "Attempted to mount text-only command!";
             let allCommandPromises = [];
             for (const guild of this.client.guilds.cache.values()) {
                 if ((command.available && command.available(guild))) {
@@ -234,7 +239,9 @@ class ProcessorBot {
         return __awaiter(this, void 0, void 0, function* () {
             let allCommandPromises = [];
             for (const command of this.commands) {
-                allCommandPromises.push(this.MountCommand(command));
+                if (!("textOnly" in command)) {
+                    allCommandPromises.push(this.MountCommand(command));
+                }
             }
             yield Promise.all(allCommandPromises);
         });
@@ -320,7 +327,10 @@ class ProcessorBot {
                         }
                     }
                     if (validargs) {
-                        if ("callback" in c) {
+                        if ("textOnly" in c) {
+                            c.callback(message, ...args);
+                        }
+                        else if ("callback" in c) {
                             let returnval = c.callback(...args);
                             if (typeof returnval === "object" && "content" in returnval) {
                                 yield message.channel.send(returnval.content, returnval.files);

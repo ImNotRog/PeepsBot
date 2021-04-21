@@ -13,19 +13,7 @@ export interface Module {
     parent?: ProcessorBot;
 }
 
-// export type Command = {
-//     name: string;
-//     description: string;
-//     parameters: {
-//         name: string, 
-//         description:string,
-//         required: boolean,
-//         type: "string" | "number";
-//     }[];
-//     callback: (...params: any[]) => SlashResponseResolvable;
-//     available?: (guild: Discord.Guild) => boolean;
-// }
-export type Command = RegularCommand | ComplexCommand;
+export type Command = RegularCommand | ComplexCommand | TextOnlyCommand;
 
 type BaseCommand = {
     name: string;
@@ -38,6 +26,16 @@ type BaseCommand = {
     }[];
     // callback: (...params: any[]) => SlashResponseResolvable;
     available: (guild: Discord.Guild) => boolean;
+}
+
+type TextOnlyCommand = BaseCommand & {
+    textOnly: true;
+    callback: (message: Discord.Message, ...params: any[]) => any;
+} 
+
+type AdvancedEmbedCommand = BaseCommand & {
+    callback: (...params: any[]) => {embed: Object};
+    advancedEmbed:true;
 }
 
 type RegularCommand = BaseCommand & {
