@@ -52,7 +52,8 @@ class TestBot {
                     }
                 ],
                 callback: (phrase) => {
-                    return phrase;
+                    // return phrase;
+                    return "No.";
                 },
                 available: (guild) => {
                     return guild.id === "832413831845249075";
