@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReactBot = void 0;
-const ProcessMessage_1 = require("./ProcessMessage");
 class ReactBot {
     constructor() {
         this.reactmap = new Map();
@@ -44,6 +43,20 @@ class ReactBot {
             description: `Ever wanted your ^ to be an actual carrot? Well, want no more, for this incredibly useless bot now exists! Any time you say ^, TRG, Checkpoint, CER, or more, you'll be rewarded with a custom emoji reaction!`,
             fields: []
         };
+        this.commands = [
+            {
+                name: "ReportTheft",
+                description: "Report your carrot theft to the local police. Police as in Peepsbot. As in me.",
+                parameters: [],
+                available: (guild) => true,
+                slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
+                    invoke(yield this.reportTheft(user.id, channel));
+                }),
+                regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                    message.channel.send(yield this.reportTheft(message.author.id, message.channel));
+                })
+            }
+        ];
     }
     available(message) {
         return true;
@@ -63,11 +76,49 @@ class ReactBot {
         }
         return false;
     }
-    onMessage(msg) {
+    reportTheft(theftreporter, channel) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            // let theftreporter = msg.author.id;
+            let messages = yield channel.messages.fetch({
+                limit: 30
+            });
+            let discoveredcrimescene = false;
+            let discoveredculprit = false;
+            let culprit = null;
+            let caseclosed = false;
+            for (const key of messages.keyArray()) {
+                let message = messages.get(key);
+                if (discoveredculprit) {
+                    yield message.react('🥕');
+                    caseclosed = true;
+                    break;
+                }
+                if (!discoveredculprit && discoveredcrimescene) {
+                    if (message.reactions.cache.has('🥕')) {
+                        (_a = message.reactions.cache.get('🥕')) === null || _a === void 0 ? void 0 : _a.remove();
+                        discoveredculprit = true;
+                        culprit = message.author;
+                        continue;
+                    }
+                }
+                if (!discoveredcrimescene && message.author.id === theftreporter && this.isChain(message.content, this.chainmap.get('🥕'))) {
+                    discoveredcrimescene = true;
+                    continue;
+                }
+            }
+            if (!caseclosed) {
+                return `Unfortunately, I was unable to solve the crime.`;
+            }
+            else {
+                return `Theft reported and solved. ${culprit.username}#${culprit.discriminator} was the culprit and is stinky.`;
+            }
+        });
+    }
+    onMessage(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
             for (const key of this.reactmap.keys()) {
-                if (msg.content.toLowerCase().replace(/[,.!"']/, '').split(" ").includes(key)) {
+                if (msg.content.toLowerCase().replace(/[,\.!"']/g, '').split(" ").includes(key)) {
                     msg.react(this.reactmap.get(key));
                 }
             }
@@ -81,45 +132,6 @@ class ReactBot {
                             messages.get(key).react(emoji);
                             break;
                         }
-                    }
-                }
-            }
-            const result = ProcessMessage_1.PROCESS(msg);
-            if (result) {
-                if (result.command === 'reporttheft') {
-                    let theftreporter = msg.author.id;
-                    let messages = yield msg.channel.messages.fetch({
-                        limit: 30
-                    });
-                    let discoveredcrimescene = false;
-                    let discoveredculprit = false;
-                    let culprit = null;
-                    let caseclosed = false;
-                    for (const key of messages.keyArray().slice(1)) {
-                        let message = messages.get(key);
-                        if (discoveredculprit) {
-                            yield message.react('🥕');
-                            caseclosed = true;
-                            break;
-                        }
-                        if (!discoveredculprit && discoveredcrimescene) {
-                            if (message.reactions.cache.has('🥕')) {
-                                (_a = message.reactions.cache.get('🥕')) === null || _a === void 0 ? void 0 : _a.remove();
-                                discoveredculprit = true;
-                                culprit = message.author;
-                                continue;
-                            }
-                        }
-                        if (!discoveredcrimescene && message.author.id === theftreporter && this.isChain(message.content, this.chainmap.get('🥕'))) {
-                            discoveredcrimescene = true;
-                            continue;
-                        }
-                    }
-                    if (!caseclosed) {
-                        msg.channel.send(`Unfortunately, I was unable to solve the crime.`, { allowedMentions: { parse: [] } });
-                    }
-                    else {
-                        msg.channel.send(`Theft reported and solved. ${culprit.username}#${culprit.discriminator} was the culprit and is stinky.`, { allowedMentions: { parse: [] } });
                     }
                 }
             }
