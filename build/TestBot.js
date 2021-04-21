@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestBot = void 0;
 const DriveUser_1 = require("./DriveUser");
 const SheetsUser_1 = require("./SheetsUser");
-const Discord = require("discord.js");
 class TestBot {
     constructor(auth, client) {
         this.prefix = "--";
@@ -42,17 +41,6 @@ class TestBot {
                 }
             },
             {
-                name: "Pingeth",
-                description: "Pongeth!",
-                parameters: [],
-                callback: () => {
-                    return "Pongeth!";
-                },
-                available: (guild) => {
-                    return true;
-                }
-            },
-            {
                 name: "Say",
                 description: "Say a given phrase",
                 parameters: [
@@ -70,18 +58,30 @@ class TestBot {
                     return guild.id === "832413831845249075";
                 }
             },
+            /*{
+                name: "Pingeth",
+                description: "Pongeth!",
+                parameters: [],
+                callback: () => {
+                    return "Pongeth!";
+                },
+                available: (guild) => {
+                    return true;
+                }
+            },
             {
                 name: "Embed",
                 description: "Embed testing",
                 parameters: [],
                 callback: () => {
                     // let embed = new Discord.MessageEmbed();
+                    
                     return {
                         embed: {
                             description: "This is a test.",
                             color: 1111111
                         }
-                    };
+                    }
                 },
                 available: () => true
             },
@@ -89,23 +89,24 @@ class TestBot {
                 name: "ImageTest",
                 description: "Image testing",
                 parameters: [],
-                slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
+                slashCallback: async (invoke, channel, user) => {
                     // let embed = new Discord.MessageEmbed();
-                    yield invoke("Processing...");
+                    await invoke("Processing...");
+
                     const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
-                    yield channel.send(a);
+                    await channel.send(a);
                     // invoke({
                     //     content: "Test",
                     //     files: a
                     // })
-                }),
-                regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
-                    yield message.channel.send("Processing...");
+                },
+                regularCallback: async (message) => {
+                    await message.channel.send("Processing...");
                     const a = new Discord.MessageAttachment(`./testing/DOG.jpg`);
-                    yield message.channel.send(a);
-                }),
+                    await message.channel.send(a);
+                },
                 available: () => true
-            }
+            } */
         ];
     }
     available(message) {

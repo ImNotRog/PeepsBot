@@ -47,17 +47,6 @@ export class TestBot implements Module {
                 }
             },
             {
-                name: "Pingeth",
-                description: "Pongeth!",
-                parameters: [],
-                callback: () => {
-                    return "Pongeth!";
-                },
-                available: (guild) => {
-                    return true;
-                }
-            },
-            {
                 name: "Say",
                 description: "Say a given phrase",
                 parameters: [
@@ -75,7 +64,18 @@ export class TestBot implements Module {
                     return guild.id === "832413831845249075"
                 }
             },
-            {
+            /*{
+                name: "Pingeth",
+                description: "Pongeth!",
+                parameters: [],
+                callback: () => {
+                    return "Pongeth!";
+                },
+                available: (guild) => {
+                    return true;
+                }
+            },
+            { 
                 name: "Embed",
                 description: "Embed testing",
                 parameters: [],
@@ -112,7 +112,7 @@ export class TestBot implements Module {
                     await message.channel.send(a);
                 },
                 available: () => true
-            }
+            } */
         ]
     }
     

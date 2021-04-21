@@ -63,6 +63,151 @@ class ImageBot {
     available(message) {
         return message.guild.id === '748669830244073533';
     }
+    categoryCommand(name, category, available) {
+        return {
+            name,
+            description: `Returns a random ${category} image from the Google drive archive.`,
+            parameters: [],
+            slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
+                yield invoke(`Fetching random "${category}" image. Expect a delay of around 1-4 seconds.`);
+                const a = yield this.randomImage(category);
+                yield channel.send(`Random image`, a);
+            }),
+            regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                let time = Date.now();
+                let msg = yield message.channel.send(`Fetching random "${category}" image. Expect a delay of around 1-4 seconds.`);
+                const a = yield this.randomImage(category);
+                yield message.channel.send(`Random image`, a);
+                yield msg.edit(`Latency: ${Date.now() - time} ms`);
+            }),
+            available: available ? available : () => true
+        };
+    }
+    onConstruct() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const files = yield this.driveUser.getItemsInFolder(this.imagesFolder);
+            for (const file of files) {
+                if (file.mimeType === DriveUser_1.DriveUser.FOLDER) {
+                    this.categoriesInfo.set(file.name, {
+                        DID: file.id,
+                        sheetscache: [[]]
+                    });
+                }
+            }
+            yield this.sheetUser.onConstruct();
+            let valueranges = yield this.sheetUser.bulkRead("images");
+            for (const valuerange of valueranges) {
+                let range = valuerange.range;
+                if (range) {
+                    let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
+                    this.categoriesInfo.set(cat, Object.assign(Object.assign({}, this.categoriesInfo.get(cat)), { sheetscache: valuerange.values }));
+                }
+            }
+            for (const id of this.approvedChannels) {
+                let channel = yield this.client.channels.fetch(id);
+                // @ts-ignore
+                const test = yield channel.messages.fetch({
+                    limit: 90
+                });
+            }
+            this.commands = [
+                // general
+                {
+                    name: "Image",
+                    description: "Returns a random image from a category",
+                    parameters: [
+                        {
+                            name: "Category",
+                            description: "Category of the image",
+                            required: true,
+                            type: "string"
+                        }
+                    ],
+                    slashCallback: (invoke, channel, user, category) => __awaiter(this, void 0, void 0, function* () {
+                        if (this.categoriesInfo.has(this.capitilize(category.replace(/_/g, " ")))) {
+                            const cat = this.capitilize(category.replace(/_/g, " "));
+                            invoke(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                            const a = yield this.randomImage(cat);
+                            yield channel.send(`Random image`, a);
+                        }
+                        else {
+                            invoke({
+                                embed: {
+                                    description: `Invalid Category ${category}.`,
+                                    color: 1111111
+                                }
+                            });
+                        }
+                    }),
+                    regularCallback: (message, category) => __awaiter(this, void 0, void 0, function* () {
+                        if (this.categoriesInfo.has(this.capitilize(category.replace(/_/g, " ")))) {
+                            let time = Date.now();
+                            const cat = this.capitilize(category.replace(/_/g, " "));
+                            let msg = yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
+                            const a = yield this.randomImage(cat);
+                            yield message.channel.send(`Random image`, a);
+                            yield msg.edit(`Latency: ${Date.now() - time} ms`);
+                        }
+                        else {
+                            yield message.channel.send({
+                                embed: {
+                                    description: `Invalid Category ${category}.`,
+                                    color: 1111111
+                                }
+                            });
+                        }
+                    }),
+                    available: (guild) => guild.id === "748669830244073533"
+                },
+                {
+                    name: "ImageCategories",
+                    description: "Returns the image categories.",
+                    parameters: [],
+                    slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
+                        yield invoke({
+                            embed: Object.assign(Object.assign({ title: 'Image Categories', description: 'When using categories with spaces, replace spaces with _', fields: [
+                                    {
+                                        name: 'Categories',
+                                        value: this.listCategories().join('\n')
+                                    }
+                                ] }, Utilities_1.Utilities.basicEmbedInfo()), { footer: {
+                                    "text": `Requested by ${user.username}`,
+                                    "icon_url": user.displayAvatarURL()
+                                } })
+                        });
+                    }),
+                    regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                        yield message.channel.send({
+                            embed: Object.assign({ title: 'Image Categories', description: 'When using categories with spaces, replace spaces with _', fields: [
+                                    {
+                                        name: 'Categories',
+                                        value: this.listCategories().join('\n')
+                                    }
+                                ] }, Utilities_1.Utilities.embedInfo(message))
+                        });
+                    }),
+                    available: (guild) => guild.id === "748669830244073533"
+                },
+                {
+                    name: "ImageArchive",
+                    description: "The link to the image archive on Google Drive",
+                    parameters: [],
+                    callback: () => {
+                        return {
+                            embed: {
+                                description: `[Link to the images.](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
+                                color: 1111111
+                            }
+                        };
+                    },
+                    available: (guild) => guild.id === "748669830244073533"
+                },
+                // other
+                this.categoryCommand("Dog", "Dog"),
+                this.categoryCommand("Archive", "Archive", (guild) => guild.id === "748669830244073533"),
+            ];
+        });
+    }
     defaultCat(message) {
         return this.jackChannels.includes(message.channel.id) ? 'Jack' : 'Archive';
     }
@@ -273,32 +418,6 @@ class ImageBot {
             }
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
-                if (this.categoriesInfo.has(this.capitilize(result.command.replace(/_/g, " ")))) {
-                    let time = Date.now();
-                    const cat = this.capitilize(result.command.replace(/_/g, " "));
-                    let msg = yield message.channel.send(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`, { allowedMentions: { parse: [] } });
-                    let entries = this.categoriesInfo.get(cat).sheetscache.length - 1;
-                    let index = Math.floor(Math.random() * entries) + 1;
-                    let row = this.categoriesInfo.get(cat).sheetscache[index];
-                    let DID = row[3];
-                    let filename = row[0];
-                    if (!this.inCache(filename)) {
-                        yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
-                    }
-                    const a = new Discord.MessageAttachment(`./temp/${filename}`);
-                    yield message.channel.send(`Random image`, a);
-                    yield msg.edit(`Latency: ${Date.now() - time} ms`);
-                }
-                if (result.command === 'imagecategories') {
-                    yield message.channel.send({
-                        embed: Object.assign({ title: 'Image Categories', description: 'When using categories with spaces, replace spaces with _', fields: [
-                                {
-                                    name: 'Categories',
-                                    value: this.listCategories().join('\n')
-                                }
-                            ] }, Utilities_1.Utilities.embedInfo(message))
-                    });
-                }
                 if (result.command === 'merge') {
                     if (!message.member.hasPermission("ADMINISTRATOR")) {
                         yield message.channel.send(`You must have permission ADMINISTRATOR!`);
@@ -319,14 +438,6 @@ class ImageBot {
                     yield message.reactions.removeAll();
                     yield message.react('✅');
                 }
-                if (["images"].includes(result.command)) {
-                    message.channel.send({
-                        embed: {
-                            description: `[Link to the images.](https://drive.google.com/drive/u/0/folders/1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2)`,
-                            color: 1111111
-                        }
-                    });
-                }
             }
         });
     }
@@ -344,62 +455,6 @@ class ImageBot {
                 yield this.driveUser.downloadFile(DID, `./temp/${filename}`);
             }
             return new Discord.MessageAttachment(`./temp/${filename}`);
-        });
-    }
-    onConstruct() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const files = yield this.driveUser.getItemsInFolder(this.imagesFolder);
-            for (const file of files) {
-                if (file.mimeType === DriveUser_1.DriveUser.FOLDER) {
-                    this.categoriesInfo.set(file.name, {
-                        DID: file.id,
-                        sheetscache: [[]]
-                    });
-                }
-            }
-            yield this.sheetUser.onConstruct();
-            let valueranges = yield this.sheetUser.bulkRead("images");
-            for (const valuerange of valueranges) {
-                let range = valuerange.range;
-                if (range) {
-                    let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
-                    this.categoriesInfo.set(cat, Object.assign(Object.assign({}, this.categoriesInfo.get(cat)), { sheetscache: valuerange.values }));
-                }
-            }
-            for (const id of this.approvedChannels) {
-                let channel = yield this.client.channels.fetch(id);
-                // @ts-ignore
-                const test = yield channel.messages.fetch({
-                    limit: 90
-                });
-            }
-            this.commands = [
-                {
-                    name: "Image",
-                    description: "Returns a random image from a category",
-                    parameters: [
-                        {
-                            name: "Category",
-                            description: "Category of the image",
-                            required: true,
-                            type: "string"
-                        }
-                    ],
-                    slashCallback: (invoke, channel, user, category) => __awaiter(this, void 0, void 0, function* () {
-                        if (this.categoriesInfo.has(this.capitilize(category.replace(/_/g, " ")))) {
-                            // let time = Date.now();
-                            const cat = this.capitilize(category.replace(/_/g, " "));
-                            invoke(`Fetching random "${cat}" image. Expect a delay of around 1-4 seconds.`);
-                            const a = yield this.randomImage(cat);
-                            yield channel.send(`Random image`, a);
-                            // await msg.edit(`Latency: ${Date.now() - time} ms`);
-                        }
-                    }),
-                    regularCallback: (message, category) => {
-                    },
-                    available: (guild) => guild.id === "748669830244073533"
-                }
-            ];
         });
     }
     merge(from, to) {
