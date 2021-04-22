@@ -33,7 +33,7 @@ export class ProcessorBot {
     private readonly bdayActive = true;
     private readonly reactActive = true;
     private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
+    private readonly roleManagerActive = false;
     private readonly scremActive = true;
     private readonly synonymActive = true;
     private readonly geckoInVCActive = true;
@@ -45,12 +45,12 @@ export class ProcessorBot {
     private readonly testActive = true;
     private readonly helpActive = true;
 
-    // private readonly quotesActive = true;
+    // private readonly quotesActive = false;
     // private readonly trackerActive = false;
     // private readonly bdayActive = false;
     // private readonly reactActive = false;
     // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
+    // private readonly roleManagerActive = true;
     // private readonly scremActive = false;
     // private readonly synonymActive = false;
     // private readonly geckoInVCActive = false;
@@ -134,6 +134,8 @@ export class ProcessorBot {
 
         // @ts-ignore
         this.client.ws.on("INTERACTION_CREATE", async (interaction) => {
+
+            if(!this.commands) return;
 
             const { name, options } = interaction.data;
             const command = name.toLowerCase();

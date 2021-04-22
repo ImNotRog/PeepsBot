@@ -38,7 +38,7 @@ class ProcessorBot {
         this.bdayActive = true;
         this.reactActive = true;
         this.nameChangerActive = true;
-        this.roleManagerActive = true;
+        this.roleManagerActive = false;
         this.scremActive = true;
         this.synonymActive = true;
         this.geckoInVCActive = true;
@@ -48,12 +48,12 @@ class ProcessorBot {
         this.hugActive = true;
         this.testActive = true;
         this.helpActive = true;
-        // private readonly quotesActive = true;
+        // private readonly quotesActive = false;
         // private readonly trackerActive = false;
         // private readonly bdayActive = false;
         // private readonly reactActive = false;
         // private readonly nameChangerActive = false;
-        // private readonly roleManagerActive = false;
+        // private readonly roleManagerActive = true;
         // private readonly scremActive = false;
         // private readonly synonymActive = false;
         // private readonly geckoInVCActive = false;
@@ -128,6 +128,8 @@ class ProcessorBot {
             // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
+                if (!this.commands)
+                    return;
                 const { name, options } = interaction.data;
                 const command = name.toLowerCase();
                 let c = this.commands.filter(c => !("textOnly" in c)).find(c => c.name.toLowerCase() === command);
