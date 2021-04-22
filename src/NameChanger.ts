@@ -70,6 +70,79 @@ export class NameChangerBot implements Module {
                     }
                 },
                 parameters: []
+            },
+            {
+                name: "Retheme",
+                description: "Rethemes the FPBG server to selected theme.",
+                available: (guild) => guild.id === this.fperbioserver,
+                parameters: [
+                    {
+                        name: "Theme",
+                        description: "The theme to change to",
+                        required: true,
+                        type: "string"
+                    }
+                ],
+                slashCallback: async (invoke, channel,  user, theme:string) => {
+                    const map = await this.readThemes();
+                    // Valid theme?
+                    if (!map.has(theme)) {
+                        invoke({
+                            embed: {
+                                title: `Invalid Theme ${theme}`,
+                                description: `That theme is not valid. Capitalization matters.`,
+                                // ...Utilities.embedInfo(message)
+                                color: 1111111
+                            }
+                        });
+                        return;
+                    }
+
+                    // Cooldown?
+                    if (!(await this.changeavailable())) {
+                        invoke({
+                            embed: {
+                                title: `Slow Down!`,
+                                description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.`,
+                                // ...Utilities.embedInfo(message)
+                                color: 1111111
+                            }
+                        });
+                        return;
+                    }
+
+                    invoke("Changing...");
+
+                    const arr = map.get(theme);
+                    const arrstr = arr.join(", ");
+
+                    const passed = await Utilities.sendEmoteCollector(channel, (bool) => {
+
+                        return {
+                            title: bool ? `Changed the Theme to ${theme}` : `Change the Theme to ${theme}?`,
+                            description: bool ?
+                                `The theme was changed. You must wait 5 minutes before changing again.` :
+                                `Vote with 👍 to approve, 👎 to disapprove like how your parents disapprove of you. 4 net votes are required to change the theme. ` +
+                                `Also, admins can use ❌ to instantly disable the vote. Finally, after 2 minutes of inactivity, the vote is disabled.`,
+                            fields: [{
+                                name: `Channel Names:`,
+                                value: arrstr
+                            }],
+                            // ...Utilities.embedInfo(message)
+                            color: 1111111
+                        }
+                    
+
+                    }, 4, 1000 * 60 * 2)
+
+
+                    if (passed) {
+                        await this.nameChange(arr);
+                    }
+                },
+                regularCallback: (message, theme:string) => {
+                    this.onChange(message, theme);
+                }
             }
         ]
     }
@@ -81,15 +154,9 @@ export class NameChangerBot implements Module {
     async onMessage(message: Discord.Message): Promise<void> {
         const result = PROCESS(message);
         if (result) {
-            if (result.command === "rename") {
-                this.onChange(message, result.args);
-            }
-            // if (result.command === "themesheet") {
-            //     this.sendSpreadsheets(message);
+            // if (result.command === "rename") {
+            //     this.onChange(message, result.args);
             // }
-        //     if (result.command === "themes") {
-        //         this.sendThemes(message);
-        //     }
         }
     }
 
@@ -199,7 +266,7 @@ export class NameChangerBot implements Module {
                 name = "Unnamed"
             }
             let channel = (channels.get(key));
-            channel.setName(name)
+            if(channel) channel.setName(name)
         }
     }
 
@@ -231,9 +298,8 @@ export class NameChangerBot implements Module {
         })
     }
 
-    async onChange(message: Discord.Message, args: string[]) {
+    async onChange(message: Discord.Message, param:string) {
 
-        const param = args.join(" ");
         const map = await this.readThemes();
         if (!map.has(param)) {
             message.channel.send({
@@ -260,7 +326,7 @@ export class NameChangerBot implements Module {
         const arr = map.get(param);
         const arrstr = arr.join(", ");
 
-        const passed = await Utilities.sendEmoteCollector(message, (bool) => {
+        const passed = await Utilities.sendEmoteCollector(message.channel, (bool) => {
 
             if (typeof bool === "boolean") {
                 return {

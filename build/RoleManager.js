@@ -145,7 +145,7 @@ class RoleManagerBot {
                 let rolemanager = this.server.roles;
                 let accepted = `abcdef0123456789`;
                 if (args[1].startsWith("#") && [...args[1].slice(1)].every((char) => accepted.includes(char))) {
-                    let created = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
+                    let created = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
                         return {
                             title: `Create${bool ? 'd' : ''} Role ${args[0]}`,
                             description: `Vote down below. You need net 3 votes to create this role.`,
@@ -178,7 +178,7 @@ class RoleManagerBot {
                     }
                 }
                 if (todelete) {
-                    let deleted = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
+                    let deleted = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
                         return {
                             title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
                             description: `Vote down below. You need net 3 votes to delete this role.`,
@@ -207,7 +207,7 @@ class RoleManagerBot {
                     if (args[1] === "color") {
                         let accepted = `abcdef0123456789`;
                         if (args[2].startsWith("#") && [...args[2].slice(1)].every((char) => accepted.includes(char))) {
-                            let edited = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
+                            let edited = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
                                 return {
                                     title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s Color to ${args[2]}`,
                                     description: `Vote down below. You need net 3 votes to edit this role.`,
@@ -223,7 +223,7 @@ class RoleManagerBot {
                         }
                     }
                     else if (args[1] === "name") {
-                        let edited = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
+                        let edited = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
                             return {
                                 title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s name to ${args[2]}`,
                                 description: `Vote down below. You need net 3 votes to edit this role.`,

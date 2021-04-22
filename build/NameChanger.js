@@ -66,6 +66,70 @@ class NameChangerBot {
                     };
                 },
                 parameters: []
+            },
+            {
+                name: "Retheme",
+                description: "Rethemes the FPBG server to selected theme.",
+                available: (guild) => guild.id === this.fperbioserver,
+                parameters: [
+                    {
+                        name: "Theme",
+                        description: "The theme to change to",
+                        required: true,
+                        type: "string"
+                    }
+                ],
+                slashCallback: (invoke, channel, user, theme) => __awaiter(this, void 0, void 0, function* () {
+                    const map = yield this.readThemes();
+                    // Valid theme?
+                    if (!map.has(theme)) {
+                        invoke({
+                            embed: {
+                                title: `Invalid Theme ${theme}`,
+                                description: `That theme is not valid. Capitalization matters.`,
+                                // ...Utilities.embedInfo(message)
+                                color: 1111111
+                            }
+                        });
+                        return;
+                    }
+                    // Cooldown?
+                    if (!(yield this.changeavailable())) {
+                        invoke({
+                            embed: {
+                                title: `Slow Down!`,
+                                description: `You must wait 5 minutes to fully rename the server. Why? Because Discord API, it's just how it is buddy.`,
+                                // ...Utilities.embedInfo(message)
+                                color: 1111111
+                            }
+                        });
+                        return;
+                    }
+                    invoke("Changing...");
+                    const arr = map.get(theme);
+                    const arrstr = arr.join(", ");
+                    const passed = yield Utilities_1.Utilities.sendEmoteCollector(channel, (bool) => {
+                        return {
+                            title: bool ? `Changed the Theme to ${theme}` : `Change the Theme to ${theme}?`,
+                            description: bool ?
+                                `The theme was changed. You must wait 5 minutes before changing again.` :
+                                `Vote with 👍 to approve, 👎 to disapprove like how your parents disapprove of you. 4 net votes are required to change the theme. ` +
+                                    `Also, admins can use ❌ to instantly disable the vote. Finally, after 2 minutes of inactivity, the vote is disabled.`,
+                            fields: [{
+                                    name: `Channel Names:`,
+                                    value: arrstr
+                                }],
+                            // ...Utilities.embedInfo(message)
+                            color: 1111111
+                        };
+                    }, 4, 1000 * 60 * 2);
+                    if (passed) {
+                        yield this.nameChange(arr);
+                    }
+                }),
+                regularCallback: (message, theme) => {
+                    this.onChange(message, theme);
+                }
             }
         ];
     }
@@ -76,15 +140,9 @@ class NameChangerBot {
         return __awaiter(this, void 0, void 0, function* () {
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
-                if (result.command === "rename") {
-                    this.onChange(message, result.args);
-                }
-                // if (result.command === "themesheet") {
-                //     this.sendSpreadsheets(message);
+                // if (result.command === "rename") {
+                //     this.onChange(message, result.args);
                 // }
-                //     if (result.command === "themes") {
-                //         this.sendThemes(message);
-                //     }
             }
         });
     }
@@ -189,7 +247,8 @@ class NameChangerBot {
                     name = "Unnamed";
                 }
                 let channel = (channels.get(key));
-                channel.setName(name);
+                if (channel)
+                    channel.setName(name);
             }
         });
     }
@@ -219,9 +278,8 @@ class NameChangerBot {
             });
         });
     }
-    onChange(message, args) {
+    onChange(message, param) {
         return __awaiter(this, void 0, void 0, function* () {
-            const param = args.join(" ");
             const map = yield this.readThemes();
             if (!map.has(param)) {
                 message.channel.send({
@@ -237,7 +295,7 @@ class NameChangerBot {
             }
             const arr = map.get(param);
             const arrstr = arr.join(", ");
-            const passed = yield Utilities_1.Utilities.sendEmoteCollector(message, (bool) => {
+            const passed = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
                 if (typeof bool === "boolean") {
                     return Object.assign({ title: bool ? `Changed the Theme to ${param}` : `Change the Theme to ${param}?`, description: bool ?
                             `The theme was changed. You must wait 5 minutes before changing again.` :

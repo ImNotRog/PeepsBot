@@ -160,12 +160,12 @@ export class Utilities {
 
     /* Discord Utilities */
 
-    public static async sendEmoteCollector(origmessage: Discord.Message,embed:(boolean) => Object,num: number,millis: number) {
+    public static async sendEmoteCollector(origchannel: Discord.TextChannel|Discord.DMChannel|Discord.NewsChannel,embed:(boolean) => Object,num: number,millis: number) {
 
         const emote = "👍"
         const downemote = "👎"
 
-        let message = await origmessage.channel.send({
+        let message = await origchannel.send({
             embed: embed(false)
         });
         await message.react(emote);

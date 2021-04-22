@@ -171,7 +171,7 @@ export class RoleManagerBot implements Module {
             let accepted = `abcdef0123456789`;
             if( args[1].startsWith("#") && [...args[1].slice(1)].every((char) => accepted.includes(char))) {
 
-                let created = await Utilities.sendEmoteCollector(message, (bool) => {
+                let created = await Utilities.sendEmoteCollector(message.channel, (bool) => {
                     return {
                         title: `Create${bool ? 'd' : ''} Role ${args[0]}`,
                         description: `Vote down below. You need net 3 votes to create this role.`,
@@ -207,7 +207,7 @@ export class RoleManagerBot implements Module {
             }
 
             if(todelete) {
-                let deleted = await Utilities.sendEmoteCollector(message, (bool) => {
+                let deleted = await Utilities.sendEmoteCollector(message.channel, (bool) => {
                     return {
                         title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
                         description: `Vote down below. You need net 3 votes to delete this role.`,
@@ -244,7 +244,7 @@ export class RoleManagerBot implements Module {
                     let accepted = `abcdef0123456789`;
                     if (args[2].startsWith("#") && [...args[2].slice(1)].every((char) => accepted.includes(char))) {
 
-                        let edited = await Utilities.sendEmoteCollector(message, (bool) => {
+                        let edited = await Utilities.sendEmoteCollector(message.channel, (bool) => {
                             return {
                                 title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s Color to ${args[2]}`,
                                 description: `Vote down below. You need net 3 votes to edit this role.`,
@@ -263,7 +263,7 @@ export class RoleManagerBot implements Module {
                     }
                 } else if(args[1] === "name") {
 
-                    let edited = await Utilities.sendEmoteCollector(message, (bool) => {
+                    let edited = await Utilities.sendEmoteCollector(message.channel, (bool) => {
                         return {
                             title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s name to ${args[2]}`,
                             description: `Vote down below. You need net 3 votes to edit this role.`,

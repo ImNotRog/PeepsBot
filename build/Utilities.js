@@ -143,11 +143,11 @@ class Utilities {
         return momentobj.diff(now, 'days');
     }
     /* Discord Utilities */
-    static sendEmoteCollector(origmessage, embed, num, millis) {
+    static sendEmoteCollector(origchannel, embed, num, millis) {
         return __awaiter(this, void 0, void 0, function* () {
             const emote = "👍";
             const downemote = "👎";
-            let message = yield origmessage.channel.send({
+            let message = yield origchannel.send({
                 embed: embed(false)
             });
             yield message.react(emote);
