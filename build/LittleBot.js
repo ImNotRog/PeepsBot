@@ -41,12 +41,29 @@ class LittleBot {
                 }
             ]
         };
+        // console.log(this.processContent(`"Grrr" - Lemon Think`))
+        // console.log(this.processContent(`"Grrr" - Mr.Little`))
     }
     available(message) {
         return true;
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.collectingChannels.indexOf(message.channel.id) !== -1 && !message.author.bot) {
+                // Verify quote
+                let { teacher } = this.processContent(message.content);
+                if (this.validTeacher(teacher)) {
+                    message.react('👍');
+                }
+                else {
+                    message.channel.send({
+                        embed: {
+                            description: "Invalid teacher! Please refrain from using numbers or special characters.",
+                            color: 1111111
+                        }
+                    });
+                }
+            }
             const result = ProcessMessage_1.PROCESS(message);
             if (result) {
                 let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
@@ -114,6 +131,26 @@ class LittleBot {
             }
         });
     }
+    processContent(content) {
+        let teacher = "Little";
+        if (content.includes("-")) {
+            teacher = content.slice(content.lastIndexOf('-') + 1);
+            let things = teacher.split(/[ \.]/g, -1);
+            teacher = things[things.length - 1];
+            content = content.slice(0, content.lastIndexOf("-"));
+        }
+        teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
+        if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
+            content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
+        }
+        return {
+            teacher,
+            content
+        };
+    }
+    validTeacher(teacher) {
+        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c))) && teacher.length > 0 && teacher.length < 20;
+    }
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1)
@@ -126,19 +163,11 @@ class LittleBot {
                 return;
             }
             if (reaction.emoji.name === "👍") {
-                let content = reaction.message.content;
-                let teacher = "Little";
-                if (content.includes("-")) {
-                    let nowhitespace = content.replace(/ /g, '');
-                    teacher = nowhitespace.slice(nowhitespace.lastIndexOf('-') + 1);
-                    content = content.slice(0, content.lastIndexOf("-"));
+                let { content, teacher } = this.processContent(reaction.message.content);
+                if (this.validTeacher(teacher)) {
+                    // console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
+                    this.addQuote(content, teacher, reaction.count - 1);
                 }
-                teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
-                if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
-                    content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
-                }
-                console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
-                this.addQuote(content, teacher, reaction.count);
             }
         });
     }

@@ -43,6 +43,9 @@ export class LittleBot implements Module {
                 }
             ]
         }
+
+        // console.log(this.processContent(`"Grrr" - Lemon Think`))
+        // console.log(this.processContent(`"Grrr" - Mr.Little`))
     }
     
     available(message: Discord.Message): boolean {
@@ -50,6 +53,22 @@ export class LittleBot implements Module {
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
+
+        if (this.collectingChannels.indexOf(message.channel.id) !== -1 && !message.author.bot) {
+            // Verify quote
+            let { teacher } = this.processContent(message.content);
+            if(this.validTeacher(teacher)) {
+                message.react('👍');
+            } else {
+                message.channel.send({
+                    embed: {
+                        description: "Invalid teacher! Please refrain from using numbers or special characters.",
+                        color: 1111111
+                    }
+                })
+            }
+        }
+
         const result = PROCESS(message);
         if(result) {
             let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
@@ -128,6 +147,31 @@ export class LittleBot implements Module {
         }
     }
 
+    processContent(content:string): {teacher:string, content:string}  {
+        let teacher = "Little";
+        if (content.includes("-")) {
+            teacher = content.slice(content.lastIndexOf('-') + 1);
+            let things = teacher.split(/[ \.]/g,-1);
+            teacher = things[things.length - 1]
+
+            content = content.slice(0, content.lastIndexOf("-"));
+        }
+
+        teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
+
+        if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
+            content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
+        }
+        return {
+            teacher,
+            content
+        }
+    }
+    
+    validTeacher(teacher:string) {
+        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c))) && teacher.length > 0 && teacher.length < 20;
+    }
+
     async onReaction(reaction: Discord.MessageReaction, user: any) {
 
         if (this.collectingChannels.indexOf(reaction.message.channel.id) === -1) return;
@@ -141,25 +185,12 @@ export class LittleBot implements Module {
 
         if (reaction.emoji.name === "👍") {
 
-            let content = reaction.message.content;
-            let teacher = "Little";
+            let { content, teacher } = this.processContent(reaction.message.content);
+            if(this.validTeacher(teacher)) {
+                // console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
 
-            if(content.includes("-")) {
-                let nowhitespace = content.replace(/ /g, '');
-                teacher = nowhitespace.slice(nowhitespace.lastIndexOf('-')+1);
-
-                content = content.slice(0, content.lastIndexOf("-"));
+                this.addQuote(content, teacher, reaction.count-1);
             }
-
-            teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
-
-            if(content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
-                content = content.slice(content.indexOf(`"`)+1,content.lastIndexOf(`"`));
-            }
-
-            console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
-
-            this.addQuote(content, teacher, reaction.count);
         }
 
 
