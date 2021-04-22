@@ -4,7 +4,7 @@ import { SheetsUser } from "./SheetsUser";
 import { Utilities } from "./Utilities";
 import Discord = require("discord.js");
 import moment = require("moment");
-import { Module } from "./Module";
+import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class NameChangerBot implements Module {
@@ -15,6 +15,7 @@ export class NameChangerBot implements Module {
     private readonly prefix = `--`;
     private fperbioserver: string;
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    public commands: Command[];
 
     constructor(auth, client: Discord.Client) {
         let currmap = new Map();
@@ -45,6 +46,18 @@ export class NameChangerBot implements Module {
         }
 
         this.fperbioserver = "748669830244073533";
+
+        this.commands = [
+            {
+                name: "themes",
+                description: "Lists the themes. Preferably, use this command in spam channels.",
+                available: (guild) => guild.id === this.fperbioserver,
+                callback: async () => {
+                    return await this.sendThemes();
+                },
+                parameters: [],
+            }
+        ]
     }
     
     available(message: Discord.Message): boolean {
@@ -60,9 +73,9 @@ export class NameChangerBot implements Module {
             if (result.command === "themesheet") {
                 this.sendSpreadsheets(message);
             }
-            if (result.command === "themes") {
-                this.sendThemes(message);
-            }
+        //     if (result.command === "themes") {
+        //         this.sendThemes(message);
+        //     }
         }
     }
 
@@ -126,15 +139,10 @@ export class NameChangerBot implements Module {
 
     async onConstruct() {
 
-        // let leo = await this.client.users.fetch("526863414635790356");
         let fpbg = await this.client.guilds.fetch(this.fperbioserver)
-        // console.log(fpbg);
 
         console.log("Fetching")
         await fpbg.members.fetch();
-        // let leomember = fpbg.member(leo);
-        // console.log(leomember)
-
 
         console.log(`Setting up Name Changer Bot.`)
         console.log(`Setting up sheets`)
@@ -142,8 +150,6 @@ export class NameChangerBot implements Module {
 
         console.log(`Name Changer Bot Complete`);
     }
-
-    
 
     async changeavailable() {
         let time = moment();
@@ -201,11 +207,7 @@ export class NameChangerBot implements Module {
         });
     }
 
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    async sendThemes(message: Discord.Message) {
+    async sendThemes() {
 
         const map = await this.readThemes();
 
@@ -213,22 +215,24 @@ export class NameChangerBot implements Module {
         for (const key of map.keys()) {
 
             if (key === "KEY") continue;
+            if(key.length === 0) continue;
 
             let arr = map.get(key).filter((a) => a !== ``)
             let randsample = arr.length ? arr[Math.floor(Math.random() * arr.length)] : `None available.`;
-            fields.push({
-                name: `${key}`,
-                value: `Sample: ${randsample}`
-            })
+            fields.push(`**${key}** (Sample: ${randsample})`)
         }
 
-
-        await Utilities.sendClosableEmbed(message, {
-            title: `Themes`,
-            description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use ${this.prefix}themesheet)`,
-            fields,
-            ...Utilities.embedInfo(message)
-        });
+        return ({
+            embed: {
+                title: `Themes`,
+                description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use /themesheet)`,
+                fields: [{
+                    name: "Themes",
+                    value: fields.join('\n')
+                }],
+                color: 1111111
+            }
+        })
     }
 
     /**

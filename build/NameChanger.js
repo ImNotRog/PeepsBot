@@ -43,6 +43,17 @@ class NameChangerBot {
             ]
         };
         this.fperbioserver = "748669830244073533";
+        this.commands = [
+            {
+                name: "themes",
+                description: "Lists the themes. Preferably, use this command in spam channels.",
+                available: (guild) => guild.id === this.fperbioserver,
+                callback: () => __awaiter(this, void 0, void 0, function* () {
+                    return yield this.sendThemes();
+                }),
+                parameters: [],
+            }
+        ];
     }
     available(message) {
         return message.guild.id === '748669830244073533';
@@ -57,9 +68,9 @@ class NameChangerBot {
                 if (result.command === "themesheet") {
                     this.sendSpreadsheets(message);
                 }
-                if (result.command === "themes") {
-                    this.sendThemes(message);
-                }
+                //     if (result.command === "themes") {
+                //         this.sendThemes(message);
+                //     }
             }
         });
     }
@@ -123,13 +134,9 @@ class NameChangerBot {
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
-            // let leo = await this.client.users.fetch("526863414635790356");
             let fpbg = yield this.client.guilds.fetch(this.fperbioserver);
-            // console.log(fpbg);
             console.log("Fetching");
             yield fpbg.members.fetch();
-            // let leomember = fpbg.member(leo);
-            // console.log(leomember)
             console.log(`Setting up Name Changer Bot.`);
             console.log(`Setting up sheets`);
             yield this.sheetsUser.onConstruct();
@@ -186,25 +193,30 @@ class NameChangerBot {
                 ] }, Utilities_1.Utilities.embedInfo(message)));
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    sendThemes(message) {
+    sendThemes() {
         return __awaiter(this, void 0, void 0, function* () {
             const map = yield this.readThemes();
             const fields = [];
             for (const key of map.keys()) {
                 if (key === "KEY")
                     continue;
+                if (key.length === 0)
+                    continue;
                 let arr = map.get(key).filter((a) => a !== ``);
                 let randsample = arr.length ? arr[Math.floor(Math.random() * arr.length)] : `None available.`;
-                fields.push({
-                    name: `${key}`,
-                    value: `Sample: ${randsample}`
-                });
+                fields.push(`**${key}** (Sample: ${randsample})`);
             }
-            yield Utilities_1.Utilities.sendClosableEmbed(message, Object.assign({ title: `Themes`, description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use ${this.prefix}themesheet)`, fields }, Utilities_1.Utilities.embedInfo(message)));
+            return ({
+                embed: {
+                    title: `Themes`,
+                    description: `All the themes, as of now. Names are case sensitive. Remember, you can always edit the spreadsheet! (use /themesheet)`,
+                    fields: [{
+                            name: "Themes",
+                            value: fields.join('\n')
+                        }],
+                    color: 1111111
+                }
+            });
         });
     }
     /**
