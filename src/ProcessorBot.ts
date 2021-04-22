@@ -106,9 +106,7 @@ export class ProcessorBot {
         }
         await Promise.all(allpromises);
         
-        this.client.on("message", (message) => {
-            this.onMessage(message)
-        });
+        
 
         console.log("Fetching mounted commmands...")
         this.mountedCommands = await this.getMountedCommands();
@@ -135,8 +133,6 @@ export class ProcessorBot {
         // @ts-ignore
         this.client.ws.on("INTERACTION_CREATE", async (interaction) => {
 
-            if(!this.commands) return;
-
             const { name, options } = interaction.data;
             const command = name.toLowerCase();
             
@@ -160,6 +156,10 @@ export class ProcessorBot {
                 
             }
         })
+
+        this.client.on("message", (message) => {
+            this.onMessage(message)
+        });
 
     }
 

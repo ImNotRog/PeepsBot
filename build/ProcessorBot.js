@@ -108,9 +108,6 @@ class ProcessorBot {
                     allpromises.push(mod.onConstruct());
             }
             yield Promise.all(allpromises);
-            this.client.on("message", (message) => {
-                this.onMessage(message);
-            });
             console.log("Fetching mounted commmands...");
             this.mountedCommands = yield this.getMountedCommands();
             // console.log(this.mountedCommands);
@@ -128,8 +125,6 @@ class ProcessorBot {
             // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
-                if (!this.commands)
-                    return;
                 const { name, options } = interaction.data;
                 const command = name.toLowerCase();
                 let c = this.commands.filter(c => !("textOnly" in c)).find(c => c.name.toLowerCase() === command);
@@ -152,6 +147,9 @@ class ProcessorBot {
                     }
                 }
             }));
+            this.client.on("message", (message) => {
+                this.onMessage(message);
+            });
         });
     }
     ResolveInteraction(interaction, returnval) {
