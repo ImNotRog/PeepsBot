@@ -298,7 +298,7 @@ export class QuotesBot implements Module {
     }
     
     validTeacher(teacher:string) {
-        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c))) && teacher.length > 0 && teacher.length < 20;
+        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
 
     async onReaction(reaction: Discord.MessageReaction, user: any) {

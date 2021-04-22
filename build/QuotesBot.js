@@ -277,7 +277,7 @@ class QuotesBot {
         };
     }
     validTeacher(teacher) {
-        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c))) && teacher.length > 0 && teacher.length < 20;
+        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
