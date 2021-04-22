@@ -45,13 +45,27 @@ class NameChangerBot {
         this.fperbioserver = "748669830244073533";
         this.commands = [
             {
-                name: "themes",
+                name: "Themes",
                 description: "Lists the themes. Preferably, use this command in spam channels.",
                 available: (guild) => guild.id === this.fperbioserver,
                 callback: () => __awaiter(this, void 0, void 0, function* () {
                     return yield this.sendThemes();
                 }),
                 parameters: [],
+            },
+            {
+                name: "ThemeSheet",
+                description: "Gives the sheet for the FPBG themes",
+                available: (guild) => guild.id === this.fperbioserver,
+                callback: () => {
+                    return {
+                        embed: {
+                            description: `[Link to the themes sheet.](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0) You can add or change themes there!`,
+                            color: 1111111
+                        }
+                    };
+                },
+                parameters: []
             }
         ];
     }
@@ -65,9 +79,9 @@ class NameChangerBot {
                 if (result.command === "rename") {
                     this.onChange(message, result.args);
                 }
-                if (result.command === "themesheet") {
-                    this.sendSpreadsheets(message);
-                }
+                // if (result.command === "themesheet") {
+                //     this.sendSpreadsheets(message);
+                // }
                 //     if (result.command === "themes") {
                 //         this.sendThemes(message);
                 //     }
@@ -179,20 +193,6 @@ class NameChangerBot {
             }
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     */
-    sendSpreadsheets(message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield Utilities_1.Utilities.sendClosableEmbed(message, Object.assign({ "title": "Theme Spreadsheet", "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!", "fields": [
-                    {
-                        "name": "Spreadsheet:",
-                        "value": "Themes found here: [Link](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0)"
-                    },
-                ] }, Utilities_1.Utilities.embedInfo(message)));
-        });
-    }
     sendThemes() {
         return __awaiter(this, void 0, void 0, function* () {
             const map = yield this.readThemes();
@@ -219,11 +219,6 @@ class NameChangerBot {
             });
         });
     }
-    /**
-     *
-     * @param {Discord.Message} message
-     * @param {string[]} args
-     */
     onChange(message, args) {
         return __awaiter(this, void 0, void 0, function* () {
             const param = args.join(" ");

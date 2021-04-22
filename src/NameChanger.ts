@@ -49,13 +49,27 @@ export class NameChangerBot implements Module {
 
         this.commands = [
             {
-                name: "themes",
+                name: "Themes",
                 description: "Lists the themes. Preferably, use this command in spam channels.",
                 available: (guild) => guild.id === this.fperbioserver,
                 callback: async () => {
                     return await this.sendThemes();
                 },
                 parameters: [],
+            },
+            {
+                name: "ThemeSheet",
+                description: "Gives the sheet for the FPBG themes",
+                available: (guild) => guild.id === this.fperbioserver,
+                callback: () => {
+                    return {
+                        embed: {
+                            description: `[Link to the themes sheet.](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0) You can add or change themes there!`,
+                            color: 1111111
+                        }
+                    }
+                },
+                parameters: []
             }
         ]
     }
@@ -70,9 +84,9 @@ export class NameChangerBot implements Module {
             if (result.command === "rename") {
                 this.onChange(message, result.args);
             }
-            if (result.command === "themesheet") {
-                this.sendSpreadsheets(message);
-            }
+            // if (result.command === "themesheet") {
+            //     this.sendSpreadsheets(message);
+            // }
         //     if (result.command === "themes") {
         //         this.sendThemes(message);
         //     }
@@ -189,24 +203,6 @@ export class NameChangerBot implements Module {
         }
     }
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     */
-    async sendSpreadsheets(message: Discord.Message) {
-        await Utilities.sendClosableEmbed(message, {
-            "title": "Theme Spreadsheet",
-            "description": "The Spreadsheet where all the FPERBIO themes are kept. You can always edit it and add/edit new themes!",
-            "fields": [
-                {
-                    "name": "Spreadsheet:",
-                    "value": "Themes found here: [Link](https://docs.google.com/spreadsheets/d/1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4/edit#gid=0)"
-                },
-            ],
-            ...Utilities.embedInfo(message)
-        });
-    }
-
     async sendThemes() {
 
         const map = await this.readThemes();
@@ -235,11 +231,6 @@ export class NameChangerBot implements Module {
         })
     }
 
-    /**
-     * 
-     * @param {Discord.Message} message 
-     * @param {string[]} args 
-     */
     async onChange(message: Discord.Message, args: string[]) {
 
         const param = args.join(" ");
