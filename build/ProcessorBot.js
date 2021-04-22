@@ -38,7 +38,7 @@ class ProcessorBot {
         this.bdayActive = true;
         this.reactActive = true;
         this.nameChangerActive = true;
-        this.roleManagerActive = false;
+        this.roleManagerActive = true;
         this.scremActive = true;
         this.synonymActive = true;
         this.geckoInVCActive = true;

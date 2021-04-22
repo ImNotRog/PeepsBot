@@ -33,7 +33,7 @@ export class ProcessorBot {
     private readonly bdayActive = true;
     private readonly reactActive = true;
     private readonly nameChangerActive = true;
-    private readonly roleManagerActive = false;
+    private readonly roleManagerActive = true;
     private readonly scremActive = true;
     private readonly synonymActive = true;
     private readonly geckoInVCActive = true;
