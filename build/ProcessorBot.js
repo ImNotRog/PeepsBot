@@ -33,7 +33,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        this.quotesActive = false;
+        this.quotesActive = true;
         this.trackerActive = true;
         this.bdayActive = true;
         this.reactActive = true;
