@@ -202,7 +202,7 @@ export class QuotesBot implements Module {
         if(result) {
             let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
             if(this.cache.has(teach)) {
-                if (teach === "Little" || message.guild.id === '748669830244073533') {
+                if ( (teach === "Little") !== (message.guild.id === '748669830244073533')) {
                     let q = this.randomQuote(teach);
 
                     message.channel.send(q.length < 400 ? q : q.slice(0, 400) + '... [quote truncated]', { allowedMentions: { parse: [] } });
