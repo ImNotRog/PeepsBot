@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoleManagerBot = void 0;
 const Discord = require("discord.js");
-const ProcessMessage_1 = require("./ProcessMessage");
 const Utilities_1 = require("./Utilities");
 class RoleManagerBot {
     constructor(client) {
@@ -57,6 +56,100 @@ class RoleManagerBot {
                 },
             ]
         };
+        this.commands = [
+            {
+                name: "Role",
+                description: "Obtain cool and hip gamer roles on the FPBG server",
+                available: (guild) => guild.id === this.fperbio,
+                parameters: [],
+                slashCallback: (invoke, channel) => __awaiter(this, void 0, void 0, function* () {
+                    invoke(yield this.onRole(channel));
+                }),
+                regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                    message.channel.send(yield this.onRole(message.channel));
+                })
+            },
+            {
+                name: "CacheRoles",
+                description: "Obtain cool and hip gamer roles on the FPBG server",
+                available: (guild) => guild.id === this.fperbio,
+                parameters: [],
+                textOnly: true,
+                callback: (message) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.cacheRoles();
+                    message.channel.send("Done!");
+                })
+            },
+            {
+                name: "AddRole",
+                description: "Add a role to the FPBG server",
+                available: (guild) => guild.id === this.fperbio,
+                parameters: [
+                    {
+                        name: "Name",
+                        description: "Name of the role",
+                        type: "string",
+                        required: true
+                    },
+                    {
+                        name: "Color",
+                        description: "Color of the role in hexcode, must be preceded by #",
+                        type: "string",
+                        required: true
+                    }
+                ],
+                textOnly: true,
+                callback: (message, name, color) => __awaiter(this, void 0, void 0, function* () {
+                    this.addRole(message.channel, name, color);
+                })
+            },
+            {
+                name: "DeleteRole",
+                description: "Delete a role from the FPBG server",
+                available: (guild) => guild.id === this.fperbio,
+                parameters: [
+                    {
+                        name: "Name",
+                        description: "Name of the role",
+                        type: "string",
+                        required: true
+                    }
+                ],
+                textOnly: true,
+                callback: (message, name) => __awaiter(this, void 0, void 0, function* () {
+                    this.deleteRole(message.channel, name);
+                })
+            },
+            {
+                name: "EditRole",
+                description: "Edit a role from the FPBG server",
+                available: (guild) => guild.id === this.fperbio,
+                parameters: [
+                    {
+                        name: "Name",
+                        description: "Name of the role",
+                        type: "string",
+                        required: true
+                    },
+                    {
+                        name: "Category",
+                        description: `The part that you're editing, either "color" or "name"`,
+                        type: "string",
+                        required: true
+                    },
+                    {
+                        name: "NameOrColor",
+                        description: "Depending on category, either name, or color.",
+                        type: "string",
+                        required: true
+                    }
+                ],
+                textOnly: true,
+                callback: (message, name, category, color) => __awaiter(this, void 0, void 0, function* () {
+                    this.editRole(message.channel, [name, category, color]);
+                })
+            },
+        ];
     }
     available(message) {
         return message.guild.id === '748669830244073533';
@@ -65,24 +158,6 @@ class RoleManagerBot {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.approvedChannels.includes(message.channel.id)) {
                 this.parseCommand(message);
-            }
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                if (result.command === "role" || result.command === "roles") {
-                    this.onRole(message);
-                }
-                if (result.command === "addrole") {
-                    this.addRole(message, result.args);
-                }
-                if (result.command === "deleterole") {
-                    this.deleteRole(message, result.args);
-                }
-                if (result.command === "editrole") {
-                    this.editRole(message, result.args);
-                }
-                if (result.command === "cacheroles") {
-                    this.cacheRoles();
-                }
             }
         });
     }
@@ -139,61 +214,65 @@ class RoleManagerBot {
             }
         });
     }
-    addRole(message, args) {
+    addRole(channel, name, color) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (args.length >= 2) {
-                let rolemanager = this.server.roles;
-                let accepted = `abcdef0123456789`;
-                if (args[1].startsWith("#") && [...args[1].slice(1)].every((char) => accepted.includes(char))) {
-                    let created = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
-                        return {
-                            title: `Create${bool ? 'd' : ''} Role ${args[0]}`,
-                            description: `Vote down below. You need net 3 votes to create this role.`,
-                            color: args[1]
-                        };
-                    }, this.numvotes, 60 * 1000 * 2);
-                    if (created) {
-                        //valid color
-                        yield rolemanager.create({
-                            data: {
-                                name: args[0],
-                                color: args[1],
-                                position: this.colorroles[this.colorroles.length - 1].position
-                            }
-                        });
-                        yield this.cacheRoles();
-                    }
+            let rolemanager = this.server.roles;
+            let accepted = `ABCDEFabcdef0123456789`;
+            if (color.startsWith("#") && [...color.slice(1)].every((char) => accepted.includes(char))) {
+                let created = yield Utilities_1.Utilities.sendEmoteCollector(channel, (bool) => {
+                    return {
+                        title: `Create${bool ? 'd' : ''} Role ${name}`,
+                        description: `Vote down below. You need net 3 votes to create this role.`,
+                        color
+                    };
+                }, this.numvotes, 60 * 1000 * 2);
+                if (created) {
+                    //valid color
+                    yield rolemanager.create({
+                        data: {
+                            name,
+                            color,
+                            position: this.colorroles[this.colorroles.length - 1].position
+                        }
+                    });
+                    yield this.cacheRoles();
                 }
             }
         });
     }
-    deleteRole(message, args) {
+    deleteRole(channel, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (args.length >= 1) {
-                let name = args[0];
-                let todelete;
-                for (const role of this.colorroles) {
-                    if (role.name === name) {
-                        todelete = role;
-                    }
+            let todelete;
+            for (const role of this.colorroles) {
+                if (role.name === name) {
+                    todelete = role;
                 }
-                if (todelete) {
-                    let deleted = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
-                        return {
-                            title: `Delete${bool ? 'd' : ''} Role ${args[0]}`,
-                            description: `Vote down below. You need net 3 votes to delete this role.`,
-                            color: todelete.color
-                        };
-                    }, this.numvotes, 60 * 1000 * 2);
-                    if (deleted) {
-                        yield todelete.delete();
-                        yield this.cacheRoles();
-                    }
+            }
+            if (todelete) {
+                let deleted = yield Utilities_1.Utilities.sendEmoteCollector(channel, (bool) => {
+                    return {
+                        title: `Delete${bool ? 'd' : ''} Role ${name}`,
+                        description: `Vote down below. You need net 3 votes to delete this role.`,
+                        color: todelete.color
+                    };
+                }, this.numvotes, 60 * 1000 * 2);
+                if (deleted) {
+                    yield todelete.delete();
+                    yield this.cacheRoles();
                 }
+            }
+            else {
+                channel.send({
+                    embed: {
+                        description: "Role name could not be found! Capitalization matters.",
+                        color: 1111111
+                    }
+                });
             }
         });
     }
-    editRole(message, args) {
+    // Can't be bothered to fix
+    editRole(channel, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (args.length >= 3) {
                 let name = args[0];
@@ -207,7 +286,7 @@ class RoleManagerBot {
                     if (args[1] === "color") {
                         let accepted = `abcdef0123456789`;
                         if (args[2].startsWith("#") && [...args[2].slice(1)].every((char) => accepted.includes(char))) {
-                            let edited = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
+                            let edited = yield Utilities_1.Utilities.sendEmoteCollector(channel, (bool) => {
                                 return {
                                     title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s Color to ${args[2]}`,
                                     description: `Vote down below. You need net 3 votes to edit this role.`,
@@ -223,7 +302,7 @@ class RoleManagerBot {
                         }
                     }
                     else if (args[1] === "name") {
-                        let edited = yield Utilities_1.Utilities.sendEmoteCollector(message.channel, (bool) => {
+                        let edited = yield Utilities_1.Utilities.sendEmoteCollector(channel, (bool) => {
                             return {
                                 title: `Edit${bool ? 'ed' : ''} Role ${args[0]}'s name to ${args[2]}`,
                                 description: `Vote down below. You need net 3 votes to edit this role.`,
@@ -237,6 +316,22 @@ class RoleManagerBot {
                             yield this.cacheRoles();
                         }
                     }
+                    else {
+                        channel.send({
+                            embed: {
+                                description: "Invalid category! Must be 'color' or 'name'.",
+                                color: 1111111
+                            }
+                        });
+                    }
+                }
+                else {
+                    channel.send({
+                        embed: {
+                            description: "Role name could not be found! Capitalization matters.",
+                            color: 1111111
+                        }
+                    });
                 }
             }
         });
@@ -267,17 +362,17 @@ class RoleManagerBot {
             }
         });
     }
-    onRole(message) {
+    onRole(channel) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.approvedChannels.includes(message.channel.id))
-                return;
+            if (!this.approvedChannels.includes(channel.id))
+                return `Please run this command in a spam channel!`;
             let roleval = "";
             let counter = 0;
             for (const role of this.colorroles) {
                 counter++;
                 roleval += `${counter}: <@&${role.id}>\n`;
             }
-            yield message.channel.send({
+            return ({
                 embed: {
                     title: `Roles`,
                     description: [
