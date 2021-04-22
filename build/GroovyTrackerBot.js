@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TrackerBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
-const ProcessMessage_1 = require("./ProcessMessage");
 class TrackerBot {
     constructor(auth) {
         this.prefix = "--";
@@ -34,18 +33,28 @@ class TrackerBot {
                 },
             ]
         };
+        this.commands = [
+            {
+                name: "GroovySheet",
+                description: "Returns the Groovy Sheet",
+                available: (guild) => guild.id === "748669830244073533",
+                parameters: [],
+                callback: () => {
+                    return {
+                        embed: {
+                            description: `[Link to Groovy Sheet](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)`,
+                            color: 1111111
+                        }
+                    };
+                }
+            }
+        ];
     }
     available(message) {
         return message.guild.id === '748669830244073533';
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                if (result.command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                    this.sendSpreadsheets(message);
-                }
-            }
             if (message.author.bot && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
                 this.process(message);
             }
@@ -53,9 +62,9 @@ class TrackerBot {
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(`Groovy Tracker Bot constructing...`);
+            // console.log(`Groovy Tracker Bot constructing...`)
             yield this.sheetsUser.onConstruct();
-            console.log(`Groovy Tracker Bot complete.`);
+            // console.log(`Groovy Tracker Bot complete.`)
         });
     }
     readList() {
@@ -94,18 +103,6 @@ class TrackerBot {
                     (this.processPlayMessage(message.embeds[0].description));
                 }
             }
-        });
-    }
-    sendSpreadsheets(message) {
-        return __awaiter(this, void 0, void 0, function* () {
-            message.channel.send({
-                embed: Object.assign({ "title": "– Groovy Spreadsheet –", "description": "F Period Bio Gang Groovy", "fields": [
-                        {
-                            "name": "Our Groovy History",
-                            "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
-                        }
-                    ] }, Utilities_1.Utilities.embedInfo(message))
-            });
         });
     }
 }

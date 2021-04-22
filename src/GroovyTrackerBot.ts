@@ -1,8 +1,7 @@
 import { SheetsUser } from "./SheetsUser";
 import { Utilities } from "./Utilities";
 import * as Discord from "discord.js";
-import { Module } from "./Module";
-import { PROCESS } from "./ProcessMessage";
+import { Command, Module } from "./Module";
 
 export class TrackerBot implements Module {
     public name: "Groovy Tracker Bot";
@@ -12,6 +11,7 @@ export class TrackerBot implements Module {
     private prefix: string = "--";
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
     private approvedMusicServers = ["748669830244073533"];
+    public commands: Command[];
 
     constructor(auth){
 
@@ -34,6 +34,23 @@ export class TrackerBot implements Module {
                 },
             ]
         }
+
+        this.commands = [
+            {
+                name: "GroovySheet",
+                description: "Returns the Groovy Sheet",
+                available: (guild) => guild.id === "748669830244073533",
+                parameters: [],
+                callback: () => {
+                    return {
+                        embed: {
+                            description: `[Link to Groovy Sheet](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)`,
+                            color: 1111111
+                        }
+                    }
+                }
+            }
+        ]
     }
 
     available(message: Discord.Message): boolean {
@@ -41,22 +58,15 @@ export class TrackerBot implements Module {
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
-        const result = PROCESS(message);
-        if(result) {
-            if (result.command === "groovy" && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
-                this.sendSpreadsheets(message);
-            }
-        }
-
         if (message.author.bot && this.approvedMusicServers.indexOf(message.guild.id) !== -1) {
             this.process(message);
         }
     }
 
     async onConstruct(){
-        console.log(`Groovy Tracker Bot constructing...`)
+        // console.log(`Groovy Tracker Bot constructing...`)
         await this.sheetsUser.onConstruct();
-        console.log(`Groovy Tracker Bot complete.`)
+        // console.log(`Groovy Tracker Bot complete.`)
     }
 
     async readList() {
@@ -81,7 +91,7 @@ export class TrackerBot implements Module {
         
     }
     
-    async process(message) {
+    async process(message:Discord.Message) {
         if(message.embeds[0] && this.musicBots.indexOf( message.author.id ) !== -1){
             let prevmsg = await message.channel.messages.fetch({
                 limit: 2
@@ -98,20 +108,4 @@ export class TrackerBot implements Module {
         
     }
 
-    async sendSpreadsheets(message: Discord.Message){
-        message.channel.send({
-            embed: {
-                "title": "– Groovy Spreadsheet –",
-                "description": "F Period Bio Gang Groovy",
-                "fields": [
-                    {
-                        "name": "Our Groovy History",
-                        "value": "All of the Groovy songs played can be found here: [Link](https://docs.google.com/spreadsheets/d/17YiJDj9-IRnP_sPg3HJYocdaDkkFgMKfNC6IBDLSLqU/edit#gid=0)"
-                    }
-                ],
-                ...Utilities.embedInfo(message)
-            }
-            
-        });
-    }
 }
