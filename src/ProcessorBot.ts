@@ -30,7 +30,7 @@ import { PROCESS } from "./ProcessMessage";
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly littleActive = true;
+    private readonly littleActive = false;
     private readonly trackerActive = true;
     private readonly bdayActive = true;
     private readonly reactActive = true;
