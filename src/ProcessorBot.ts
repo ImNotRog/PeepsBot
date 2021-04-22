@@ -5,7 +5,7 @@
 
 import Discord = require("discord.js");
 
-import { LittleBot } from "./LittleBot";
+import { QuotesBot } from "./QuotesBot";
 import { TrackerBot } from "./GroovyTrackerBot";
 import { CalendarBot } from "./CalBot";
 import { ReactBot } from "./ReactBot";
@@ -14,11 +14,9 @@ import { RoleManagerBot } from "./RoleManager";
 import { ScremBot } from "./ScremBot";
 import { SynonymBot } from "./SynonymBot";
 import { ImageBot } from "./ImageBot";
-// import { SqualolBot } from "./SqualolBot";
 import { GeckoInVCBot } from "./GeckoInVC";
 import { EmoteBot } from "./EmoteBot";
 import { PianoManBot } from "./PianoManBot";
-// import { CipherBot } from "./CipherBot"
 import { HugBot } from "./HugBot";
 
 import { TestBot } from "./TestBot";
@@ -30,7 +28,7 @@ import { PROCESS } from "./ProcessMessage";
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly littleActive = false;
+    private readonly quotesActive = false;
     private readonly trackerActive = true;
     private readonly bdayActive = true;
     private readonly reactActive = true;
@@ -47,7 +45,7 @@ export class ProcessorBot {
     private readonly testActive = true;
     private readonly helpActive = true;
 
-    // private readonly littleActive = false;
+    // private readonly quotesActive = true;
     // private readonly trackerActive = false;
     // private readonly bdayActive = false;
     // private readonly reactActive = false;
@@ -75,7 +73,7 @@ export class ProcessorBot {
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
         this.modules = [];
-        if (this.littleActive) this.modules.push(new LittleBot(auth, client));
+        if (this.quotesActive) this.modules.push(new QuotesBot(auth, client));
         if (this.trackerActive) this.modules.push(new TrackerBot(auth));
         if (this.bdayActive) this.modules.push(new CalendarBot(auth, client));
         if (this.reactActive) this.modules.push(new ReactBot());
@@ -88,8 +86,6 @@ export class ProcessorBot {
         if (this.pianoManActive) this.modules.push(new PianoManBot(auth, client));
         if (this.hugActive) this.modules.push(new HugBot());
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
-        // if (this.squalolActive) this.modules.push(new SqualolBot());
-
 
         if (this.testActive) this.modules.push(new TestBot(auth, client));
         if (this.helpActive) this.modules.push(new HelpBot(this.modules, client));

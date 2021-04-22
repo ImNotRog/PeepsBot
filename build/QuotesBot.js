@@ -9,14 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LittleBot = void 0;
+exports.QuotesBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const ProcessMessage_1 = require("./ProcessMessage");
 const fs = require("fs");
-class LittleBot {
+class QuotesBot {
     constructor(auth, client) {
         this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"];
+        // private readonly littleservers = ["748669830244073533", "568220839590494209", "750066407093436509"];
         this.prefix = "--";
         let currmap = new Map();
         currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
@@ -41,11 +42,138 @@ class LittleBot {
                 }
             ]
         };
+        this.commands = [
+            {
+                name: "Quote",
+                description: "Returns a random quote from a teacher",
+                parameters: [
+                    {
+                        name: "Teacher",
+                        description: "The teacher to obtain a quote from",
+                        type: "string",
+                        required: true
+                    },
+                    {
+                        name: "Message",
+                        description: "A question to ask or a message to send",
+                        type: "string",
+                        required: false
+                    }
+                ],
+                available: () => true,
+                slashCallback: (invoke, channel, user, teacher, message) => {
+                    teacher = teacher.charAt(0).toUpperCase() + teacher.slice(1).toLowerCase();
+                    if (this.availableTeachers(channel.guild).includes(teacher)) {
+                        let q = this.randomQuote(teacher);
+                        if (q.length > 400) {
+                            q = q.slice(0, 400) + "... [quote truncated]";
+                        }
+                        if (message) {
+                            invoke(`Q: ${message}\n${teacher}: ${q}`);
+                        }
+                        else {
+                            invoke(`${teacher}: ${q}`);
+                        }
+                    }
+                    else {
+                        invoke({
+                            embed: {
+                                description: `Teacher ${teacher} not available. In the future, there will be functionality for each server to have their own quotes. However, for now, quotes access is restricted. Run /availablequotes to see available quotes.`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                },
+                regularCallback: (message, teacher, m) => {
+                    teacher = teacher.charAt(0).toUpperCase() + teacher.slice(1).toLowerCase();
+                    if (this.availableTeachers(message.guild).includes(teacher)) {
+                        let q = this.randomQuote(teacher);
+                        if (q.length > 400) {
+                            q = q.slice(0, 400) + "... [quote truncated]";
+                        }
+                        if (m) {
+                            message.channel.send(`Q: ${m}\n${teacher}: ${q}`, { allowedMentions: { parse: [] } });
+                        }
+                        else {
+                            message.channel.send(`${teacher}: ${q}`, { allowedMentions: { parse: [] } });
+                        }
+                        // message.channel.send(q, {allowedMentions: {parse: []}})
+                    }
+                    else {
+                        message.channel.send({
+                            embed: {
+                                description: `Teacher ${teacher} not available. In the future, there will be functionality for each server to have their own quotes. However, for now, quotes access is restricted. Run /availablequotes to see available quotes.`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                }
+            },
+            {
+                name: "AvailableQuotes",
+                description: "Gives the available quotes.",
+                parameters: [],
+                available: () => true,
+                slashCallback: (invoke, channel) => {
+                    invoke({
+                        embed: {
+                            description: `Here are the available people to obtain quotes from:  ${this.availableTeachers(channel.guild).join(", ")}. In the future, every server will be able to contribute and store their own quotes, but for now, peepsbot code is broken and functionality is limited.`,
+                            color: 1111111
+                        }
+                    });
+                },
+                regularCallback: (message) => {
+                    message.channel.send({
+                        embed: {
+                            description: `Here are the available people to obtain quotes from: ${this.availableTeachers(message.guild).join(", ")}. In the future, every server will be able to contribute and store their own quotes, but for now, peepsbot code is broken and functionality is limited.`,
+                            color: 1111111
+                        }
+                    });
+                }
+            },
+            this.teacherCommand("Little"),
+            this.teacherCommand("Kinyanjui"),
+        ];
         // console.log(this.processContent(`"Grrr" - Lemon Think`))
         // console.log(this.processContent(`"Grrr" - Mr.Little`))
     }
+    teacherCommand(teacher, available) {
+        return {
+            name: teacher,
+            description: `Returns a random ${teacher} quote.`,
+            parameters: [
+                {
+                    name: "Message",
+                    description: "A question to ask or a message to send",
+                    type: "string",
+                    required: false
+                }
+            ],
+            available: available ? available : (guild) => guild.id === "748669830244073533",
+            callback: (message) => {
+                let q = this.randomQuote(teacher);
+                if (q.length > 400) {
+                    q = q.slice(0, 400) + "... [quote truncated]";
+                }
+                if (message) {
+                    return `Q: ${message}\nA: ${q}`;
+                }
+                else {
+                    return q;
+                }
+            }
+        };
+    }
     available(message) {
         return true;
+    }
+    availableTeachers(guild) {
+        if (guild.id === "748669830244073533") {
+            return [...this.cache.keys()];
+        }
+        else {
+            return ["Little"];
+        }
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -187,4 +315,4 @@ class LittleBot {
         return "Uh oh, something went wrong.";
     }
 }
-exports.LittleBot = LittleBot;
+exports.QuotesBot = QuotesBot;

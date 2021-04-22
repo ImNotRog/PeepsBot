@@ -14,7 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProcessorBot = void 0;
 const Discord = require("discord.js");
-const LittleBot_1 = require("./LittleBot");
+const QuotesBot_1 = require("./QuotesBot");
 const GroovyTrackerBot_1 = require("./GroovyTrackerBot");
 const CalBot_1 = require("./CalBot");
 const ReactBot_1 = require("./ReactBot");
@@ -23,11 +23,9 @@ const RoleManager_1 = require("./RoleManager");
 const ScremBot_1 = require("./ScremBot");
 const SynonymBot_1 = require("./SynonymBot");
 const ImageBot_1 = require("./ImageBot");
-// import { SqualolBot } from "./SqualolBot";
 const GeckoInVC_1 = require("./GeckoInVC");
 const EmoteBot_1 = require("./EmoteBot");
 const PianoManBot_1 = require("./PianoManBot");
-// import { CipherBot } from "./CipherBot"
 const HugBot_1 = require("./HugBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
@@ -35,7 +33,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
 class ProcessorBot {
     constructor(auth, db, client, MW) {
         this.prefix = "--";
-        this.littleActive = false;
+        this.quotesActive = false;
         this.trackerActive = true;
         this.bdayActive = true;
         this.reactActive = true;
@@ -50,7 +48,7 @@ class ProcessorBot {
         this.hugActive = true;
         this.testActive = true;
         this.helpActive = true;
-        // private readonly littleActive = false;
+        // private readonly quotesActive = true;
         // private readonly trackerActive = false;
         // private readonly bdayActive = false;
         // private readonly reactActive = false;
@@ -67,8 +65,8 @@ class ProcessorBot {
         // private readonly helpActive = false;
         this.clearCommands = true;
         this.modules = [];
-        if (this.littleActive)
-            this.modules.push(new LittleBot_1.LittleBot(auth, client));
+        if (this.quotesActive)
+            this.modules.push(new QuotesBot_1.QuotesBot(auth, client));
         if (this.trackerActive)
             this.modules.push(new GroovyTrackerBot_1.TrackerBot(auth));
         if (this.bdayActive)
@@ -93,7 +91,6 @@ class ProcessorBot {
             this.modules.push(new HugBot_1.HugBot());
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
-        // if (this.squalolActive) this.modules.push(new SqualolBot());
         if (this.testActive)
             this.modules.push(new TestBot_1.TestBot(auth, client));
         if (this.helpActive)
