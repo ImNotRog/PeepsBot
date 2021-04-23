@@ -63,7 +63,7 @@ class ProcessorBot {
         // private readonly hugActive = false;
         // private readonly testActive = false;
         // private readonly helpActive = false;
-        this.clearCommands = false;
+        this.clearCommands = true;
         this.modules = [];
         if (this.quotesActive)
             this.modules.push(new QuotesBot_1.QuotesBot(auth, client));
