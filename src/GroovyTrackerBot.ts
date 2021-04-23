@@ -27,12 +27,7 @@ export class TrackerBot implements Module {
                 `Keeps track of all the Groovy songs we've ever played on the FPERBIO server exclusively.`,
                 `Why? Unsure, just because I feel like it.`
             ].join(` `),
-            fields: [
-                {
-                    name: `${this.prefix}groovy`,
-                    value: `Provides the Google spreadsheet where the data is stored.`
-                },
-            ]
+            fields: []
         }
 
         this.commands = [

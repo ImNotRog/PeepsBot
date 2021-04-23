@@ -35,10 +35,6 @@ export class QuotesBot implements Module {
             description: `A bot for keeping teacher quotes, often horribly out of context.`,
             fields: [
                 {
-                    name: `${this.prefix}[teacher name]`,
-                    value: `Spews out a random quote from that teacher.`
-                },
-                {
                     name: `How to Add Quotes`,
                     value: `In a designated channel specifically on select servers, you can enter a quote of the format: \n` +
                         `"[Quote Content]" - [Teacher Last Name Only, no Shenanigans]\n` + 

@@ -47,18 +47,6 @@ export class ImageBot implements Module {
             description: `A bot that archives images in certain channels, then adds them to Google Drive for storage.`,
             fields: [
                 {
-                    name: `${this.prefix}[category]`,
-                    value: `Enter the category, and it will send a randomly chosen image from that category. Any category name with spaces should have spaces replaced with "_"s.`
-                },
-                {
-                    name: `${this.prefix}imagecategories`,
-                    value: `Lists the categories.`
-                },
-                {
-                    name: `${this.prefix}merge [from category] [to category]`,
-                    value: `Merges two categories.`
-                },
-                {
                     name: `How to Add Images`,
                     value: `Whenever you post an image in one of the designated channels, it defaults to a certain category. ` +
                         `To override it, just enter the category name as the image caption when uploading. \n\n` +

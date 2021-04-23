@@ -27,18 +27,10 @@ class SynonymBot {
             title: `Help - Synonym Bot`,
             description: `Sends synonyms of specific sentences.`,
             fields: [
-                {
-                    name: `${this.prefix}bread`,
-                    value: `Sends a synonym version of "Good morning epic gamers let's get the bread".`
-                },
-                {
-                    name: `${this.prefix}wfbo`,
-                    value: `Sends a synonym version of "Weird flex but ok".`
-                },
-                {
-                    name: `Why Don't You Add More?`,
-                    value: `API limits.`
-                },
+            // {
+            //     name: `Why Don't You Add More?`,
+            //     value: `API limits.`
+            // },
             ]
         };
         this.commands = [

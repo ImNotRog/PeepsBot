@@ -30,18 +30,7 @@ export class NameChangerBot implements Module {
                 `There's an editable spreadsheet that keeps track of the themes.`
             ].join(` `),
             fields: [
-                {
-                    name: `${this.prefix}rename [theme name]`,
-                    value: `Changes the theme of the server to the theme name, which is case sensitive. It basically changes all the channel names.`
-                },
-                {
-                    name: `${this.prefix}themesheet`,
-                    value: `Provides the link to the spreadsheet where themes are kept. You can even add your own!`
-                },
-                {
-                    name: `${this.prefix}themes`,
-                    value: `Gives a quick list of all the themes.`
-                },
+                
             ]
         }
 
