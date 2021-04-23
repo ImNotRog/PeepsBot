@@ -318,38 +318,40 @@ export class Utilities {
         
     }
 
-    public static async sendCarousel(origmessage: Discord.Message, embeds: { embed: object; }[]) {
+    public static async dmCarousel(user: Discord.User, embeds: { embed: object; }[]) {
 
         // Remap embeds
         embeds = embeds.map( (e) => {
             if(e.embed) {
                 return { 
                     ...e,
-                    ...Utilities.embedInfo(origmessage)
+                    // ...Utilities.embedInfo(origmessage)
+                    color: 1111111
                 };
             } else {
                 return {
                     embed: {
                         ...e,
-                        ...Utilities.embedInfo(origmessage)
+                        color: 1111111
+                        // ...Utilities.embedInfo(origmessage)
                     }
                 }
             }
         })
 
-        const message = await origmessage.channel.send(embeds[0]);
+        const message = await user.dmChannel.send(embeds[0]);
         // ⬅️ ❌ ➡️
-        await message.react("⬅️")
-        await message.react("❌")
-        await message.react("➡️")
+        message.react("⬅️")
+        message.react("❌")
+        message.react("➡️")
 
-        Utilities.carouselPage(message, embeds, 0, origmessage);
+        Utilities.carouselPage(message, embeds, 0, user);
     }
 
-    public static async carouselPage(message: Discord.Message, embeds: { embed: object; }[], curr: number, origmessage: Discord.Message) {
+    public static async carouselPage(message: Discord.Message, embeds: { embed: object; }[], curr: number, user: Discord.User) {
 
         const filter = (reaction, user) => {
-            return ['❌','⬅️','➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+            return ['❌','⬅️','➡️'].includes(reaction.emoji.name) && user.id === user.id;
         };
 
         let collected;
@@ -365,7 +367,7 @@ export class Utilities {
         }
         const reaction = collected.first();
 
-        await reaction.users.remove(origmessage.author.id);
+        await reaction.users.remove(user.id);
         
         if(reaction.emoji.name === '❌') {
             await message.delete();
@@ -376,14 +378,14 @@ export class Utilities {
                 curr += embeds.length;
             }
             await message.edit(embeds[curr]);
-            this.carouselPage(message, embeds, curr, origmessage);
+            this.carouselPage(message, embeds, curr, user);
         } else if(reaction.emoji.name === '➡️') {
             curr++;
             while(curr >= embeds.length) {
                 curr -= embeds.length;
             }
             await message.edit(embeds[curr]);
-            this.carouselPage(message, embeds, curr, origmessage);
+            this.carouselPage(message, embeds, curr, user);
         }
 
     }

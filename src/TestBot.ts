@@ -62,7 +62,7 @@ export class TestBot implements Module {
                     // return "No.";
                 },
                 available: (guild) => {
-                    return guild.id === "832413831845249075"
+                    return guild && guild.id === "832413831845249075"
                 }
             },
             /*{
@@ -117,7 +117,7 @@ export class TestBot implements Module {
         ]
     }
     
-    available(message: Discord.Message): boolean {
+    available(guild: Discord.Guild): boolean {
         return false;
     }
 

@@ -1,6 +1,7 @@
 import * as Discord from "discord.js";
-import { Module } from "./Module";
+import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
+import { ProcessorBot } from "./ProcessorBot";
 import { Utilities } from "./Utilities"
 
 export class HelpBot implements Module {
@@ -10,12 +11,15 @@ export class HelpBot implements Module {
     private readonly prefix = "--";
 
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
-    private modules: Module[];
+    // private modules: Module[];
     private client: Discord.Client;
+    public parent: ProcessorBot;
 
-    constructor(modules: Module[], client:Discord.Client) {
+    public commands: Command[];
+
+    constructor(client:Discord.Client) {
         this.client = client;
-        this.modules = modules.map(a => a);
+        // this.modules = modules.map(a => a);
 
         this.helpEmbed = {
             title: `Help - General`,
@@ -27,7 +31,6 @@ export class HelpBot implements Module {
             ].join(` `),
             fields: []
         }
-
 
         this.helpTechnicalEmbed = {
             title: `Help - Details for Nerds`,
@@ -56,40 +59,93 @@ export class HelpBot implements Module {
                 },
             ]
         }
+
+        this.commands = [
+            {
+                name: "Help",
+                description: "AAAAAAAAAAAA",
+                available: () => true,
+                parameters: [
+                    {
+                        name: "Command",
+                        description: "Command to get detailed help on.",
+                        required: false,
+                        type: "string"
+                    }
+                ],
+                slashCallback: (invoke, channel, user) => {
+                    this.DMCarousel(user, channel.guild);
+                    invoke("Help is on its way.");
+                    // user.dmChannel.send()
+                },
+                regularCallback: (message) => {
+                    this.DMCarousel(message.author, message.guild);
+                    message.channel.send("Help is on its way.");
+                }
+            }
+        ]
     }
     
     async onMessage(message: Discord.Message): Promise<void> {
-
+        if(message.author.bot) return;
         if (message.content.includes("<@!750573267026182185>")) {
             message.channel.send({
                 embed: {
-                    title: '🏓',
-                    description: `Use ${this.prefix}help for help.`,
+                    description: `Use /help for help.`,
                     fields: [
                         {
                             name: 'Latency',
                             value: `${Date.now() - message.createdTimestamp}ms`
                         }
                     ],
-                    ...Utilities.embedInfo(message)
+                    // ...Utilities.embedInfo(message)
+                    color: 1111111
                 }
             })
         }
 
-        const result = PROCESS(message);
-        if(result && result.command === 'help') {
-            let embeds = [];
-            embeds.push(this.helpEmbed);
-            for (let i = 0; i < this.modules.length; i++) {
-                const module = this.modules[i];
-                if(module.available(message) && module.helpEmbed) {
-                    embeds.push(module.helpEmbed);
-                }
-            }
-            embeds.push(this.helpTechnicalEmbed);
-            await Utilities.sendCarousel(message, embeds);
-        }
+        // const result = PROCESS(message);
+        // if(result && result.command === 'help') {
+        //     let embeds = [];
+        //     embeds.push(this.helpEmbed);
+        //     for (let i = 0; i < this.modules.length; i++) {
+        //         const module = this.modules[i];
+        //         if(module.available(message) && module.helpEmbed) {
+        //             embeds.push(module.helpEmbed);
+        //         }
+        //     }
+        //     embeds.push(this.helpTechnicalEmbed);
+        //     await Utilities.sendCarousel(message, embeds);
+        // }
 
+    }
+
+    async DMCarousel(user:Discord.User, guild: Discord.Guild) {
+        let embeds = [];
+        // embeds.push(this.helpEmbed);
+
+        // console.log(guild.id);
+        for(let i = 0; i < this.parent.modules.length; i++) {
+            const module = this.parent.modules[i];
+            if(module.available(guild) && module.helpEmbed) {
+                embeds.push({
+                    ...module.helpEmbed,
+                    // fields: [...module.helpEmbed.fields]
+                })
+            }
+        }
+        // for (let i = 0; i < this.modules.length; i++) {
+            // const module = this.modules[i];
+            // if(module.available(message) && module.helpEmbed) {
+            //     embeds.push(module.helpEmbed);
+            // }
+        // }
+        // embeds.push(this.helpTechnicalEmbed);
+        // if(user.dmChannel == null) {
+        //     await user.createDM();
+        // }
+        // await Utilities.dmCarousel(user, embeds);
+        
     }
 
     async onConstruct(): Promise<void> {
@@ -104,7 +160,7 @@ export class HelpBot implements Module {
 
     }
 
-    available(message: Discord.Message): boolean {
+    available(): boolean {
         return true;
     }
 

@@ -286,31 +286,33 @@ class Utilities {
             }
         });
     }
-    static sendCarousel(origmessage, embeds) {
+    static dmCarousel(user, embeds) {
         return __awaiter(this, void 0, void 0, function* () {
             // Remap embeds
             embeds = embeds.map((e) => {
                 if (e.embed) {
-                    return Object.assign(Object.assign({}, e), Utilities.embedInfo(origmessage));
+                    return Object.assign(Object.assign({}, e), { 
+                        // ...Utilities.embedInfo(origmessage)
+                        color: 1111111 });
                 }
                 else {
                     return {
-                        embed: Object.assign(Object.assign({}, e), Utilities.embedInfo(origmessage))
+                        embed: Object.assign(Object.assign({}, e), { color: 1111111 })
                     };
                 }
             });
-            const message = yield origmessage.channel.send(embeds[0]);
+            const message = yield user.dmChannel.send(embeds[0]);
             // ⬅️ ❌ ➡️
-            yield message.react("⬅️");
-            yield message.react("❌");
-            yield message.react("➡️");
-            Utilities.carouselPage(message, embeds, 0, origmessage);
+            message.react("⬅️");
+            message.react("❌");
+            message.react("➡️");
+            Utilities.carouselPage(message, embeds, 0, user);
         });
     }
-    static carouselPage(message, embeds, curr, origmessage) {
+    static carouselPage(message, embeds, curr, user) {
         return __awaiter(this, void 0, void 0, function* () {
             const filter = (reaction, user) => {
-                return ['❌', '⬅️', '➡️'].includes(reaction.emoji.name) && user.id === origmessage.author.id;
+                return ['❌', '⬅️', '➡️'].includes(reaction.emoji.name) && user.id === user.id;
             };
             let collected;
             try {
@@ -325,7 +327,7 @@ class Utilities {
                 return false;
             }
             const reaction = collected.first();
-            yield reaction.users.remove(origmessage.author.id);
+            yield reaction.users.remove(user.id);
             if (reaction.emoji.name === '❌') {
                 yield message.delete();
                 return true;
@@ -336,7 +338,7 @@ class Utilities {
                     curr += embeds.length;
                 }
                 yield message.edit(embeds[curr]);
-                this.carouselPage(message, embeds, curr, origmessage);
+                this.carouselPage(message, embeds, curr, user);
             }
             else if (reaction.emoji.name === '➡️') {
                 curr++;
@@ -344,7 +346,7 @@ class Utilities {
                     curr -= embeds.length;
                 }
                 yield message.edit(embeds[curr]);
-                this.carouselPage(message, embeds, curr, origmessage);
+                this.carouselPage(message, embeds, curr, user);
             }
         });
     }

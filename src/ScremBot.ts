@@ -34,7 +34,7 @@ export class ScremBot implements Module {
         }
     }
 
-    available(message: Discord.Message): boolean {
+    available(guild: Discord.Guild): boolean {
         return true;
     }
 

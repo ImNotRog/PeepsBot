@@ -90,8 +90,8 @@ class HugBot {
             // }
         });
     }
-    available(message) {
-        return message.guild.id === `748669830244073533`;
+    available(guild) {
+        return guild && guild.id === `748669830244073533`;
     }
 }
 exports.HugBot = HugBot;

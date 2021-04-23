@@ -100,8 +100,8 @@ export class EmoteBot implements Module {
         
     }
 
-    available(message: Message): boolean {
-        return message.guild.id === '748669830244073533';
+    available(guild): boolean {
+        return guild && guild.id === '748669830244073533';
     }
 
     toArray() {

@@ -61,7 +61,7 @@ class SynonymBot {
             }
         ];
     }
-    available(message) {
+    available(guild) {
         return true;
     }
     onConstruct() {

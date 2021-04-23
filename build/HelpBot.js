@@ -10,13 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HelpBot = void 0;
-const ProcessMessage_1 = require("./ProcessMessage");
-const Utilities_1 = require("./Utilities");
 class HelpBot {
-    constructor(modules, client) {
+    constructor(client) {
         this.prefix = "--";
         this.client = client;
-        this.modules = modules.map(a => a);
+        // this.modules = modules.map(a => a);
         this.helpEmbed = {
             title: `Help - General`,
             description: [
@@ -54,32 +52,87 @@ class HelpBot {
                 },
             ]
         };
+        this.commands = [
+            {
+                name: "Help",
+                description: "AAAAAAAAAAAA",
+                available: () => true,
+                parameters: [
+                    {
+                        name: "Command",
+                        description: "Command to get detailed help on.",
+                        required: false,
+                        type: "string"
+                    }
+                ],
+                slashCallback: (invoke, channel, user) => {
+                    this.DMCarousel(user, channel.guild);
+                    invoke("Help is on its way.");
+                    // user.dmChannel.send()
+                },
+                regularCallback: (message) => {
+                    this.DMCarousel(message.author, message.guild);
+                    message.channel.send("Help is on its way.");
+                }
+            }
+        ];
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (message.author.bot)
+                return;
             if (message.content.includes("<@!750573267026182185>")) {
                 message.channel.send({
-                    embed: Object.assign({ title: '🏓', description: `Use ${this.prefix}help for help.`, fields: [
+                    embed: {
+                        description: `Use /help for help.`,
+                        fields: [
                             {
                                 name: 'Latency',
                                 value: `${Date.now() - message.createdTimestamp}ms`
                             }
-                        ] }, Utilities_1.Utilities.embedInfo(message))
+                        ],
+                        // ...Utilities.embedInfo(message)
+                        color: 1111111
+                    }
                 });
             }
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result && result.command === 'help') {
-                let embeds = [];
-                embeds.push(this.helpEmbed);
-                for (let i = 0; i < this.modules.length; i++) {
-                    const module = this.modules[i];
-                    if (module.available(message) && module.helpEmbed) {
-                        embeds.push(module.helpEmbed);
-                    }
+            // const result = PROCESS(message);
+            // if(result && result.command === 'help') {
+            //     let embeds = [];
+            //     embeds.push(this.helpEmbed);
+            //     for (let i = 0; i < this.modules.length; i++) {
+            //         const module = this.modules[i];
+            //         if(module.available(message) && module.helpEmbed) {
+            //             embeds.push(module.helpEmbed);
+            //         }
+            //     }
+            //     embeds.push(this.helpTechnicalEmbed);
+            //     await Utilities.sendCarousel(message, embeds);
+            // }
+        });
+    }
+    DMCarousel(user, guild) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let embeds = [];
+            // embeds.push(this.helpEmbed);
+            // console.log(guild.id);
+            for (let i = 0; i < this.parent.modules.length; i++) {
+                const module = this.parent.modules[i];
+                if (module.available(guild) && module.helpEmbed) {
+                    embeds.push(Object.assign({}, module.helpEmbed));
                 }
-                embeds.push(this.helpTechnicalEmbed);
-                yield Utilities_1.Utilities.sendCarousel(message, embeds);
             }
+            // for (let i = 0; i < this.modules.length; i++) {
+            // const module = this.modules[i];
+            // if(module.available(message) && module.helpEmbed) {
+            //     embeds.push(module.helpEmbed);
+            // }
+            // }
+            // embeds.push(this.helpTechnicalEmbed);
+            // if(user.dmChannel == null) {
+            //     await user.createDM();
+            // }
+            // await Utilities.dmCarousel(user, embeds);
         });
     }
     onConstruct() {
@@ -93,7 +146,7 @@ class HelpBot {
             });
         });
     }
-    available(message) {
+    available() {
         return true;
     }
 }

@@ -69,8 +69,8 @@ export class ImageBot implements Module {
         }
     }
 
-    available(message: Discord.Message): boolean {
-        return message.guild.id === '748669830244073533';
+    available(guild: Discord.Guild): boolean {
+        return guild && guild.id === '748669830244073533';
     }
 
     private categoryCommand(name:string, category: string, available?: (guild: Discord.Guild) => boolean): Command {

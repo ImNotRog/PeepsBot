@@ -80,8 +80,8 @@ export class PianoManBot implements Module {
         }
     }
 
-    available(message:Discord.Message) {
-        return message.guild.id === "748669830244073533";
+    available(guild: Discord.Guild) {
+        return guild && guild.id === "748669830244073533";
     }
 
     async sing(channel:Discord.Channel, lines: string[], message?: string) {

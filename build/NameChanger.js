@@ -13,7 +13,6 @@ exports.NameChangerBot = void 0;
 const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 const moment = require("moment");
-const ProcessMessage_1 = require("./ProcessMessage");
 class NameChangerBot {
     constructor(auth, client) {
         this.prefix = `--`;
@@ -133,17 +132,11 @@ class NameChangerBot {
             }
         ];
     }
-    available(message) {
-        return message.guild.id === '748669830244073533';
+    available(guild) {
+        return guild && guild.id === '748669830244073533';
     }
     onMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                // if (result.command === "rename") {
-                //     this.onChange(message, result.args);
-                // }
-            }
         });
     }
     /**

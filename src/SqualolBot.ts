@@ -99,8 +99,8 @@ export class SqualolBot implements Module {
         // fs.writeFileSync('./temp/assignmentslist.json', JSON.stringify( await (await SchoologyAccessor.get('/sections/2772305484/assignments?limit=1000')).json()) );
     }
 
-    available(message: Discord.Message): boolean {
-        return message.guild.id === '748669830244073533';
+    available(guild: Discord.Guild): boolean {
+        return guild && guild.id === '748669830244073533';
     }
 
     helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };

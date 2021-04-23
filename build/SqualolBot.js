@@ -80,8 +80,8 @@ class SqualolBot {
             // fs.writeFileSync('./temp/assignmentslist.json', JSON.stringify( await (await SchoologyAccessor.get('/sections/2772305484/assignments?limit=1000')).json()) );
         });
     }
-    available(message) {
-        return message.guild.id === '748669830244073533';
+    available(guild) {
+        return guild && guild.id === '748669830244073533';
     }
 }
 exports.SqualolBot = SqualolBot;

@@ -60,8 +60,8 @@ class ImageBot {
             ]
         };
     }
-    available(message) {
-        return message.guild.id === '748669830244073533';
+    available(guild) {
+        return guild && guild.id === '748669830244073533';
     }
     categoryCommand(name, category, available) {
         return {

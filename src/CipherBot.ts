@@ -52,7 +52,7 @@ export class CipherBot implements Module {
     }
 
 
-    available(message: Message): boolean {
+    available(): boolean {
         return true;
     }
 

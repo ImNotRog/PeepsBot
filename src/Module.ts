@@ -8,7 +8,7 @@ export interface Module {
     onMessage?(message: Discord.Message): Promise<void>;
     onReaction?(reaction: Discord.MessageReaction, user: Discord.User): Promise<void>;
     onConstruct?(): Promise<void>;
-    available?(message: Discord.Message): boolean;
+    available?(guild?: Discord.Guild): boolean;
     helpEmbed?: { title: string; description: string; fields: { name: string; value: string; }[]; };
     parent?: ProcessorBot;
 }

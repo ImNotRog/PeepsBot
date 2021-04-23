@@ -38,7 +38,7 @@ class ScremBot {
             ]
         };
     }
-    available(message) {
+    available(guild) {
         return true;
     }
     onMessage(message) {

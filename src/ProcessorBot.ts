@@ -28,44 +28,44 @@ import { PROCESS } from "./ProcessMessage";
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly quotesActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly geckoInVCActive = true;
-    private readonly imageActive = true;
-    private readonly emojiActive = true;
-    private readonly pianoManActive = true;
-    private readonly hugActive = true;
+    // private readonly quotesActive = true;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly geckoInVCActive = true;
+    // private readonly imageActive = true;
+    // private readonly emojiActive = true;
+    // private readonly pianoManActive = true;
+    // private readonly hugActive = true;
 
-    private readonly testActive = true;
+    // private readonly testActive = true;
+    // private readonly helpActive = true;
+
+    private readonly quotesActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = true;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly geckoInVCActive = false;
+    private readonly imageActive = false;
+    private readonly emojiActive = false;
+    private readonly pianoManActive = false;
+    private readonly hugActive = false;
+
+    private readonly testActive = false;
     private readonly helpActive = true;
 
-    // private readonly quotesActive = false;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = true;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly emojiActive = false;
-    // private readonly pianoManActive = false;
-    // private readonly hugActive = false;
+    private readonly clearCommands = false;
 
-    // private readonly testActive = false;
-    // private readonly helpActive = false;
-
-    private readonly clearCommands = true;
-
-    private modules: Module[];
-    private commands: Command[];
+    public modules: Module[];
+    public commands: Command[];
     private mountedCommands: MountedCommand[];
 
     private client: Discord.Client;
@@ -88,7 +88,7 @@ export class ProcessorBot {
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
 
         if (this.testActive) this.modules.push(new TestBot(auth, client));
-        if (this.helpActive) this.modules.push(new HelpBot(this.modules, client));
+        if (this.helpActive) this.modules.push(new HelpBot(client));
 
         this.client = client;
 
@@ -305,7 +305,7 @@ export class ProcessorBot {
     async onMessage(message: Discord.Message) {
         
         for (const mod of this.modules) {
-            if(!mod.available || !mod.available(message)) continue;
+            if(!mod.available || !mod.available(message.guild)) continue;
             if(mod.onMessage) {
                 try {
                     await mod.onMessage(message);
@@ -375,7 +375,7 @@ export class ProcessorBot {
     async onReaction(reaction: Discord.MessageReaction, user: Discord.User) {
 
         for (const mod of this.modules) {
-            if (!mod.available || !mod.available(reaction.message)) continue;
+            if (!mod.available || !mod.available(reaction.message.guild)) continue;
             if (mod.onReaction) {
                 try {
                     await mod.onReaction(reaction,user);

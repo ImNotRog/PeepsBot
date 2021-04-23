@@ -63,7 +63,7 @@ class CipherBot {
             }
         });
     }
-    available(message) {
+    available() {
         return true;
     }
     CharToNumber(char) {

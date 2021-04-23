@@ -79,8 +79,8 @@ class PianoManBot {
             }
         });
     }
-    available(message) {
-        return message.guild.id === "748669830244073533";
+    available(guild) {
+        return guild && guild.id === "748669830244073533";
     }
     sing(channel, lines, message) {
         return __awaiter(this, void 0, void 0, function* () {

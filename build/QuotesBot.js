@@ -164,7 +164,7 @@ class QuotesBot {
             }
         };
     }
-    available(message) {
+    available(guild) {
         return true;
     }
     availableTeachers(guild) {

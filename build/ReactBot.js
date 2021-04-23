@@ -58,7 +58,7 @@ class ReactBot {
             }
         ];
     }
-    available(message) {
+    available(guild) {
         return true;
     }
     onConstruct() {

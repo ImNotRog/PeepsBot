@@ -56,7 +56,7 @@ class TestBot {
                     // return "No.";
                 },
                 available: (guild) => {
-                    return guild.id === "832413831845249075";
+                    return guild && guild.id === "832413831845249075";
                 }
             },
             /*{
@@ -110,7 +110,7 @@ class TestBot {
             } */
         ];
     }
-    available(message) {
+    available(guild) {
         return false;
     }
     onMessage(message) {
