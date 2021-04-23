@@ -38,24 +38,7 @@ class RoleManagerBot {
             description: [
                 `Roles Bot helps manage the roles of the FPERBIO server.`,
             ].join(` `),
-            fields: [
-                {
-                    name: `${this.prefix}addrole [role name] [role color, in hexcode]`,
-                    value: `Adds the role when 3 votes are reached. Will be ignored if the role color is not hexcode, e.g. #ff0000.`
-                },
-                {
-                    name: `${this.prefix}deleterole [role name]`,
-                    value: `Deletes the role when 3 votes are reached. Role names are case sensitive.`
-                },
-                {
-                    name: `${this.prefix}editrole [role name] color [role color, in hexcode]`,
-                    value: `Edits the role's color. Again, must be in hexcode, e.g. #ff0000`
-                },
-                {
-                    name: `${this.prefix}editrole [role name] name [new role name]`,
-                    value: `Edits the role's name.`
-                },
-            ]
+            fields: []
         };
         this.commands = [
             {
@@ -72,7 +55,7 @@ class RoleManagerBot {
             },
             {
                 name: "CacheRoles",
-                description: "Obtain cool and hip gamer roles on the FPBG server",
+                description: "Caches the roles (for developer purposes).",
                 available: (guild) => guild.id === this.fperbio,
                 parameters: [],
                 textOnly: true,

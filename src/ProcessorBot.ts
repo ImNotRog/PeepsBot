@@ -364,7 +364,7 @@ export class ProcessorBot {
                 } else {
                     await message.channel.send({
                         embed: {
-                            description: `Invalid Arguments to command ${c.name}. It accepts parameters of the form: \n${this.prefix}${c.name} ${c.parameters.map(param => param.required ? `[**${param.name}**]` : `[Optional: **${param.name}]`).join(' ')}`,
+                            description: `Invalid Arguments to command ${c.name}. It accepts parameters of the form: \n${this.prefix}${c.name} ${c.parameters.map(param => param.required ? `[**${param.name}**]` : `[Optional: **${param.name}**]`).join(' ')}`,
                             color: 1111111
                         }
                     })
