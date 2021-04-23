@@ -179,8 +179,9 @@ class HelpBot {
                     }
                     else {
                         // @TODO 
-                        let availableModuleCommands = availableModules[num - 2].commands.filter(command => command.available && command.available(guild));
-                        let embed = availableModules[num - 2].helpEmbed;
+                        let module = availableModules[num - 2];
+                        let availableModuleCommands = module.commands ? module.commands.filter(command => command.available && command.available(guild)) : [];
+                        let embed = module.helpEmbed;
                         yield user.send({
                             embed: Object.assign(Object.assign({}, embed), { fields: [
                                     ...embed.fields,

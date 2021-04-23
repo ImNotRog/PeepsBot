@@ -203,8 +203,9 @@ export class HelpBot implements Module {
                     })
                 } else {
                     // @TODO 
-                    let availableModuleCommands = availableModules[num - 2].commands.filter(command => command.available && command.available(guild));
-                    let embed = availableModules[num - 2].helpEmbed;
+                    let module = availableModules[num - 2];
+                    let availableModuleCommands = module.commands ? module.commands.filter(command => command.available && command.available(guild)) : [];
+                    let embed = module.helpEmbed;
                     await user.send({
                         embed: {
                             ...embed,
