@@ -14,6 +14,7 @@ const SheetsUser_1 = require("./SheetsUser");
 const Utilities_1 = require("./Utilities");
 class TrackerBot {
     constructor(auth) {
+        this.name = "Groovy Tracker Bot";
         this.prefix = "--";
         this.approvedMusicServers = ["748669830244073533"];
         let currmap = new Map();

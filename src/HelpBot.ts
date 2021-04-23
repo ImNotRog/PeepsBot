@@ -5,12 +5,13 @@ import { ProcessorBot } from "./ProcessorBot";
 import { Utilities } from "./Utilities"
 
 export class HelpBot implements Module {
-    public name: "Help Bot";
+    public name = "Help Bot";
 
     public helpTechnicalEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
     private readonly prefix = "--";
 
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
+    // public entryEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
     // private modules: Module[];
     private client: Discord.Client;
     public parent: ProcessorBot;
@@ -24,12 +25,14 @@ export class HelpBot implements Module {
         this.helpEmbed = {
             title: `Help - General`,
             description: [
-                `This is a very long help section, much like the girthy substance of a complete TRG.`,
-                `I do a lot of things, from quotes to alerts. You can use those arrows down there to scroll around,`,
-                `which I don't think I really have to say, but the brick to human ratio is surprisingly high.`,
-                `Alright, go read and exercise that 3 second attention span. GLHF`
+                `Send the numbers of any modules you would like the commands for, like 1, or 2.`,
+                `Moreover, you can type any command name to obtain more detailed information about it.`,
+                `Finally, once you are done, remember to type "end", so that other modules can use DMs.`
             ].join(` `),
-            fields: []
+            fields: [{
+                name: "Commands",
+                value: `# - Type in any number for module help\n[Some Command Name] - Get help on a specific command\nend - end the session`
+            }]
         }
 
         this.helpTechnicalEmbed = {
@@ -74,12 +77,12 @@ export class HelpBot implements Module {
                     }
                 ],
                 slashCallback: (invoke, channel, user) => {
-                    this.DMCarousel(user, channel.guild);
+                    this.DMHelp(user, channel.guild);
                     invoke("Help is on its way.");
                     // user.dmChannel.send()
                 },
                 regularCallback: (message) => {
-                    this.DMCarousel(message.author, message.guild);
+                    this.DMHelp(message.author, message.guild);
                     message.channel.send("Help is on its way.");
                 }
             }
@@ -120,20 +123,51 @@ export class HelpBot implements Module {
 
     }
 
-    async DMCarousel(user:Discord.User, guild: Discord.Guild) {
-        let embeds = [];
+    async DMHelp(user:Discord.User, guild: Discord.Guild) {
+
+        if(this.parent.DMSessions.has(user.id)) {
+            user.dmChannel.send({
+                embed: {
+                    description: `The module ${this.parent.DMSessions.get(user.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
+                    color: 1111111
+                }
+            })
+            return;
+        }
+
+        this.parent.DMSessions.set(user.id, this.name);
+
+        let availableModules = this.parent.modules.filter(module => module.available && module.available(guild) && module.helpEmbed);
+
+        if (user.dmChannel == null) {
+            await user.createDM();
+        }
+        user.dmChannel.send({
+            embed: {
+                ...this.helpEmbed,
+                fields: [...this.helpEmbed.fields, {
+                    name: "Modules",
+                    value: `${availableModules.map((m,i) => {
+                        return `${i+1}: ${m.name}`
+                    }).join('\n')}`
+                }],
+                color: 1111111
+            }
+        })
+
+        // let embeds = [];
         // embeds.push(this.helpEmbed);
 
         // console.log(guild.id);
-        for(let i = 0; i < this.parent.modules.length; i++) {
-            const module = this.parent.modules[i];
-            if(module.available(guild) && module.helpEmbed) {
-                embeds.push({
-                    ...module.helpEmbed,
-                    // fields: [...module.helpEmbed.fields]
-                })
-            }
-        }
+        // for(let i = 0; i < this.parent.modules.length; i++) {
+        //     const module = this.parent.modules[i];
+        //     if(module.available(guild) && module.helpEmbed) {
+        //         embeds.push({
+        //             ...module.helpEmbed,
+        //             // fields: [...module.helpEmbed.fields]
+        //         })
+        //     }
+        // }
         // for (let i = 0; i < this.modules.length; i++) {
             // const module = this.modules[i];
             // if(module.available(message) && module.helpEmbed) {

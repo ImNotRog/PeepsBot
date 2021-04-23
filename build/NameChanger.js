@@ -15,6 +15,7 @@ const Utilities_1 = require("./Utilities");
 const moment = require("moment");
 class NameChangerBot {
     constructor(auth, client) {
+        this.name = "Theme Bot";
         this.prefix = `--`;
         let currmap = new Map();
         currmap.set("names", "1-eQTzUas98d4PdHcJBEJBJnfVib0Aa-1hs6fQuJZmB4");

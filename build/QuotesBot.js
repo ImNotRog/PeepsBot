@@ -16,6 +16,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
 const fs = require("fs");
 class QuotesBot {
     constructor(auth, client) {
+        this.name = "Quotes Bot";
         this.collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"];
         // private readonly littleservers = ["748669830244073533", "568220839590494209", "750066407093436509"];
         this.prefix = "--";

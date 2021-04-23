@@ -22,6 +22,7 @@ const https = require("https");
  */
 class ImageBot {
     constructor(auth, client) {
+        this.name = "Image Bot";
         this.prefix = "--";
         this.imagesFolder = '1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2';
         this.imagesSheet = '17iYieSC2zDKpxgSPqhk6fcJZQjVBvJFE5S5KS1IcON8';

@@ -16,6 +16,7 @@ const cron = require("node-cron");
 const famous = require("./data/famous-people.json");
 class SynonymBot {
     constructor(MW, client) {
+        this.name = "Synonym Bot";
         this.prefix = '--';
         this.apikey = MW;
         this.cache = new Map();

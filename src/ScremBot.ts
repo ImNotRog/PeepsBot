@@ -3,7 +3,7 @@ import { Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class ScremBot implements Module {
-    public name: "Screm Bot";
+    public name = "Screm Bot";
 
     private readonly prefix = '--';
     private readonly chars: string[] = ["a", "A"];

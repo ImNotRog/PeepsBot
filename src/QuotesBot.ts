@@ -5,7 +5,7 @@ import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 import * as fs from "fs";
 export class QuotesBot implements Module {
-    public name: "Quotes Bot";
+    public name = "Quotes Bot";
 
     private sheetsUser: SheetsUser;
     private client: Discord.Client;

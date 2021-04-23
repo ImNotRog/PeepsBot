@@ -14,6 +14,7 @@ const Discord = require("discord.js");
 const Utilities_1 = require("./Utilities");
 class RoleManagerBot {
     constructor(client) {
+        this.name = "Role Manager Bot";
         this.approvedChannels = ["750804960333135914", "748670606085587060"];
         this.fperbio = "748669830244073533";
         this.entrancechannel = "750186607352479755";

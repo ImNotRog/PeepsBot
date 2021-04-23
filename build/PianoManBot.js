@@ -17,6 +17,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
 const SheetsUser_1 = require("./SheetsUser");
 class PianoManBot {
     constructor(auth, client) {
+        this.name = "Piano Man Bot";
         this.pianoManChannel = '748669830244073536';
         this.spam = ['748670606085587060', '750804960333135914', '755528072597471243'];
         this.client = client;

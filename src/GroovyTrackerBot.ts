@@ -4,7 +4,7 @@ import * as Discord from "discord.js";
 import { Command, Module } from "./Module";
 
 export class TrackerBot implements Module {
-    public name: "Groovy Tracker Bot";
+    public name = "Groovy Tracker Bot";
 
     private sheetsUser: SheetsUser;
     private musicBots: string[];

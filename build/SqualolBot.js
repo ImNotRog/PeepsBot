@@ -18,6 +18,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
  */
 class SqualolBot {
     constructor() {
+        this.name = "Squalol Bot";
         this.helpEmbed = {
             title: "Help Squalol Bot",
             description: `In progress!`,

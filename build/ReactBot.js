@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReactBot = void 0;
 class ReactBot {
     constructor() {
+        this.name = "Reaction Bot";
         this.reactmap = new Map();
         this.reactmap.set("little", "754075455304499211");
         this.reactmap.set("trg", "788460256052117524");

@@ -8,7 +8,7 @@ import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class NameChangerBot implements Module {
-    public name: "Theme Bot";
+    public name = "Theme Bot";
 
     private sheetsUser: SheetsUser;
     private client: Discord.Client;

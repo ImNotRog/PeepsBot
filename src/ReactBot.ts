@@ -3,7 +3,7 @@ import { Command, Module } from './Module';
 import { PROCESS } from './ProcessMessage';
 
 export class ReactBot implements Module {
-    public name: "Reaction Bot";
+    public name = "Reaction Bot";
 
     private reactmap:Map<string,string>
     private chainmap: Map<string, { value: string, method: string }[]>

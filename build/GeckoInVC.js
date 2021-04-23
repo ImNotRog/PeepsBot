@@ -13,6 +13,7 @@ exports.GeckoInVCBot = void 0;
 const Discord = require("discord.js");
 class GeckoInVCBot {
     constructor(client) {
+        this.name = "Gecko in VC Bot";
         this.LogChannel = "755528072597471243";
         this.GECKO = "526863414635790356";
         this.FPERBIO = "748669830244073533";

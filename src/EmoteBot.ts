@@ -4,7 +4,7 @@ import { PROCESS } from "./ProcessMessage";
 import { SheetsUser } from "./SheetsUser";
 
 export class EmoteBot implements Module {
-    public name: "Emote Bot";
+    public name = "Emote Bot";
 
     private client: Client;
     private allEmotes: GuildEmoji[];

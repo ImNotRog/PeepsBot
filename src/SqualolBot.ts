@@ -11,7 +11,7 @@ import { PROCESS } from "./ProcessMessage";
 
 
 export class SqualolBot implements Module {
-    public name: "Squalol Bot";
+    public name = "Squalol Bot";
 
     private self:Course;
     constructor() {

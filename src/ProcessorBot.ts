@@ -70,6 +70,8 @@ export class ProcessorBot {
 
     private client: Discord.Client;
 
+    public DMSessions: Map<string, string>;
+
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
         this.modules = [];
@@ -92,6 +94,7 @@ export class ProcessorBot {
 
         this.client = client;
 
+        this.DMSessions = new Map();
     }
 
     async onConstruct() {

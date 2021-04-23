@@ -14,6 +14,7 @@ const DriveUser_1 = require("./DriveUser");
 const SheetsUser_1 = require("./SheetsUser");
 class TestBot {
     constructor(auth, client) {
+        this.name = "Test Bot";
         this.prefix = "--";
         this.imagesFolder = '1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2';
         this.imagesSheet = '17iYieSC2zDKpxgSPqhk6fcJZQjVBvJFE5S5KS1IcON8';

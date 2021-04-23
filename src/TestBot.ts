@@ -6,7 +6,7 @@ import { SchoologyAccessor } from './SA';
 import * as fs from "fs";
 import { PROCESS } from "./ProcessMessage";
 export class TestBot implements Module {
-    public name: "Test Bot";
+    public name = "Test Bot";
 
     private client: Discord.Client;
     private readonly prefix: string = "--";

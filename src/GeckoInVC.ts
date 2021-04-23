@@ -3,7 +3,7 @@ import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
 
 export class GeckoInVCBot implements Module {
-    public name: "Gecko in VC Bot";
+    public name = "Gecko in VC Bot";
 
     private client: Discord.Client;
     private readonly LogChannel = "755528072597471243";

@@ -96,6 +96,7 @@ class ProcessorBot {
         if (this.helpActive)
             this.modules.push(new HelpBot_1.HelpBot(client));
         this.client = client;
+        this.DMSessions = new Map();
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {

@@ -17,6 +17,7 @@ const node_schedule_1 = require("node-schedule");
 const moment_timezone_1 = require("moment-timezone");
 class CalendarBot {
     constructor(auth, client) {
+        this.name = "Calendar Bot";
         this.prefix = `--`;
         this.bdayChannels = ["748669830244073536"];
         let currmap = new Map();

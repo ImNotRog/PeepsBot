@@ -7,7 +7,7 @@ import { PROCESS } from "./ProcessMessage";
 import { SheetsUser } from "./SheetsUser";
 
 export class PianoManBot implements Module {
-    public name: "Piano Man Bot";
+    public name = "Piano Man Bot";
 
     private pianoManChannel = '748669830244073536';
     // private pianoManChannel = '750804960333135914'; // OVERRIDE

@@ -15,6 +15,7 @@ const ProcessMessage_1 = require("./ProcessMessage");
 const SheetsUser_1 = require("./SheetsUser");
 class EmoteBot {
     constructor(auth, client) {
+        this.name = "Emote Bot";
         this.alpha = `🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇲 🇳 🇴 🇵 🇶 🇷 🇸 🇹 🇺 🇻 🇼 🇽 🇾 🇿`.split(` `);
         this.client = client;
         let m = new Map();
