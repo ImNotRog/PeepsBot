@@ -191,7 +191,8 @@ export class RoleManagerBot implements Module {
 
         this.roles.sort((a, b) => b.position - a.position);
 
-        this.colorroles = this.roles.filter((role) => role.color !== 0 && !role.name.toLowerCase().includes("booster") && !role.name.toLowerCase().includes("chry") && !role.name.toLowerCase().includes("poop")).array();
+        let exceptedroles = ['booster', 'chry', 'poop', '🫂'];
+        this.colorroles = this.roles.filter((role) => role.color !== 0 && exceptedroles.every(exception => !role.name.toLowerCase().includes(exception))).array();
 
         let i = 0;
 
