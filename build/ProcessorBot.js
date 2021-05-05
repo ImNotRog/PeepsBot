@@ -27,6 +27,7 @@ const GeckoInVC_1 = require("./GeckoInVC");
 const EmoteBot_1 = require("./EmoteBot");
 const PianoManBot_1 = require("./PianoManBot");
 const HugBot_1 = require("./HugBot");
+const YearbookBot_1 = require("./YearbookBot");
 const TestBot_1 = require("./TestBot");
 const HelpBot_1 = require("./HelpBot");
 const ProcessMessage_1 = require("./ProcessMessage");
@@ -46,8 +47,10 @@ class ProcessorBot {
         this.emojiActive = true;
         this.pianoManActive = true;
         this.hugActive = true;
+        this.yearbookActive = true;
         this.testActive = true;
         this.helpActive = true;
+        // TESTING:
         // private readonly quotesActive = false;
         // private readonly trackerActive = false;
         // private readonly bdayActive = false;
@@ -61,6 +64,7 @@ class ProcessorBot {
         // private readonly emojiActive = false;
         // private readonly pianoManActive = false;
         // private readonly hugActive = false;
+        // private readonly yearbookActive = true;
         // private readonly testActive = false;
         // private readonly helpActive = false;
         this.clearCommands = true;
@@ -91,6 +95,8 @@ class ProcessorBot {
             this.modules.push(new HugBot_1.HugBot());
         if (this.imageActive)
             this.modules.push(new ImageBot_1.ImageBot(auth, client));
+        if (this.yearbookActive)
+            this.modules.push(new YearbookBot_1.YearbookBot(db, client));
         if (this.testActive)
             this.modules.push(new TestBot_1.TestBot(auth, client));
         if (this.helpActive)

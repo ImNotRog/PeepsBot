@@ -19,6 +19,8 @@ import { EmoteBot } from "./EmoteBot";
 import { PianoManBot } from "./PianoManBot";
 import { HugBot } from "./HugBot";
 
+import { YearbookBot } from "./YearbookBot";
+
 import { TestBot } from "./TestBot";
 import { HelpBot } from "./HelpBot";
 
@@ -42,8 +44,12 @@ export class ProcessorBot {
     private readonly pianoManActive = true;
     private readonly hugActive = true;
 
+    private readonly yearbookActive = true;
+
     private readonly testActive = true;
     private readonly helpActive = true;
+
+    // TESTING:
 
     // private readonly quotesActive = false;
     // private readonly trackerActive = false;
@@ -58,6 +64,8 @@ export class ProcessorBot {
     // private readonly emojiActive = false;
     // private readonly pianoManActive = false;
     // private readonly hugActive = false;
+
+    // private readonly yearbookActive = true;
 
     // private readonly testActive = false;
     // private readonly helpActive = false;
@@ -88,6 +96,8 @@ export class ProcessorBot {
         if (this.pianoManActive) this.modules.push(new PianoManBot(auth, client));
         if (this.hugActive) this.modules.push(new HugBot());
         if (this.imageActive) this.modules.push(new ImageBot(auth, client));
+
+        if (this.yearbookActive) this.modules.push(new YearbookBot(db, client));
 
         if (this.testActive) this.modules.push(new TestBot(auth, client));
         if (this.helpActive) this.modules.push(new HelpBot(client));
