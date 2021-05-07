@@ -150,6 +150,11 @@ export class EmoteBot implements Module {
     }
 
     fromShortArray(param: (string|number)[][]) {
+
+        if(!param || param.length === 0 || param[0].length === 0) {
+            return;
+        }
+
         let nums = param.slice(1);
         for(const row of nums) {
             if(this.emoteCount.has('' + row[0])) {
