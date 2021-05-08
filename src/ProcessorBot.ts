@@ -221,11 +221,11 @@ export class ProcessorBot {
         // @ts-ignore
         await this.client.api.applications(this.client.user.id).guilds(guildID).commands.post({
             data: {
-                name: command.name,
+                name: command.name.toLowerCase(),
                 description: command.description,
                 options: command.parameters.map(parameter => {
                     return {
-                        name: parameter.name,
+                        name: parameter.name.toLowerCase(),
                         description: parameter.description,
                         required: parameter.required,
                         type: parameter.type === "string" ? 3 : 4
