@@ -23,6 +23,7 @@ class EmoteBot {
         this.sheetsUser = new SheetsUser_1.SheetsUser(auth, m);
     }
     onMessage(message) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             if (!message.author.bot) {
                 for (const emote of this.allEmotes) {
@@ -32,7 +33,7 @@ class EmoteBot {
                             count++;
                         }
                     }
-                    this.emoteCount.get(emote.identifier).add(message.author.id, count);
+                    (_a = this.emoteCount.get(emote.identifier)) === null || _a === void 0 ? void 0 : _a.add(message.author.id, count);
                 }
             }
             const result = ProcessMessage_1.PROCESS(message);

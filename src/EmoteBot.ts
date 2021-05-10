@@ -30,7 +30,7 @@ export class EmoteBot implements Module {
                         count++;
                     }
                 }
-                this.emoteCount.get(emote.identifier).add(message.author.id, count);
+                this.emoteCount.get(emote.identifier)?.add(message.author.id, count);
             }
         }
 
