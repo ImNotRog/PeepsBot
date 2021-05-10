@@ -375,7 +375,7 @@ class ProcessorBot {
                     catch (err) {
                         console.log("Ruh roh! Error in module " + mod);
                         console.error(err);
-                        reaction.message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
+                        // reaction.message.channel.send(`Error: ${err}. Please report to @Rog#2597. Or not, it's your choice.`, { allowedMentions: { parse: [] } });
                     }
                 }
             }
