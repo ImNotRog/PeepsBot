@@ -260,8 +260,8 @@ class QuotesBot {
         let teacher = "Little";
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
-            // let things = teacher.split(/[ \.]/g,-1);
-            // teacher = things[things.length - 1]
+            let things = teacher.split(/[ \.]/g, -1);
+            teacher = things.join(' ');
             content = content.slice(0, content.lastIndexOf("-"));
         }
         teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
