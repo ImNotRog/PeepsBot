@@ -183,7 +183,7 @@ class QuotesBot {
                 else {
                     message.channel.send({
                         embed: {
-                            description: "That's an invalid teacher, you illiterate heathen! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing troglodyte.",
+                            description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing mumpsimus!",
                             color: 1111111
                         }
                     });
