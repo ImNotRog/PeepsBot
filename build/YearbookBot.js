@@ -335,6 +335,10 @@ class YearbookBot {
             let blockwidth = size / rows;
             const canvas = pdf ? Canvas.createCanvas(size, size, 'pdf') : Canvas.createCanvas(size, size);
             const ctx = canvas.getContext('2d');
+            if (pdf) {
+                ctx.quality = "best";
+                ctx.patternQuality = "best";
+            }
             let positions = [];
             for (let i = 0; i < rows; i++) {
                 if (i % 2 === 1) {
@@ -367,6 +371,8 @@ class YearbookBot {
             let size = this.size;
             const canvas = Canvas.createCanvas(size, size, 'pdf');
             const ctx = canvas.getContext('2d');
+            ctx.quality = "best";
+            ctx.patternQuality = "best";
             const img = yield Canvas.loadImage(path);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             return canvas.toBuffer();
@@ -797,15 +803,7 @@ class YearbookBot {
                     }
                     yearbookPagesAsBuffers.push(this.FPBGMessageBuffer);
                     // const PDFDocument = require('pdf-lib').PDFDocument
-                    function toArrayBuffer(buf) {
-                        var ab = new ArrayBuffer(buf.length);
-                        var view = new Uint8Array(ab);
-                        for (var i = 0; i < buf.length; ++i) {
-                            view[i] = buf[i];
-                        }
-                        return ab;
-                    }
-                    var pdfsToMerge = yearbookPagesAsBuffers.map(toArrayBuffer);
+                    var pdfsToMerge = yearbookPagesAsBuffers;
                     const mergedPdf = yield pdf_lib_1.PDFDocument.create();
                     for (const pdfBytes of pdfsToMerge) {
                         const pdf = yield pdf_lib_1.PDFDocument.load(pdfBytes);

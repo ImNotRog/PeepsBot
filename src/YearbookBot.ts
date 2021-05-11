@@ -6,6 +6,8 @@ import { PROCESS } from './ProcessMessage';
 import * as Crypto from 'crypto';
 import { PDFDocument } from 'pdf-lib';
 
+// @to-do change to ctx.addPage
+
 // @to-do NAME GET
 
 type YearbookUserObj = {
@@ -356,6 +358,10 @@ export class YearbookBot implements Module {
         let blockwidth = size / rows;
         const canvas = pdf ? Canvas.createCanvas(size, size, 'pdf') : Canvas.createCanvas(size, size);
         const ctx = canvas.getContext('2d');
+        if (pdf) {
+            ctx.quality = "best";
+            ctx.patternQuality = "best";
+        }
 
         let positions: number[][] = [];
         for (let i = 0; i < rows; i++) {
@@ -384,6 +390,8 @@ export class YearbookBot implements Module {
             // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
         }
 
+        
+
         return canvas.toBuffer();
     }
 
@@ -392,9 +400,13 @@ export class YearbookBot implements Module {
 
         const canvas = Canvas.createCanvas(size, size, 'pdf');
         const ctx = canvas.getContext('2d');
+        ctx.quality = "best";
+        ctx.patternQuality = "best";
 
         const img = await Canvas.loadImage(path);
         ctx.drawImage(img, 0,0, canvas.width, canvas.height);
+
+        
 
         return canvas.toBuffer();
     }
@@ -861,16 +873,7 @@ export class YearbookBot implements Module {
 
                 // const PDFDocument = require('pdf-lib').PDFDocument
 
-                function toArrayBuffer(buf: Buffer) {
-                    var ab = new ArrayBuffer(buf.length);
-                    var view = new Uint8Array(ab);
-                    for (var i = 0; i < buf.length; ++i) {
-                        view[i] = buf[i];
-                    }
-                    return ab;
-                }
-
-                var pdfsToMerge = yearbookPagesAsBuffers.map(toArrayBuffer);
+                var pdfsToMerge = yearbookPagesAsBuffers;
 
                 const mergedPdf = await PDFDocument.create();
                 for (const pdfBytes of pdfsToMerge) {
