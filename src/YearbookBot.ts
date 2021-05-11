@@ -2,31 +2,30 @@ import * as Discord from 'discord.js';
 import * as Canvas from 'canvas';
 import { Command, Module } from './Module';
 import { ProcessorBot } from './ProcessorBot';
-import { PROCESS } from './ProcessMessage';
 import * as Crypto from 'crypto';
-
-// @to-do change to ctx.addPage
+import * as AdmZip from 'adm-zip';
+import nodefetch from 'node-fetch';
 
 // @to-do NAME GET
 
 type YearbookUserObj = {
     NAME: string;
     TAG: string;
-    DISCRIMINATOR:string;
-    FPBG:boolean;
-    SIGNATURES: { 
-        LINK: string, 
-        USERID: string 
+    DISCRIMINATOR: string;
+    FPBG: boolean;
+    SIGNATURES: {
+        LINK: string,
+        USERID: string
     }[];
 }
 
 export class YearbookBot implements Module {
     name: string = "Yearbook Bot";
-    keys: Map<string, { to: Discord.User, from: Discord.User, callback:() => void }>;
+    keys: Map<string, { to: Discord.User, from: Discord.User, callback: () => void }>;
     requestsfor: Map<string, string[]>;
     db: FirebaseFirestore.Firestore;
     client: Discord.Client;
-    commands:Command[];
+    commands: Command[];
     fpbg: Discord.Guild;
     private readonly perPage = 8;
     private readonly size = 750;
@@ -44,14 +43,14 @@ export class YearbookBot implements Module {
 
     async onConstruct(): Promise<void> {
         let data = await this.db.collection("Yearbook").get();
-        for(const doc of data.docs) {
+        for (const doc of data.docs) {
             this.requestsfor.set(doc.id, []);
             // @ts-ignore
             this.usersCache.set(doc.id, doc.data());
         }
 
         this.fpbg = await this.client.guilds.fetch('748669830244073533');
-        
+
         this.commands = [
             {
                 name: 'CreateUser',
@@ -105,7 +104,7 @@ export class YearbookBot implements Module {
                     required: true
                 }],
                 available: () => true,
-                regularCallback: async (message,mention) => {
+                regularCallback: async (message, mention) => {
                     let user = await this.parseMention(mention);
                     if (user) {
 
@@ -134,6 +133,17 @@ export class YearbookBot implements Module {
                             })
                             return;
                         }
+
+                        let c = user.id;
+                        if (this.getSignatures(message.author.id).find(({USERID}) => USERID === c)) {
+                            message.channel.send({
+                                embed: {
+                                    color: 1111111,
+                                    description: `${user} has already signed your yearbook!`
+                                }
+                            })
+                            return;
+                        }
                         this.requestsign(message.author, user);
 
                         message.channel.send({
@@ -153,7 +163,7 @@ export class YearbookBot implements Module {
                         })
                     }
                 },
-                slashCallback: async(invoke, channel, user ,mention) => {
+                slashCallback: async (invoke, channel, user, mention) => {
                     let requested = await this.parseMention(mention);
                     if (requested) {
 
@@ -182,6 +192,18 @@ export class YearbookBot implements Module {
                             })
                             return;
                         }
+
+                        let c = requested.id;
+                        if (this.getSignatures(user.id).find(({ USERID }) => USERID === c)) {
+                            invoke({
+                                embed: {
+                                    color: 1111111,
+                                    description: `${user} has already signed your yearbook!`
+                                }
+                            })
+                            return;
+                        }
+
                         this.requestsign(user, requested);
 
                         await invoke({
@@ -253,7 +275,7 @@ export class YearbookBot implements Module {
         ]
     }
 
-    async userInFPBG(userID:string) {
+    async userInFPBG(userID: string) {
         try {
             await this.fpbg.members.fetch(userID);
             return true;
@@ -281,30 +303,30 @@ export class YearbookBot implements Module {
         return this.usersCache.get(userID).SIGNATURES;
     }
 
-    setSigatures(userID: string, signatures: {LINK: string, USERID: string}[]) {
+    setSigatures(userID: string, signatures: { LINK: string, USERID: string }[]) {
         if (!this.userExists(userID)) throw "Attempted to set signatures of non-existent user!";
         this.usersCache.get(userID).SIGNATURES = signatures;
     }
 
-    async deleteSignatureByIndex(userID:string, index: number) {
-        this.setSigatures(userID, this.getSignatures(userID).filter((_,i) => i!==index));
+    async deleteSignatureByIndex(userID: string, index: number) {
+        this.setSigatures(userID, this.getSignatures(userID).filter((_, i) => i !== index));
         await this.pushSignature(userID);
     }
 
-    async swapSignatures(userID:string,index1:number, index2:number) {
+    async swapSignatures(userID: string, index1: number, index2: number) {
         let signatures = this.getSignatures(userID);
         ;[signatures[index1], signatures[index2]] = [signatures[index2], signatures[index1]];
         await this.pushSignature(userID);
     }
 
-    private async pushSignature(userID:string) {
+    private async pushSignature(userID: string) {
         await this.db.collection("Yearbook").doc(userID).update({
             SIGNATURES: this.getSignatures(userID)
         })
     }
 
     requestsign(requester: Discord.User, requested: Discord.User) {
-        if( this.requestsfor.has(requested.id) && !this.requestsfor.get(requested.id).includes(requester.id) ) {
+        if (this.requestsfor.has(requested.id) && !this.requestsfor.get(requested.id).includes(requester.id)) {
             this.requestsfor.set(requested.id, [...this.requestsfor.get(requested.id), requester.id])
         } else {
             console.log("Uh oh!");
@@ -333,29 +355,29 @@ export class YearbookBot implements Module {
         return link;
     }
 
-    async parseMention(mention:string): Promise<false|Discord.User> {
+    async parseMention(mention: string): Promise<false | Discord.User> {
         mention = mention.replace(/ /g, '');
-        if(!(mention.length === 22 && mention.startsWith('<@!') && mention.endsWith('>') && [...mention.slice(3,-1)].every(char => '0123456789'.includes(char)))) {
+        if (!(mention.length === 22 && mention.startsWith('<@!') && mention.endsWith('>') && [...mention.slice(3, -1)].every(char => '0123456789'.includes(char)))) {
             return false;
         }
-        let id = mention.slice(3,-1);
+        let id = mention.slice(3, -1);
         let user = await this.client.users.fetch(id);
 
-        if(user) {
+        if (user) {
             return user;
         } else {
             return false;
         }
     }
 
-    async createPage(userID: string, pageID:number) {
+    async createPage(userID: string, pageID: number, exportFile?: boolean) {
 
-        let size = 600;
+        let size = exportFile ? 2400 : 600;
         let rows = 3;
         let blockwidth = size / rows;
         const canvas = Canvas.createCanvas(size, size);
         const ctx = canvas.getContext('2d');
-        
+
         let positions: number[][] = [];
         for (let i = 0; i < rows; i++) {
             if (i % 2 === 1) {
@@ -369,16 +391,25 @@ export class YearbookBot implements Module {
             }
         }
 
+        ctx.patternQuality = "best";
+
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        let signatures = this.getSignatures(userID).slice(pageID * this.perPage,pageID * this.perPage + this.perPage);
+        let signatures = this.getSignatures(userID).slice(pageID * this.perPage, pageID * this.perPage + this.perPage);
         for (let i = 0; i < Math.min(positions.length, signatures.length); i++) {
             const img = await Canvas.loadImage(signatures[i].LINK);
             ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
         }
 
-        return canvas.toBuffer();
+        return canvas.toBuffer('image/png', 
+            exportFile ? { 
+                compressionLevel: 6, 
+                filters: canvas.PNG_ALL_FILTERS,
+                backgroundIndex: 0, 
+                resolution: 400 
+            } : {}
+        );
     }
 
     async createYearbook(userID: string) {
@@ -404,10 +435,10 @@ export class YearbookBot implements Module {
             }
         }
 
-        
+
 
         let pages = Math.ceil(this.getSignatures(userID).length / this.perPage);
-        for(let pageID = 0; pageID < pages; pageID++) {
+        for (let pageID = 0; pageID < pages; pageID++) {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -419,11 +450,11 @@ export class YearbookBot implements Module {
             ctx.addPage();
         }
 
-        // if(this.usersCache.get(userID).FPBG) {
-        if(true) {
-            let img = await Canvas.loadImage('./images/hags.png');
-            ctx.drawImage(img, 0,0,canvas.width, canvas.height);
-        }
+        // if() {
+        // if (true) {
+        let img = this.usersCache.get(userID).FPBG ? await Canvas.loadImage('./images/fpbghags.png') : await Canvas.loadImage('./images/hags.png');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // }
 
         return canvas.toBuffer();
     }
@@ -444,11 +475,11 @@ export class YearbookBot implements Module {
         // WEBHOOK
         if (message.channel.id === '839207825535795210') {
             // console.log(message);
-            if(message.webhookID) {
+            if (message.webhookID) {
                 let KEY = message.content;
-                if(message.attachments.size > 0 && this.keys.has(KEY)){
+                if (message.attachments.size > 0 && this.keys.has(KEY)) {
                     let url = message.attachments.first().url;
-                    const {from, to, callback} = this.keys.get(KEY);
+                    const { from, to, callback } = this.keys.get(KEY);
                     this.keys.delete(KEY);
 
                     // fetch signatures idk
@@ -471,13 +502,13 @@ export class YearbookBot implements Module {
 
                     callback();
                 }
-                
-                
+
+
             }
         }
     }
-    
-    async sign(signerUser: Discord.User){
+
+    async sign(signerUser: Discord.User) {
         if (this.parent.DMSessions.has(signerUser.id)) {
             signerUser.send({
                 embed: {
@@ -504,14 +535,14 @@ export class YearbookBot implements Module {
                     title: 'Signing Yearbook!',
                     description: `To sign someone's yearbook, they first need to request it via --request or /request.\n` +
                         `${requestees().length > 0 ? `These people have requested your signature: \n${requestees().map((id, i) => `${i + 1}: <@!${id}>`).join('\n')}\n\nIn this channel, type the number of the person you want to sign, or type "end" to end the session.` : `Sad! It seems like no one has requested your signature.`}`,
-                    
+
                     color: 1111111,
 
                     fields: requestees().length > 0 ? [
                         {
-                            name: "Commands", 
+                            name: "Commands",
                             value: `# - Type in any number to sign that person's yearbook\n` +
-                                `help - Resend this message\n` + 
+                                `help - Resend this message\n` +
                                 `end - End the session`
                         }
                     ] : []
@@ -519,7 +550,7 @@ export class YearbookBot implements Module {
             })
         }
 
-        if(requestees().length === 0) {
+        if (requestees().length === 0) {
             await sendHelp();
         }
 
@@ -583,7 +614,7 @@ export class YearbookBot implements Module {
                                 try {
                                     b = await signerUser.dmChannel.awaitMessages((m: Discord.Message) => {
                                         return !m.author.bot;
-                                    }, { max: 1, time: 1000 * 30*60, errors: ['time'] }); // * 60 in production
+                                    }, { max: 1, time: 1000 * 30 * 60, errors: ['time'] }); // * 60 in production
                                 } catch (err) {
 
                                     if (!resolved) {
@@ -643,7 +674,7 @@ export class YearbookBot implements Module {
                     }
                 })
                 break;
-            } else if (m.content.toLowerCase() === "help")  {
+            } else if (m.content.toLowerCase() === "help") {
                 sendHelp();
             } else {
                 await signerUser.send({
@@ -670,7 +701,7 @@ export class YearbookBot implements Module {
 
     }
 
-    async manage(user:Discord.User) {
+    async manage(user: Discord.User) {
         if (this.parent.DMSessions.has(user.id)) {
             user.send({
                 embed: {
@@ -692,7 +723,7 @@ export class YearbookBot implements Module {
         }
 
         let pages = () => {
-            return Math.ceil( signatures().length / this.perPage );
+            return Math.ceil(signatures().length / this.perPage);
         }
 
         let sendHelp = async () => {
@@ -700,24 +731,24 @@ export class YearbookBot implements Module {
                 embed: {
                     title: `Manage Yearbook`,
                     description: `This is to edit or see your own yearbook! If you want to sign someone else's yearbook, type "end", then run /sign in a server (not here).\n` +
-                        `To see your yearbook, type "yearbook #", where # is the page of the yearbook you want to see. **You currently have ${pages()} pages.**\n` + 
+                        `To see your yearbook, type "yearbook #", where # is the page of the yearbook you want to see. **You currently have ${pages()} pages.**\n` +
                         `Alternatively, to view a single signature, type "get #", where # is the signature's index (see Signatures below).\n` +
-                        `To manage signatures, refer to the list of commands below.\n` + 
+                        `To manage signatures, refer to the list of commands below.\n` +
                         `And finally, to export your virtual yearbook as a pdf, simply type "export".`,
                     fields: [
                         {
                             name: `Signatures`,
-                            value: `${signatures().length > 0 
-                                ? signatures().map(({LINK, USERID}, i) => `${i+1}: <@${USERID}>`).join('\n')
+                            value: `${signatures().length > 0
+                                ? signatures().map(({ LINK, USERID }, i) => `${i + 1}: <@${USERID}>`).join('\n')
                                 : `😔 You don't have any signatures yet!`}`
                         },
                         {
                             name: `Commands`,
-                            value: `yearbook # - Gives a yearbook page\n` + 
-                                `get # - Gives the requested signature\n` + 
+                            value: `yearbook # - Gives a yearbook page\n` +
+                                `get # - Gives the requested signature\n` +
                                 `swap # # - Swaps the positions of two signatures\n` +
-                                `delete # - Deletes a signature (UNRECOVERABLE)\n` + 
-                                `export - Exports your entire virtual yearbook as a pdf\n` + 
+                                `delete # - Deletes a signature (UNRECOVERABLE)\n` +
+                                `export - Exports your entire virtual yearbook (as a zip)\n` +
                                 `help - Resends this message\n` +
                                 `end - Ends the session`
                         }
@@ -728,7 +759,7 @@ export class YearbookBot implements Module {
         }
         await sendHelp();
 
-        while(true) {
+        while (true) {
             let a: Discord.Collection<string, Discord.Message>;
             try {
                 a = await user.dmChannel.awaitMessages((m: Discord.Message) => {
@@ -743,7 +774,7 @@ export class YearbookBot implements Module {
                 })
                 break;
             }
-            
+
             let m = a.first();
 
             let args = m.content.split(' ').filter(substr => substr.length);
@@ -752,11 +783,11 @@ export class YearbookBot implements Module {
             // swap complete
             // delete complete
             // get complete
-            if(command === "yearbook") {
-                if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= pages()) ) {
+            if (command === "yearbook") {
+                if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= pages())) {
                     await user.send({
                         embed: {
-                            description: pages() > 0 
+                            description: pages() > 0
                                 ? `Please specify a valid number between 1 and ${pages()}, e.g. "yearbook 1".`
                                 : `😔 This command is currently invalid, as you currently do not have any signatures. Request a signature in a server via /requestsignature in a server!`,
                             color: 1111111
@@ -768,7 +799,7 @@ export class YearbookBot implements Module {
                     let buffer = await this.createPage(user.id, num);
                     const attachment = new Discord.MessageAttachment(buffer, `yearbook-${user.id}-${num}.png`);
 
-                    await user.send(`Yearbook Page ${num+1} of ${pages()}`, attachment);
+                    await user.send(`Yearbook Page ${num + 1} of ${pages()}`, attachment);
                 }
             } else if (command === "get") {
                 if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= signatures().length)) {
@@ -784,7 +815,7 @@ export class YearbookBot implements Module {
                     let num = parseInt(args[1]) - 1;
                     await user.send({
                         embed: {
-                            description: `${num+1}: Signature from <@${signatures()[num].USERID}>`,
+                            description: `${num + 1}: Signature from <@${signatures()[num].USERID}>`,
                             color: 1111111,
                             image: {
                                 url: signatures()[num].LINK
@@ -793,8 +824,8 @@ export class YearbookBot implements Module {
                     })
                 }
             } else if (command === "swap") {
-                let nums = args.slice(1,3).map(b => parseInt(b));
-                if(nums.length < 2 || nums.some(isNaN) || !nums.every(val => val >= 1 && val <= signatures().length)) {
+                let nums = args.slice(1, 3).map(b => parseInt(b));
+                if (nums.length < 2 || nums.some(isNaN) || !nums.every(val => val >= 1 && val <= signatures().length)) {
                     await user.send({
                         embed: {
                             description: signatures().length > 0
@@ -813,7 +844,7 @@ export class YearbookBot implements Module {
                     })
                     await sendHelp();
                 }
-                
+
             } else if (command === "delete") {
                 if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= signatures().length)) {
                     await user.send({
@@ -852,11 +883,11 @@ export class YearbookBot implements Module {
                         })
                     }
                     let confirmationMsg = b.first();
-                    if(confirmationMsg.content.toLowerCase() === "yes") {
+                    if (confirmationMsg.content.toLowerCase() === "yes") {
                         confirmed = true;
                     }
 
-                    if(confirmed) {
+                    if (confirmed) {
                         await this.deleteSignatureByIndex(user.id, num);
                         await user.send({
                             embed: {
@@ -882,8 +913,74 @@ export class YearbookBot implements Module {
                     }
                 });
 
-                const attachment = new Discord.MessageAttachment(await this.createYearbook(user.id), `yearbook.pdf`);
+                let yearbookfull = await this.createYearbook(user.id);
+
+                let zip = new AdmZip();
+                zip.addFile(`yearbook-full.pdf`, yearbookfull);
+                let pages = Math.ceil(this.getSignatures(user.id).length / this.perPage);
                 
+                for (let i = 0; i < pages; i++) {
+                    zip.addFile(`yearbook-page-${i + 1}.png`, await this.createPage(user.id, i, true));
+                }
+
+                let signatures = this.getSignatures(user.id);
+
+                let addSignature = async (i: number) => {
+                    let res = await nodefetch(signatures[i].LINK);
+                    let b = await res.buffer();
+                    zip.addFile(`yearbook-signature-${i + 1}.png`, b);
+                }
+
+                let allpromises = [];
+                for(let i = 0; i < signatures.length; i++) {
+                    allpromises.push(addSignature(i));
+                }
+
+                Promise.all(allpromises);
+
+                let userinfo = this.usersCache.get(user.id);
+
+                var signatureInfoContent = 
+                    `–– Virtual Yearbook Signatures 2020-2021 ––\n\n` +
+                    `Property of: ${userinfo.NAME}\n` + 
+                    `Discord ID: ${user.id}\n\n` + 
+                    `Signatures are listed per page, from top left and going right then down, like how you read English.\n\n`
+                ;
+
+                for(let i = 0; i < pages; i++) {
+                    let signatures = this.getSignatures(user.id).slice(this.perPage * i, this.perPage * (i+1));
+                    signatureInfoContent += 
+                        `* Page ${i+1} of ${pages} *\n` + 
+                        `${signatures.map((val,localindex) => {
+                            let name = this.usersCache.get(val.USERID).NAME;
+                            let actualIndex = localindex + this.perPage * i;
+                            return `Signature ${actualIndex+1}: from ${name}\n`;
+                        }).join('\n\n')}` +
+                        `\n\n`
+                    ;
+                }
+
+                if(userinfo.FPBG) {
+                    signatureInfoContent +=
+                        `Hi. Hey. Hello.\n` +
+                        `We’re the FPBG, and we’d like to thank you for choosing to partake in our Glorious Server with us during this historic school year. From what started as a 4 person joke grew into a 100 person server… of which only about four people use (Five? Six? None of us really know how to count). It’s been weird and wonderful but mostly weird to see the FPBG’s tendrils of influence silently wrap around every aspect of the world, but of course, none of it would have been possible without the contribution of people like you. So thanks. And have a great summer.\n\n` +
+                        `Mors, census, vec et TRG.\n` +
+                        `The FPBG`
+                    ;
+                } else {
+                    signatureInfoContent +=
+                        `Have a fantastic summer!`
+                    ;
+                }
+                
+
+                // console.log(signatureInfoContent);
+
+                zip.addFile("yearbook-info.txt", Buffer.from(signatureInfoContent, 'utf-8'));
+
+                let zipbuffer = zip.toBuffer();
+                const attachment = new Discord.MessageAttachment(zipbuffer, `yearbook.zip`);
+
                 await user.send(attachment);
 
             } else if (m.content.toLowerCase() === "end") {
@@ -905,7 +1002,7 @@ export class YearbookBot implements Module {
                 })
             }
 
-            
+
         }
 
         this.parent.DMSessions.delete(user.id);

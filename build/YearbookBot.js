@@ -13,6 +13,8 @@ exports.YearbookBot = void 0;
 const Discord = require("discord.js");
 const Canvas = require("canvas");
 const Crypto = require("crypto");
+const AdmZip = require("adm-zip");
+const node_fetch_1 = require("node-fetch");
 class YearbookBot {
     constructor(db, client) {
         this.name = "Yearbook Bot";
@@ -113,6 +115,16 @@ class YearbookBot {
                                 });
                                 return;
                             }
+                            let c = user.id;
+                            if (this.getSignatures(message.author.id).find(({ USERID }) => USERID === c)) {
+                                message.channel.send({
+                                    embed: {
+                                        color: 1111111,
+                                        description: `${user} has already signed your yearbook!`
+                                    }
+                                });
+                                return;
+                            }
                             this.requestsign(message.author, user);
                             message.channel.send({
                                 content: `<@!${user.id}>`,
@@ -152,6 +164,16 @@ class YearbookBot {
                                     embed: {
                                         color: 1111111,
                                         description: `You've already requested ${requested}'s presence!`
+                                    }
+                                });
+                                return;
+                            }
+                            let c = requested.id;
+                            if (this.getSignatures(user.id).find(({ USERID }) => USERID === c)) {
+                                invoke({
+                                    embed: {
+                                        color: 1111111,
+                                        description: `${user} has already signed your yearbook!`
                                     }
                                 });
                                 return;
@@ -326,9 +348,9 @@ class YearbookBot {
             }
         });
     }
-    createPage(userID, pageID) {
+    createPage(userID, pageID, exportFile) {
         return __awaiter(this, void 0, void 0, function* () {
-            let size = 600;
+            let size = exportFile ? 2400 : 600;
             let rows = 3;
             let blockwidth = size / rows;
             const canvas = Canvas.createCanvas(size, size);
@@ -346,6 +368,7 @@ class YearbookBot {
                     }
                 }
             }
+            ctx.patternQuality = "best";
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             let signatures = this.getSignatures(userID).slice(pageID * this.perPage, pageID * this.perPage + this.perPage);
@@ -353,7 +376,12 @@ class YearbookBot {
                 const img = yield Canvas.loadImage(signatures[i].LINK);
                 ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
             }
-            return canvas.toBuffer();
+            return canvas.toBuffer('image/png', exportFile ? {
+                compressionLevel: 6,
+                filters: canvas.PNG_ALL_FILTERS,
+                backgroundIndex: 0,
+                resolution: 400
+            } : {});
         });
     }
     createYearbook(userID) {
@@ -389,11 +417,11 @@ class YearbookBot {
                 }
                 ctx.addPage();
             }
-            // if(this.usersCache.get(userID).FPBG) {
-            if (true) {
-                let img = yield Canvas.loadImage('./images/hags.png');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            }
+            // if() {
+            // if (true) {
+            let img = this.usersCache.get(userID).FPBG ? yield Canvas.loadImage('./images/fpbghags.png') : yield Canvas.loadImage('./images/hags.png');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // }
             return canvas.toBuffer();
         });
     }
@@ -650,7 +678,7 @@ class YearbookBot {
                                     `get # - Gives the requested signature\n` +
                                     `swap # # - Swaps the positions of two signatures\n` +
                                     `delete # - Deletes a signature (UNRECOVERABLE)\n` +
-                                    `export - Exports your entire virtual yearbook as a pdf\n` +
+                                    `export - Exports your entire virtual yearbook (as a zip)\n` +
                                     `help - Resends this message\n` +
                                     `end - Ends the session`
                             }
@@ -816,7 +844,55 @@ class YearbookBot {
                             color: 1111111,
                         }
                     });
-                    const attachment = new Discord.MessageAttachment(yield this.createYearbook(user.id), `yearbook.pdf`);
+                    let yearbookfull = yield this.createYearbook(user.id);
+                    let zip = new AdmZip();
+                    zip.addFile(`yearbook-full.pdf`, yearbookfull);
+                    let pages = Math.ceil(this.getSignatures(user.id).length / this.perPage);
+                    for (let i = 0; i < pages; i++) {
+                        zip.addFile(`yearbook-page-${i + 1}.png`, yield this.createPage(user.id, i, true));
+                    }
+                    let signatures = this.getSignatures(user.id);
+                    let addSignature = (i) => __awaiter(this, void 0, void 0, function* () {
+                        let res = yield node_fetch_1.default(signatures[i].LINK);
+                        let b = yield res.buffer();
+                        zip.addFile(`yearbook-signature-${i + 1}.png`, b);
+                    });
+                    let allpromises = [];
+                    for (let i = 0; i < signatures.length; i++) {
+                        allpromises.push(addSignature(i));
+                    }
+                    Promise.all(allpromises);
+                    let userinfo = this.usersCache.get(user.id);
+                    var signatureInfoContent = `–– Virtual Yearbook Signatures 2020-2021 ––\n\n` +
+                        `Property of: ${userinfo.NAME}\n` +
+                        `Discord ID: ${user.id}\n\n` +
+                        `Signatures are listed per page, from top left and going right then down, like how you read English.\n\n`;
+                    for (let i = 0; i < pages; i++) {
+                        let signatures = this.getSignatures(user.id).slice(this.perPage * i, this.perPage * (i + 1));
+                        signatureInfoContent +=
+                            `* Page ${i + 1} of ${pages} *\n` +
+                                `${signatures.map((val, localindex) => {
+                                    let name = this.usersCache.get(val.USERID).NAME;
+                                    let actualIndex = localindex + this.perPage * i;
+                                    return `Signature ${actualIndex + 1}: from ${name}\n`;
+                                }).join('\n\n')}` +
+                                `\n\n`;
+                    }
+                    if (userinfo.FPBG) {
+                        signatureInfoContent +=
+                            `Hi. Hey. Hello.\n` +
+                                `We’re the FPBG, and we’d like to thank you for choosing to partake in our Glorious Server with us during this historic school year. From what started as a 4 person joke grew into a 100 person server… of which only about four people use (Five? Six? None of us really know how to count). It’s been weird and wonderful but mostly weird to see the FPBG’s tendrils of influence silently wrap around every aspect of the world, but of course, none of it would have been possible without the contribution of people like you. So thanks. And have a great summer.\n\n` +
+                                `Mors, census, vec et TRG.\n` +
+                                `The FPBG`;
+                    }
+                    else {
+                        signatureInfoContent +=
+                            `Have a fantastic summer!`;
+                    }
+                    // console.log(signatureInfoContent);
+                    zip.addFile("yearbook-info.txt", Buffer.from(signatureInfoContent, 'utf-8'));
+                    let zipbuffer = zip.toBuffer();
+                    const attachment = new Discord.MessageAttachment(zipbuffer, `yearbook.zip`);
                     yield user.send(attachment);
                 }
                 else if (m.content.toLowerCase() === "end") {
