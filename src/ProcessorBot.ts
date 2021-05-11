@@ -44,7 +44,7 @@ export class ProcessorBot {
     private readonly pianoManActive = true;
     private readonly hugActive = true;
 
-    private readonly yearbookActive = false;
+    private readonly yearbookActive = true;
 
     private readonly testActive = true;
     private readonly helpActive = true;

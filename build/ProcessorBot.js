@@ -47,7 +47,7 @@ class ProcessorBot {
         this.emojiActive = true;
         this.pianoManActive = true;
         this.hugActive = true;
-        this.yearbookActive = false;
+        this.yearbookActive = true;
         this.testActive = true;
         this.helpActive = true;
         // TESTING:
