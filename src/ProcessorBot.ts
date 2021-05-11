@@ -71,6 +71,7 @@ export class ProcessorBot {
     // private readonly helpActive = false;
 
     private readonly clearCommands = true;
+    private readonly mountCommands = false;
 
     public modules: Module[];
     public commands: Command[];
@@ -139,7 +140,7 @@ export class ProcessorBot {
         // Mount commands
         this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list,...mod.commands] : list, []);
 
-        await this.MountAllCommands();
+        if (this.mountCommands ) await this.MountAllCommands();
 
         // Handle calls
 

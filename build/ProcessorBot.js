@@ -68,6 +68,7 @@ class ProcessorBot {
         // private readonly testActive = false;
         // private readonly helpActive = false;
         this.clearCommands = true;
+        this.mountCommands = false;
         this.modules = [];
         if (this.quotesActive)
             this.modules.push(new QuotesBot_1.QuotesBot(auth, client));
@@ -128,7 +129,8 @@ class ProcessorBot {
             console.log("Registering commands...");
             // Mount commands
             this.commands = this.modules.reduce((list, mod) => mod.commands ? [...list, ...mod.commands] : list, []);
-            yield this.MountAllCommands();
+            if (this.mountCommands)
+                yield this.MountAllCommands();
             // Handle calls
             // @ts-ignore
             this.client.ws.on("INTERACTION_CREATE", (interaction) => __awaiter(this, void 0, void 0, function* () {
