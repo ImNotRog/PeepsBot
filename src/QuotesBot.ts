@@ -187,7 +187,7 @@ export class QuotesBot implements Module {
             } else {
                 message.channel.send({
                     embed: {
-                        description: "Invalid teacher! Please refrain from using numbers or special characters.",
+                        description: "That's an invalid teacher, you illiterate heathen! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing troglodyte.",
                         color: 1111111
                     }
                 })
@@ -276,8 +276,8 @@ export class QuotesBot implements Module {
         let teacher = "Little";
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
-            let things = teacher.split(/[ \.]/g,-1);
-            teacher = things[things.length - 1]
+            // let things = teacher.split(/[ \.]/g,-1);
+            // teacher = things[things.length - 1]
 
             content = content.slice(0, content.lastIndexOf("-"));
         }
@@ -294,7 +294,7 @@ export class QuotesBot implements Module {
     }
     
     validTeacher(teacher:string) {
-        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
+        return ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
 
     async onReaction(reaction: Discord.MessageReaction, user: any) {

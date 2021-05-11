@@ -183,7 +183,7 @@ class QuotesBot {
                 else {
                     message.channel.send({
                         embed: {
-                            description: "Invalid teacher! Please refrain from using numbers or special characters.",
+                            description: "That's an invalid teacher, you illiterate heathen! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing troglodyte.",
                             color: 1111111
                         }
                     });
@@ -260,8 +260,8 @@ class QuotesBot {
         let teacher = "Little";
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
-            let things = teacher.split(/[ \.]/g, -1);
-            teacher = things[things.length - 1];
+            // let things = teacher.split(/[ \.]/g,-1);
+            // teacher = things[things.length - 1]
             content = content.slice(0, content.lastIndexOf("-"));
         }
         teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
@@ -274,7 +274,7 @@ class QuotesBot {
         };
     }
     validTeacher(teacher) {
-        return ([...teacher].every(c => ` abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
+        return ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {
