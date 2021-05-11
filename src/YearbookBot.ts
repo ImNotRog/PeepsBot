@@ -4,7 +4,6 @@ import { Command, Module } from './Module';
 import { ProcessorBot } from './ProcessorBot';
 import { PROCESS } from './ProcessMessage';
 import * as Crypto from 'crypto';
-import { PDFDocument } from 'pdf-lib';
 
 // @to-do change to ctx.addPage
 
@@ -252,8 +251,6 @@ export class YearbookBot implements Module {
                 }
             }
         ]
-
-        this.FPBGMessageBuffer = await this.imgPathToPDFBuffer('./images/hags.png');
     }
 
     async userInFPBG(userID:string) {
@@ -351,18 +348,14 @@ export class YearbookBot implements Module {
         }
     }
 
-    async createPage(userID: string, pageID:number, pdf?:boolean) {
+    async createPage(userID: string, pageID:number) {
 
-        let size = pdf ? this.size : 600;
+        let size = 600;
         let rows = 3;
         let blockwidth = size / rows;
-        const canvas = pdf ? Canvas.createCanvas(size, size, 'pdf') : Canvas.createCanvas(size, size);
+        const canvas = Canvas.createCanvas(size, size);
         const ctx = canvas.getContext('2d');
-        if (pdf) {
-            ctx.quality = "best";
-            ctx.patternQuality = "best";
-        }
-
+        
         let positions: number[][] = [];
         for (let i = 0; i < rows; i++) {
             if (i % 2 === 1) {
@@ -385,28 +378,52 @@ export class YearbookBot implements Module {
             ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
         }
 
-        ctx.strokeStyle = "blue";
-        for (let p of positions) {
-            // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
+        return canvas.toBuffer();
+    }
+
+    async createYearbook(userID: string) {
+
+        let size = this.size;
+        let rows = 3;
+        let blockwidth = size / rows;
+        const canvas = Canvas.createCanvas(size, size, 'pdf');
+        const ctx = canvas.getContext('2d');
+        // ctx.quality = "best";
+        ctx.patternQuality = "best";
+
+        let positions: number[][] = [];
+        for (let i = 0; i < rows; i++) {
+            if (i % 2 === 1) {
+                for (let j = 0; j < rows - 1; j++) {
+                    positions.push([j * blockwidth + blockwidth / 2, i * blockwidth]);
+                }
+            } else {
+                for (let j = 0; j < rows; j++) {
+                    positions.push([j * blockwidth, i * blockwidth]);
+                }
+            }
         }
 
         
 
-        return canvas.toBuffer();
-    }
+        let pages = Math.ceil(this.getSignatures(userID).length / this.perPage);
+        for(let pageID = 0; pageID < pages; pageID++) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    async imgPathToPDFBuffer(path: string) {
-        let size = this.size;
+            let signatures = this.getSignatures(userID).slice(pageID * this.perPage, pageID * this.perPage + this.perPage);
+            for (let i = 0; i < Math.min(positions.length, signatures.length); i++) {
+                const img = await Canvas.loadImage(signatures[i].LINK);
+                ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
+            }
+            ctx.addPage();
+        }
 
-        const canvas = Canvas.createCanvas(size, size, 'pdf');
-        const ctx = canvas.getContext('2d');
-        ctx.quality = "best";
-        ctx.patternQuality = "best";
-
-        const img = await Canvas.loadImage(path);
-        ctx.drawImage(img, 0,0, canvas.width, canvas.height);
-
-        
+        // if(this.usersCache.get(userID).FPBG) {
+        if(true) {
+            let img = await Canvas.loadImage('./images/hags.png');
+            ctx.drawImage(img, 0,0,canvas.width, canvas.height);
+        }
 
         return canvas.toBuffer();
     }
@@ -864,51 +881,8 @@ export class YearbookBot implements Module {
                         color: 1111111,
                     }
                 });
-                let yearbookPagesAsBuffers: Buffer[] = [];
-                for(let i = 0; i < pages(); i++) {
-                    yearbookPagesAsBuffers.push(await this.createPage(user.id, i, true));
-                }
 
-                yearbookPagesAsBuffers.push(this.FPBGMessageBuffer);
-
-                // const PDFDocument = require('pdf-lib').PDFDocument
-
-                var pdfsToMerge = yearbookPagesAsBuffers;
-
-                const mergedPdf = await PDFDocument.create();
-                for (const pdfBytes of pdfsToMerge) {
-                    const pdf = await PDFDocument.load(pdfBytes);
-                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                    copiedPages.forEach((page) => {
-                        mergedPdf.addPage(page);
-                    });
-                }
-
-                function toBuffer(ab: ArrayBuffer) {
-                    var buf = Buffer.alloc(ab.byteLength);
-                    var view = new Uint8Array(ab);
-                    for (var i = 0; i < buf.length; ++i) {
-                        buf[i] = view[i];
-                    }
-                    return buf;
-                }
-
-                const newBuffer = toBuffer(await mergedPdf.save()); 
-                
-                // let origPDFStream = new hummus.PDFRStreamForBuffer(yearbookPagesAsBuffers[0]);
-                // let outStream = new memoryStreams.WritableStream();
-
-                // let pdfWriter = hummus.createWriterToModify(origPDFStream, new hummus.PDFStreamForResponse(outStream));
-
-                // for(let i = 1; i < yearbookPagesAsBuffers.length; i++) {
-                //     var secondPDFStream = new hummus.PDFRStreamForBuffer(yearbookPagesAsBuffers[i]);
-                //     pdfWriter.appendPDFPagesFromPDF(secondPDFStream);
-                // }
-
-                // pdfWriter.end();
-                // let newBuffer = outStream.toBuffer();
-
-                const attachment = new Discord.MessageAttachment(newBuffer, `yearbook-${user.id}-full.pdf`);
+                const attachment = new Discord.MessageAttachment(await this.createYearbook(user.id), `yearbook.pdf`);
                 
                 await user.send(attachment);
 
