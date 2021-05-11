@@ -276,7 +276,7 @@ export class QuotesBot implements Module {
         let teacher = "Little";
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
-            let things = teacher.split(/[ \.]/g,-1);
+            let things = teacher.split(/[ \.]/g).filter(a => a.length);
             teacher = things.join(' ');
 
             content = content.slice(0, content.lastIndexOf("-"));
