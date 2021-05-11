@@ -4,6 +4,7 @@ import { Command, Module } from './Module';
 import { ProcessorBot } from './ProcessorBot';
 import { PROCESS } from './ProcessMessage';
 import * as Crypto from 'crypto';
+import { PDFDocument } from 'pdf-lib';
 
 // @to-do NAME GET
 
@@ -27,6 +28,8 @@ export class YearbookBot implements Module {
     commands:Command[];
     fpbg: Discord.Guild;
     private readonly perPage = 8;
+    private readonly size = 750;
+    private FPBGMessageBuffer: Buffer;
 
     usersCache: Map<string, YearbookUserObj>;
 
@@ -248,6 +251,7 @@ export class YearbookBot implements Module {
             }
         ]
 
+        this.FPBGMessageBuffer = await this.imgPathToPDFBuffer('./images/hags.png');
     }
 
     async userInFPBG(userID:string) {
@@ -347,7 +351,7 @@ export class YearbookBot implements Module {
 
     async createPage(userID: string, pageID:number, pdf?:boolean) {
 
-        let size = 600;
+        let size = pdf ? this.size : 600;
         let rows = 3;
         let blockwidth = size / rows;
         const canvas = pdf ? Canvas.createCanvas(size, size, 'pdf') : Canvas.createCanvas(size, size);
@@ -379,6 +383,18 @@ export class YearbookBot implements Module {
         for (let p of positions) {
             // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
         }
+
+        return canvas.toBuffer();
+    }
+
+    async imgPathToPDFBuffer(path: string) {
+        let size = this.size;
+
+        const canvas = Canvas.createCanvas(size, size, 'pdf');
+        const ctx = canvas.getContext('2d');
+
+        const img = await Canvas.loadImage(path);
+        ctx.drawImage(img, 0,0, canvas.width, canvas.height);
 
         return canvas.toBuffer();
     }
@@ -721,7 +737,7 @@ export class YearbookBot implements Module {
                     let num = parseInt(args[1]) - 1;
                     // SEND YEARBOOK PAGE
                     let buffer = await this.createPage(user.id, num);
-                    const attachment = new Discord.MessageAttachment(buffer, `yearbook-${user.id}-num.png`);
+                    const attachment = new Discord.MessageAttachment(buffer, `yearbook-${user.id}-${num}.png`);
 
                     await user.send(`Yearbook Page ${num+1} of ${pages()}`, attachment);
                 }
@@ -747,7 +763,7 @@ export class YearbookBot implements Module {
                         }
                     })
                 }
-            } else if(command === "swap") {
+            } else if (command === "swap") {
                 let nums = args.slice(1,3).map(b => parseInt(b));
                 if(nums.length < 2 || nums.some(isNaN) || !nums.every(val => val >= 1 && val <= signatures().length)) {
                     await user.send({
@@ -769,7 +785,7 @@ export class YearbookBot implements Module {
                     await sendHelp();
                 }
                 
-            } else if(command === "delete") {
+            } else if (command === "delete") {
                 if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= signatures().length)) {
                     await user.send({
                         embed: {
@@ -829,6 +845,70 @@ export class YearbookBot implements Module {
                         })
                     }
                 }
+            } else if (m.content.toLowerCase() === "export") {
+                await user.send({
+                    embed: {
+                        description: `Exporting sometimes takes a while. Please wait up to around 30 seconds; Peepsbot will be unresponsive meanwhile.`,
+                        color: 1111111,
+                    }
+                });
+                let yearbookPagesAsBuffers: Buffer[] = [];
+                for(let i = 0; i < pages(); i++) {
+                    yearbookPagesAsBuffers.push(await this.createPage(user.id, i, true));
+                }
+
+                yearbookPagesAsBuffers.push(this.FPBGMessageBuffer);
+
+                // const PDFDocument = require('pdf-lib').PDFDocument
+
+                function toArrayBuffer(buf: Buffer) {
+                    var ab = new ArrayBuffer(buf.length);
+                    var view = new Uint8Array(ab);
+                    for (var i = 0; i < buf.length; ++i) {
+                        view[i] = buf[i];
+                    }
+                    return ab;
+                }
+
+                var pdfsToMerge = yearbookPagesAsBuffers.map(toArrayBuffer);
+
+                const mergedPdf = await PDFDocument.create();
+                for (const pdfBytes of pdfsToMerge) {
+                    const pdf = await PDFDocument.load(pdfBytes);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => {
+                        mergedPdf.addPage(page);
+                    });
+                }
+
+                function toBuffer(ab: ArrayBuffer) {
+                    var buf = Buffer.alloc(ab.byteLength);
+                    var view = new Uint8Array(ab);
+                    for (var i = 0; i < buf.length; ++i) {
+                        buf[i] = view[i];
+                    }
+                    return buf;
+                }
+
+                const newBuffer = toBuffer(await mergedPdf.save()); 
+                
+                // let origPDFStream = new hummus.PDFRStreamForBuffer(yearbookPagesAsBuffers[0]);
+                // let outStream = new memoryStreams.WritableStream();
+
+                // let pdfWriter = hummus.createWriterToModify(origPDFStream, new hummus.PDFStreamForResponse(outStream));
+
+                // for(let i = 1; i < yearbookPagesAsBuffers.length; i++) {
+                //     var secondPDFStream = new hummus.PDFRStreamForBuffer(yearbookPagesAsBuffers[i]);
+                //     pdfWriter.appendPDFPagesFromPDF(secondPDFStream);
+                // }
+
+                // pdfWriter.end();
+                // let newBuffer = outStream.toBuffer();
+
+                const attachment = new Discord.MessageAttachment(newBuffer, `yearbook-${user.id}-full.pdf`);
+                
+                await user.send(attachment);
+
             } else if (m.content.toLowerCase() === "end") {
                 await user.send({
                     embed: {
