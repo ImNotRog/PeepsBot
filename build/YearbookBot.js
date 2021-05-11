@@ -34,6 +34,14 @@ class YearbookBot {
                 // @ts-ignore
                 this.usersCache.set(doc.id, doc.data());
             }
+            this.helpEmbed = {
+                title: `Help - Yearbook Bot`,
+                description: `This module creates a virtual and scuffed yearbook signing experience! Everything is held together with duck tape and Typescript, and will only work if you READ!\n` +
+                    `There are 4 commands you need to know. /createuser signs you up, so others can know you're accepting signatures. ` +
+                    `Then, /requestsignature @someone requests someone's signature. After that, they have to run /sign to sign your yearbook. ` +
+                    `Finally, /manageyearbook allows you to look at your own yearbook!`,
+                fields: []
+            };
             this.fpbg = yield this.client.guilds.fetch('748669830244073533');
             this.commands = [
                 {
@@ -173,7 +181,7 @@ class YearbookBot {
                                 invoke({
                                     embed: {
                                         color: 1111111,
-                                        description: `${user} has already signed your yearbook!`
+                                        description: `${requested} has already signed your yearbook!`
                                     }
                                 });
                                 return;
@@ -597,6 +605,13 @@ class YearbookBot {
                                     image: {
                                         url: this.getSignatures(userBeingSignedID).find((d) => d.USERID === signerUser.id).LINK
                                     }
+                                }
+                            });
+                            let userbeingsigned = yield this.client.users.fetch(userBeingSignedID);
+                            userbeingsigned.send({
+                                embed: {
+                                    color: 1111111,
+                                    description: `🥳 ${signerUser} signed your yearbook! Run /manageyearbook in a server to view it!`
                                 }
                             });
                             this.requestsfor.set(signerUser.id, this.requestsfor.get(signerUser.id).filter(c => c !== userBeingSignedID));
