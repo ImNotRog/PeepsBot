@@ -12,26 +12,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.YearbookBot = void 0;
 const Discord = require("discord.js");
 const Canvas = require("canvas");
-const ProcessMessage_1 = require("./ProcessMessage");
 const Crypto = require("crypto");
-// @to-do NAME GET
 class YearbookBot {
     constructor(db, client) {
         this.name = "Yearbook Bot";
+        this.perPage = 8;
         this.db = db;
         this.keys = new Map();
         this.requestsfor = new Map();
         this.client = client;
-        this.signatureCache = new Map();
+        this.usersCache = new Map();
     }
     onConstruct() {
         return __awaiter(this, void 0, void 0, function* () {
             let data = yield this.db.collection("Yearbook").get();
             for (const doc of data.docs) {
                 this.requestsfor.set(doc.id, []);
-                this.signatureCache.set(doc.id, doc.data().SIGNATURES);
+                // @ts-ignore
+                this.usersCache.set(doc.id, doc.data());
             }
-            console.log(this.signatureCache);
+            this.fpbg = yield this.client.guilds.fetch('748669830244073533');
             this.commands = [
                 {
                     name: 'CreateUser',
@@ -159,7 +159,7 @@ class YearbookBot {
                             yield invoke({
                                 embed: {
                                     color: 1111111,
-                                    description: `Your presence has been requested by ${requested}! Type --sign or /sign to begin signing!`
+                                    description: `${user}, your presence has been requested by ${requested}! Type --sign or /sign to begin signing!`
                                 }
                             });
                             channel.send(`<@!${requested.id}>`);
@@ -197,30 +197,70 @@ class YearbookBot {
                             }
                         });
                     })
+                },
+                {
+                    name: "ManageYearbook",
+                    description: "See and manage your own signatures.",
+                    parameters: [],
+                    available: () => true,
+                    regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {
+                        this.manage(message.author);
+                        message.channel.send({
+                            embed: {
+                                description: `Started!`,
+                                color: 111111
+                            }
+                        });
+                    }),
+                    slashCallback: (invoke, channel, user) => __awaiter(this, void 0, void 0, function* () {
+                        this.manage(user);
+                        invoke({
+                            embed: {
+                                description: `Started!`,
+                                color: 111111
+                            }
+                        });
+                    })
                 }
             ];
-            // await this.deleteSignatureByIndex('473635602630311938', 1);
+        });
+    }
+    userInFPBG(userID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.fpbg.members.fetch(userID);
+                return true;
+            }
+            catch (err) {
+                return false;
+            }
         });
     }
     createUser(user) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.userExists(user.id))
-                throw "Uh oh!";
-            yield this.db.collection("Yearbook").doc(user.id).set({
+                throw "Attempted to create already existing user!";
+            let obj = {
                 TAG: user.username,
                 DISCRIMINATOR: user.discriminator,
                 SIGNATURES: [],
-                NAME: user.tag + '#' + user.discriminator
-            });
+                NAME: user.tag,
+                FPBG: yield this.userInFPBG(user.id)
+            };
+            yield this.db.collection("Yearbook").doc(user.id).set(obj);
             this.requestsfor.set(user.id, []);
-            this.signatureCache.set(user.id, []);
+            this.usersCache.set(user.id, obj);
         });
     }
     getSignatures(userID) {
-        return this.signatureCache.get(userID);
+        if (!this.userExists(userID))
+            throw "Attempted to retrieve signatures from non-existent user!";
+        return this.usersCache.get(userID).SIGNATURES;
     }
     setSigatures(userID, signatures) {
-        this.signatureCache.set(userID, signatures);
+        if (!this.userExists(userID))
+            throw "Attempted to set signatures of non-existent user!";
+        this.usersCache.get(userID).SIGNATURES = signatures;
     }
     deleteSignatureByIndex(userID, index) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -285,59 +325,49 @@ class YearbookBot {
             }
         });
     }
-    onMessage(message) {
+    createPage(userID, pageID, pdf) {
         return __awaiter(this, void 0, void 0, function* () {
-            let result = ProcessMessage_1.PROCESS(message);
-            if (result) {
-                if (result.command === "brrr") {
-                    let size = 600;
-                    let rows = 4;
-                    let blockwidth = size / rows;
-                    const canvas = Canvas.createCanvas(size, size);
-                    const ctx = canvas.getContext('2d');
-                    // const background = await Canvas.loadImage('./testing/DOG.jpg');
-                    // ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-                    // const applyText = (text:string, d?:number ) => {
-                    //     const ctx = canvas.getContext('2d');
-                    //     // Declare a base size of the font
-                    //     let fontSize = d || 200;
-                    //     do {
-                    //         // Assign the font to the context and decrement it so it can be measured again
-                    //         ctx.font = `${fontSize -= 10}px sans-serif`;
-                    //         // Compare pixel width of the text to the canvas minus the approximate avatar size
-                    //     } while (ctx.measureText(text).width > canvas.width-100);
-                    //     // Return the result to use in the actual canvas
-                    //     return fontSize;
-                    // };
-                    let positions = [];
-                    for (let i = 0; i < rows; i++) {
-                        if (i % 2 === 1) {
-                            for (let j = 0; j < rows - 1; j++) {
-                                positions.push([j * blockwidth + blockwidth / 2, i * blockwidth]);
-                            }
-                        }
-                        else {
-                            for (let j = 0; j < rows; j++) {
-                                positions.push([j * blockwidth, i * blockwidth]);
-                            }
-                        }
+            let size = 600;
+            let rows = 3;
+            let blockwidth = size / rows;
+            const canvas = pdf ? Canvas.createCanvas(size, size, 'pdf') : Canvas.createCanvas(size, size);
+            const ctx = canvas.getContext('2d');
+            let positions = [];
+            for (let i = 0; i < rows; i++) {
+                if (i % 2 === 1) {
+                    for (let j = 0; j < rows - 1; j++) {
+                        positions.push([j * blockwidth + blockwidth / 2, i * blockwidth]);
                     }
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    let signatures = this.getSignatures("473635602630311938");
-                    for (let i = 0; i < Math.min(positions.length, signatures.length); i++) {
-                        const img = yield Canvas.loadImage(signatures[i].LINK);
-                        ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
+                }
+                else {
+                    for (let j = 0; j < rows; j++) {
+                        positions.push([j * blockwidth, i * blockwidth]);
                     }
-                    ctx.strokeStyle = "blue";
-                    for (let p of positions) {
-                        // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
-                    }
-                    // pdf merge
-                    const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'test.png');
-                    message.channel.send(attachment);
                 }
             }
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let signatures = this.getSignatures(userID).slice(pageID * this.perPage, pageID * this.perPage + this.perPage);
+            for (let i = 0; i < Math.min(positions.length, signatures.length); i++) {
+                const img = yield Canvas.loadImage(signatures[i].LINK);
+                ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
+            }
+            ctx.strokeStyle = "blue";
+            for (let p of positions) {
+                // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
+            }
+            return canvas.toBuffer();
+        });
+    }
+    onMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // let result = PROCESS(message);
+            // if(result) {
+            //     if(result.command === "brrr") {
+            //         const attachment = new Discord.MessageAttachment(await this.createPage(message.author.id, 0), 'test.png');
+            //         message.channel.send(attachment);
+            //     }
+            // }
             // WEBHOOK
             if (message.channel.id === '839207825535795210') {
                 // console.log(message);
@@ -347,15 +377,18 @@ class YearbookBot {
                         let url = message.attachments.first().url;
                         const { from, to, callback } = this.keys.get(KEY);
                         this.keys.delete(KEY);
+                        // fetch signatures idk
                         let { SIGNATURES } = (yield this.db.collection("Yearbook").doc(to.id).get()).data();
                         SIGNATURES.push({
                             LINK: url,
                             USERID: from.id
                         });
+                        // update on db
                         yield this.db.collection("Yearbook").doc(to.id).update({
                             SIGNATURES
                         });
-                        this.signatureCache.get(to.id).push({
+                        // update cache
+                        this.getSignatures(to.id).push({
                             LINK: url,
                             USERID: from.id
                         });
@@ -496,7 +529,7 @@ class YearbookBot {
                                     description: `🥳 Successfully Signed Yearbook for <@!${userBeingSignedID}>!`,
                                     color: 1111111,
                                     image: {
-                                        url: this.signatureCache.get(userBeingSignedID).find((d) => d.USERID === signerUser.id).LINK
+                                        url: this.getSignatures(userBeingSignedID).find((d) => d.USERID === signerUser.id).LINK
                                     }
                                 }
                             });
@@ -534,6 +567,232 @@ class YearbookBot {
                 }
             }
             this.parent.DMSessions.delete(signerUser.id);
+        });
+    }
+    manage(user) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.parent.DMSessions.has(user.id)) {
+                user.send({
+                    embed: {
+                        description: `The module ${this.parent.DMSessions.get(user.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
+                        color: 1111111
+                    }
+                });
+                return;
+            }
+            if (!this.userExists(user.id)) {
+                yield this.createUser(user);
+            }
+            this.parent.DMSessions.set(user.id, this.name);
+            let signatures = () => {
+                return this.getSignatures(user.id);
+            };
+            let pages = () => {
+                return Math.ceil(signatures().length / this.perPage);
+            };
+            let sendHelp = () => __awaiter(this, void 0, void 0, function* () {
+                yield user.send({
+                    embed: {
+                        title: `Manage Yearbook`,
+                        description: `This is to edit or see your own yearbook! If you want to sign someone else's yearbook, type "end", then run /sign in a server (not here).\n` +
+                            `To see your yearbook, type "yearbook #", where # is the page of the yearbook you want to see. **You currently have ${pages()} pages.**\n` +
+                            `Alternatively, to view a single signature, type "get #", where # is the signature's index (see Signatures below).\n` +
+                            `To manage signatures, refer to the list of commands below.\n` +
+                            `And finally, to export your virtual yearbook as a pdf, simply type "export".`,
+                        fields: [
+                            {
+                                name: `Signatures`,
+                                value: `${signatures().length > 0
+                                    ? signatures().map(({ LINK, USERID }, i) => `${i + 1}: <@${USERID}>`).join('\n')
+                                    : `😔 You don't have any signatures yet!`}`
+                            },
+                            {
+                                name: `Commands`,
+                                value: `yearbook # - Gives a yearbook page\n` +
+                                    `get # - Gives the requested signature\n` +
+                                    `swap # # - Swaps the positions of two signatures\n` +
+                                    `delete # - Deletes a signature (UNRECOVERABLE)\n` +
+                                    `export - Exports your entire virtual yearbook as a pdf\n` +
+                                    `help - Resends this message\n` +
+                                    `end - Ends the session`
+                            }
+                        ],
+                        color: 1111111
+                    }
+                });
+            });
+            yield sendHelp();
+            while (true) {
+                let a;
+                try {
+                    a = yield user.dmChannel.awaitMessages((m) => {
+                        return !m.author.bot;
+                    }, { max: 1, time: 1000 * 60 * 10, errors: ['time'] });
+                }
+                catch (err) {
+                    yield user.send({
+                        embed: {
+                            description: "The signing session timed out. To restart it, run /sign or --sign in a server.",
+                            color: 1111111
+                        }
+                    });
+                    break;
+                }
+                let m = a.first();
+                let args = m.content.split(' ').filter(substr => substr.length);
+                let command = args[0];
+                // swap complete
+                // delete complete
+                // get complete
+                if (command === "yearbook") {
+                    if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= pages())) {
+                        yield user.send({
+                            embed: {
+                                description: pages() > 0
+                                    ? `Please specify a valid number between 1 and ${pages()}, e.g. "yearbook 1".`
+                                    : `😔 This command is currently invalid, as you currently do not have any signatures. Request a signature in a server via /requestsignature in a server!`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                    else {
+                        let num = parseInt(args[1]) - 1;
+                        // SEND YEARBOOK PAGE
+                        let buffer = yield this.createPage(user.id, num);
+                        const attachment = new Discord.MessageAttachment(buffer, `yearbook-${user.id}-num.png`);
+                        yield user.send(`Yearbook Page ${num + 1} of ${pages()}`, attachment);
+                    }
+                }
+                else if (command === "get") {
+                    if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= signatures().length)) {
+                        yield user.send({
+                            embed: {
+                                description: signatures().length > 0
+                                    ? `Please specify a valid number between 1 and ${pages()}, e.g. "get 1".`
+                                    : `😔 This command is currently invalid, as you currently do not have any signatures. Request a signature in a server via /requestsignature in a server!`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                    else {
+                        let num = parseInt(args[1]) - 1;
+                        yield user.send({
+                            embed: {
+                                description: `${num + 1}: Signature from <@${signatures()[num].USERID}>`,
+                                color: 1111111,
+                                image: {
+                                    url: signatures()[num].LINK
+                                }
+                            }
+                        });
+                    }
+                }
+                else if (command === "swap") {
+                    let nums = args.slice(1, 3).map(b => parseInt(b));
+                    if (nums.length < 2 || nums.some(isNaN) || !nums.every(val => val >= 1 && val <= signatures().length)) {
+                        yield user.send({
+                            embed: {
+                                description: signatures().length > 0
+                                    ? `Please specify 2 valid numbers between 1 and ${signatures().length}, e.g. "swap 1 2".`
+                                    : `😔 This command is currently invalid, as you currently do not have any signatures. Request a signature in a server via /requestsignature in a server!`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                    else {
+                        yield this.swapSignatures(user.id, nums[0] - 1, nums[1] - 1);
+                        yield user.send({
+                            embed: {
+                                description: `Swapped! <:chomp:788142366015881236>`,
+                                color: 1111111
+                            }
+                        });
+                        yield sendHelp();
+                    }
+                }
+                else if (command === "delete") {
+                    if (args.length < 2 || isNaN(parseInt(args[1])) || !(parseInt(args[1]) >= 1 && parseInt(args[1]) <= signatures().length)) {
+                        yield user.send({
+                            embed: {
+                                description: signatures().length > 0
+                                    ? `Please specify a valid number between 1 and ${pages()}, e.g. "delete 1".`
+                                    : `😔 This command is currently invalid, as you currently do not have any signatures. Request a signature in a server via /requestsignature in a server!`,
+                                color: 1111111
+                            }
+                        });
+                    }
+                    else {
+                        let num = parseInt(args[1]) - 1;
+                        yield user.send({
+                            embed: {
+                                description: `Are you sure you want to delete (PERMANANTLY) this signature by <@${signatures()[num].USERID}>? This action is IRREVERSIBLE. Type "yes" if you want to proceed, and type "no" or anything else to cancel.`,
+                                color: 1111111,
+                                image: {
+                                    url: signatures()[num].LINK
+                                }
+                            }
+                        });
+                        let b;
+                        let confirmed = false;
+                        try {
+                            b = yield user.dmChannel.awaitMessages((m) => {
+                                return !m.author.bot;
+                            }, { max: 1, time: 1000 * 60 * 3, errors: ['time'] });
+                        }
+                        catch (err) {
+                            yield user.send({
+                                embed: {
+                                    description: "The deletion has been cancelled due to timeout.",
+                                    color: 1111111
+                                }
+                            });
+                        }
+                        let confirmationMsg = b.first();
+                        if (confirmationMsg.content.toLowerCase() === "yes") {
+                            confirmed = true;
+                        }
+                        if (confirmed) {
+                            yield this.deleteSignatureByIndex(user.id, num);
+                            yield user.send({
+                                embed: {
+                                    description: "Deleted! <:chomp:788142366015881236>",
+                                    color: 1111111
+                                }
+                            });
+                            yield sendHelp();
+                        }
+                        else {
+                            yield user.send({
+                                embed: {
+                                    description: "Deletion was cancelled!",
+                                    color: 1111111
+                                }
+                            });
+                        }
+                    }
+                }
+                else if (m.content.toLowerCase() === "end") {
+                    yield user.send({
+                        embed: {
+                            description: "Session ended! To restart it, run /ManageYearbook or --ManageYearbook in a server.",
+                            color: 1111111
+                        }
+                    });
+                    break;
+                }
+                else if (m.content.toLowerCase() === "help") {
+                    sendHelp();
+                }
+                else {
+                    yield user.send({
+                        embed: {
+                            description: `Uh oh, that's not a command I recognize. Type "help" for help if you're confused.`,
+                            color: 1111111
+                        }
+                    });
+                }
+            }
+            this.parent.DMSessions.delete(user.id);
         });
     }
     available(guild) {
