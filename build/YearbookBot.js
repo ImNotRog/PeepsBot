@@ -14,6 +14,7 @@ const Discord = require("discord.js");
 const Canvas = require("canvas");
 const ProcessMessage_1 = require("./ProcessMessage");
 const Crypto = require("crypto");
+// @to-do NAME GET
 class YearbookBot {
     constructor(db, client) {
         this.name = "Yearbook Bot";
@@ -30,6 +31,7 @@ class YearbookBot {
                 this.requestsfor.set(doc.id, []);
                 this.signatureCache.set(doc.id, doc.data().SIGNATURES);
             }
+            console.log(this.signatureCache);
             this.commands = [
                 {
                     name: 'CreateUser',
@@ -115,7 +117,7 @@ class YearbookBot {
                                 content: `<@!${user.id}>`,
                                 embed: {
                                     color: 1111111,
-                                    description: `Your presence has been requested by ${user}! Type --sign or /sign to begin signing!`
+                                    description: `${user}, your presence has been requested by ${message.author}! Type --sign or /sign to begin signing!`
                                 }
                             });
                         }
@@ -154,13 +156,13 @@ class YearbookBot {
                                 return;
                             }
                             this.requestsign(user, requested);
-                            yield invoke(`<@!${requested.id}>`);
-                            channel.send({
+                            yield invoke({
                                 embed: {
                                     color: 1111111,
                                     description: `Your presence has been requested by ${requested}! Type --sign or /sign to begin signing!`
                                 }
                             });
+                            channel.send(`<@!${requested.id}>`);
                         }
                         else {
                             invoke({
@@ -197,6 +199,7 @@ class YearbookBot {
                     })
                 }
             ];
+            // await this.deleteSignatureByIndex('473635602630311938', 1);
         });
     }
     createUser(user) {
@@ -206,10 +209,38 @@ class YearbookBot {
             yield this.db.collection("Yearbook").doc(user.id).set({
                 TAG: user.username,
                 DISCRIMINATOR: user.discriminator,
-                SIGNATURES: []
+                SIGNATURES: [],
+                NAME: user.tag + '#' + user.discriminator
             });
             this.requestsfor.set(user.id, []);
             this.signatureCache.set(user.id, []);
+        });
+    }
+    getSignatures(userID) {
+        return this.signatureCache.get(userID);
+    }
+    setSigatures(userID, signatures) {
+        this.signatureCache.set(userID, signatures);
+    }
+    deleteSignatureByIndex(userID, index) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.setSigatures(userID, this.getSignatures(userID).filter((_, i) => i !== index));
+            yield this.pushSignature(userID);
+        });
+    }
+    swapSignatures(userID, index1, index2) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let signatures = this.getSignatures(userID);
+            ;
+            [signatures[index1], signatures[index2]] = [signatures[index2], signatures[index1]];
+            yield this.pushSignature(userID);
+        });
+    }
+    pushSignature(userID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.db.collection("Yearbook").doc(userID).update({
+                SIGNATURES: this.getSignatures(userID)
+            });
         });
     }
     requestsign(requester, requested) {
@@ -259,7 +290,10 @@ class YearbookBot {
             let result = ProcessMessage_1.PROCESS(message);
             if (result) {
                 if (result.command === "brrr") {
-                    const canvas = Canvas.createCanvas(600, 600);
+                    let size = 600;
+                    let rows = 4;
+                    let blockwidth = size / rows;
+                    const canvas = Canvas.createCanvas(size, size);
                     const ctx = canvas.getContext('2d');
                     // const background = await Canvas.loadImage('./testing/DOG.jpg');
                     // ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
@@ -276,23 +310,31 @@ class YearbookBot {
                     //     return fontSize;
                     // };
                     let positions = [];
-                    for (let i = 0; i < 3; i++) {
-                        if (i == 1) {
-                            for (let j = 0; j < 2; j++) {
-                                positions.push([j * 200 + 100, i * 200]);
+                    for (let i = 0; i < rows; i++) {
+                        if (i % 2 === 1) {
+                            for (let j = 0; j < rows - 1; j++) {
+                                positions.push([j * blockwidth + blockwidth / 2, i * blockwidth]);
                             }
                         }
                         else {
-                            for (let j = 0; j < 3; j++) {
-                                positions.push([j * 200, i * 200]);
+                            for (let j = 0; j < rows; j++) {
+                                positions.push([j * blockwidth, i * blockwidth]);
                             }
                         }
                     }
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    let signatures = this.getSignatures("473635602630311938");
+                    for (let i = 0; i < Math.min(positions.length, signatures.length); i++) {
+                        const img = yield Canvas.loadImage(signatures[i].LINK);
+                        ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
+                    }
                     ctx.strokeStyle = "blue";
                     for (let p of positions) {
-                        ctx.strokeRect(p[0], p[1], 200, 200);
+                        // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
                     }
-                    const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'brrr.png');
+                    // pdf merge
+                    const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'test.png');
                     message.channel.send(attachment);
                 }
             }
@@ -323,26 +365,26 @@ class YearbookBot {
             }
         });
     }
-    sign(user) {
+    sign(signerUser) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.parent.DMSessions.has(user.id)) {
-                user.send({
+            if (this.parent.DMSessions.has(signerUser.id)) {
+                signerUser.send({
                     embed: {
-                        description: `The module ${this.parent.DMSessions.get(user.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
+                        description: `The module ${this.parent.DMSessions.get(signerUser.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
                         color: 1111111
                     }
                 });
                 return;
             }
-            if (!this.userExists(user.id)) {
-                yield this.createUser(user);
+            if (!this.userExists(signerUser.id)) {
+                yield this.createUser(signerUser);
             }
-            this.parent.DMSessions.set(user.id, this.name);
+            this.parent.DMSessions.set(signerUser.id, this.name);
             let requestees = () => {
-                return this.requestsfor.get(user.id);
+                return this.requestsfor.get(signerUser.id);
             };
             let sendHelp = () => __awaiter(this, void 0, void 0, function* () {
-                yield user.send({
+                yield signerUser.send({
                     embed: {
                         title: 'Signing Yearbook!',
                         description: `To sign someone's yearbook, they first need to request it via --request or /request.\n` +
@@ -366,12 +408,12 @@ class YearbookBot {
                 yield sendHelp();
                 let a;
                 try {
-                    a = yield user.dmChannel.awaitMessages((m) => {
+                    a = yield signerUser.dmChannel.awaitMessages((m) => {
                         return !m.author.bot;
                     }, { max: 1, time: 1000 * 60 * 10, errors: ['time'] });
                 }
                 catch (err) {
-                    yield user.send({
+                    yield signerUser.send({
                         embed: {
                             description: "The signing session timed out. To restart it, run /sign or --sign in a server.",
                             color: 1111111
@@ -383,7 +425,7 @@ class YearbookBot {
                 if (!isNaN(parseInt(m.content))) {
                     let num = parseInt(m.content) - 1;
                     if (!(num >= 0 && num < requestees().length)) {
-                        yield user.send({
+                        yield signerUser.send({
                             embed: {
                                 description: `Invalid requester number! Please send a number between 1 and ${requestees().length}.`,
                                 color: 1111111
@@ -391,13 +433,13 @@ class YearbookBot {
                         });
                     }
                     else {
-                        let id = requestees()[num];
+                        let userBeingSignedID = requestees()[num];
                         // SIGNING HERE
                         let token = this.generateToken();
-                        yield user.send({
+                        yield signerUser.send({
                             embed: {
                                 title: `Signing Yearbook`,
-                                description: `Signing <@!${id}>'s yearbook! \n***Use this link to sign:*** ${this.generateLink(user, yield this.client.users.fetch(id), token)} \n(I promise its not a virus)\n\n` +
+                                description: `Signing <@!${userBeingSignedID}>'s yearbook! \n***Use this link to sign:*** ${this.generateLink(signerUser, yield this.client.users.fetch(userBeingSignedID), token)} \n(I promise its not a virus)\n\n` +
                                     `To abort, type "end".`,
                                 color: 1111111
                             }
@@ -415,13 +457,13 @@ class YearbookBot {
                                 while (!resolved) {
                                     let b;
                                     try {
-                                        b = yield user.dmChannel.awaitMessages((m) => {
+                                        b = yield signerUser.dmChannel.awaitMessages((m) => {
                                             return !m.author.bot;
                                         }, { max: 1, time: 1000 * 30 * 60, errors: ['time'] }); // * 60 in production
                                     }
                                     catch (err) {
                                         if (!resolved) {
-                                            yield user.send({
+                                            yield signerUser.send({
                                                 embed: {
                                                     description: `The signature timed out. To restart it, retype the number or type "help" if you're confused.`,
                                                     color: 1111111
@@ -433,7 +475,7 @@ class YearbookBot {
                                     }
                                     if (!resolved) {
                                         if (b.first().content.toLowerCase() === "end") {
-                                            yield user.send({
+                                            yield signerUser.send({
                                                 embed: {
                                                     description: `Aborted!`,
                                                     color: 1111111
@@ -449,21 +491,21 @@ class YearbookBot {
                         let resolved = yield returnpromise;
                         if (resolved) {
                             // console.log(this.signatureCache)
-                            yield user.send({
+                            yield signerUser.send({
                                 embed: {
-                                    description: `🥳 Successfully Signed Yearbook for <@!${id}>!`,
+                                    description: `🥳 Successfully Signed Yearbook for <@!${userBeingSignedID}>!`,
                                     color: 1111111,
                                     image: {
-                                        url: this.signatureCache.get(id).find((d) => d.USERID === user.id).LINK
+                                        url: this.signatureCache.get(userBeingSignedID).find((d) => d.USERID === signerUser.id).LINK
                                     }
                                 }
                             });
-                            this.requestsfor.set(user.id, this.requestsfor.get(user.id).filter(c => c !== id));
+                            this.requestsfor.set(signerUser.id, this.requestsfor.get(signerUser.id).filter(c => c !== userBeingSignedID));
                         }
                     }
                 }
                 else if (m.content.toLowerCase() === "end") {
-                    yield user.send({
+                    yield signerUser.send({
                         embed: {
                             description: "Session ended! To restart it, run /sign or --sign in a server.",
                             color: 1111111
@@ -475,7 +517,7 @@ class YearbookBot {
                     sendHelp();
                 }
                 else {
-                    yield user.send({
+                    yield signerUser.send({
                         embed: {
                             description: `Uh oh, that's not a command I recognize. Type in the number of the person who you want to sign, or type "help" for help.`,
                             color: 1111111
@@ -483,7 +525,7 @@ class YearbookBot {
                     });
                 }
                 if (requestees().length === 0) {
-                    yield user.send({
+                    yield signerUser.send({
                         embed: {
                             description: "Session ended! There are no more requested yearbooks to sign.",
                             color: 1111111
@@ -491,7 +533,7 @@ class YearbookBot {
                     });
                 }
             }
-            this.parent.DMSessions.delete(user.id);
+            this.parent.DMSessions.delete(signerUser.id);
         });
     }
     available(guild) {

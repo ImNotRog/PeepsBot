@@ -5,6 +5,8 @@ import { ProcessorBot } from './ProcessorBot';
 import { PROCESS } from './ProcessMessage';
 import * as Crypto from 'crypto';
 
+// @to-do NAME GET
+
 export class YearbookBot implements Module {
     name: string = "Yearbook Bot";
     keys: Map<string, { to: Discord.User, from: Discord.User, callback:() => void }>;
@@ -29,6 +31,8 @@ export class YearbookBot implements Module {
             this.requestsfor.set(doc.id, []);
             this.signatureCache.set(doc.id, doc.data().SIGNATURES);
         }
+
+        console.log(this.signatureCache);
         
         this.commands = [
             {
@@ -118,7 +122,7 @@ export class YearbookBot implements Module {
                             content: `<@!${user.id}>`,
                             embed: {
                                 color: 1111111,
-                                description: `Your presence has been requested by ${user}! Type --sign or /sign to begin signing!`
+                                description: `${user}, your presence has been requested by ${message.author}! Type --sign or /sign to begin signing!`
                             }
                         })
 
@@ -162,13 +166,13 @@ export class YearbookBot implements Module {
                         }
                         this.requestsign(user, requested);
 
-                        await invoke(`<@!${requested.id}>`);
-                        channel.send({
+                        await invoke({
                             embed: {
                                 color: 1111111,
                                 description: `Your presence has been requested by ${requested}! Type --sign or /sign to begin signing!`
                             }
                         })
+                        channel.send(`<@!${requested.id}>`);
 
                     } else {
                         invoke({
@@ -205,6 +209,8 @@ export class YearbookBot implements Module {
                 }
             }
         ]
+
+        // await this.deleteSignatureByIndex('473635602630311938', 1);
     }
 
     async createUser(user: Discord.User) {
@@ -212,10 +218,36 @@ export class YearbookBot implements Module {
         await this.db.collection("Yearbook").doc(user.id).set({
             TAG: user.username,
             DISCRIMINATOR: user.discriminator,
-            SIGNATURES: []
+            SIGNATURES: [],
+            NAME: user.tag + '#' + user.discriminator
         })
         this.requestsfor.set(user.id, []);
         this.signatureCache.set(user.id, []);
+    }
+
+    getSignatures(userID: string) {
+        return this.signatureCache.get(userID);
+    }
+
+    setSigatures(userID: string, signatures: {LINK: string, USERID: string}[]) {
+        this.signatureCache.set(userID, signatures);
+    }
+
+    async deleteSignatureByIndex(userID:string, index: number) {
+        this.setSigatures(userID, this.getSignatures(userID).filter((_,i) => i!==index));
+        await this.pushSignature(userID);
+    }
+
+    async swapSignatures(userID:string,index1:number, index2:number) {
+        let signatures = this.getSignatures(userID);
+        ;[signatures[index1], signatures[index2]] = [signatures[index2], signatures[index1]];
+        await this.pushSignature(userID);
+    }
+
+    private async pushSignature(userID:string) {
+        await this.db.collection("Yearbook").doc(userID).update({
+            SIGNATURES: this.getSignatures(userID)
+        })
     }
 
     requestsign(requester: Discord.User, requested: Discord.User) {
@@ -268,8 +300,13 @@ export class YearbookBot implements Module {
         if(result) {
 
             if(result.command === "brrr") {
-                const canvas = Canvas.createCanvas(600, 600);
+
+                let size = 600;
+                let rows = 4;
+                let blockwidth = size/rows;
+                const canvas = Canvas.createCanvas(size, size);
                 const ctx = canvas.getContext('2d');
+
                 // const background = await Canvas.loadImage('./testing/DOG.jpg');
                 // ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
@@ -290,24 +327,36 @@ export class YearbookBot implements Module {
                 // };
 
                 let positions: number[][] = [];
-                for(let i = 0; i < 3; i++) {
-                    if(i==1){
-                        for(let j = 0; j < 2; j++) {
-                            positions.push([j*200+100,i*200]);
+                for (let i = 0; i < rows; i++) {
+                    if(i%2 === 1){
+                        for (let j = 0; j < rows-1; j++) {
+                            positions.push([j * blockwidth + blockwidth/2, i * blockwidth]);
                         }
                     } else {
-                        for(let j = 0; j < 3; j++) {
-                            positions.push([j*200,i*200]);
+                        for (let j = 0; j < rows; j++) {
+                            positions.push([j * blockwidth, i * blockwidth]);
                         }
                     }
                 }
 
-                ctx.strokeStyle = "blue";
-                for(let p of positions) {
-                    ctx.strokeRect(p[0],p[1], 200,200);
+                ctx.fillStyle = "white";
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+
+                let signatures = this.getSignatures("473635602630311938");
+                for (let i = 0; i < Math.min(positions.length, signatures.length) ; i++) {
+                    const img = await Canvas.loadImage(signatures[i].LINK);
+                    ctx.drawImage(img, positions[i][0], positions[i][1], blockwidth, blockwidth);
                 }
 
-                const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'brrr.png');
+                ctx.strokeStyle = "blue";
+                for(let p of positions) {
+                    // ctx.strokeRect(p[0], p[1], blockwidth, blockwidth);
+                }
+
+                
+                // pdf merge
+
+                const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'test.png');
 
                 message.channel.send(attachment);
             }
@@ -346,29 +395,29 @@ export class YearbookBot implements Module {
         }
     }
     
-    async sign(user: Discord.User){
-        if (this.parent.DMSessions.has(user.id)) {
-            user.send({
+    async sign(signerUser: Discord.User){
+        if (this.parent.DMSessions.has(signerUser.id)) {
+            signerUser.send({
                 embed: {
-                    description: `The module ${this.parent.DMSessions.get(user.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
+                    description: `The module ${this.parent.DMSessions.get(signerUser.id)} is already using this DM-Channel. Resolve that interaction first by continuining with the process or by sending "end".`,
                     color: 1111111
                 }
             })
             return;
         }
 
-        if (!this.userExists(user.id)) {
-            await this.createUser(user);
+        if (!this.userExists(signerUser.id)) {
+            await this.createUser(signerUser);
         }
 
-        this.parent.DMSessions.set(user.id, this.name);
+        this.parent.DMSessions.set(signerUser.id, this.name);
 
         let requestees = () => {
-            return this.requestsfor.get(user.id);
+            return this.requestsfor.get(signerUser.id);
         }
 
         let sendHelp = async () => {
-            await user.send({
+            await signerUser.send({
                 embed: {
                     title: 'Signing Yearbook!',
                     description: `To sign someone's yearbook, they first need to request it via --request or /request.\n` +
@@ -397,11 +446,11 @@ export class YearbookBot implements Module {
 
             let a: Discord.Collection<string, Discord.Message>;
             try {
-                a = await user.dmChannel.awaitMessages((m: Discord.Message) => {
+                a = await signerUser.dmChannel.awaitMessages((m: Discord.Message) => {
                     return !m.author.bot;
                 }, { max: 1, time: 1000 * 60 * 10, errors: ['time'] });
             } catch (err) {
-                await user.send({
+                await signerUser.send({
                     embed: {
                         description: "The signing session timed out. To restart it, run /sign or --sign in a server.",
                         color: 1111111
@@ -414,21 +463,21 @@ export class YearbookBot implements Module {
             if (!isNaN(parseInt(m.content))) {
                 let num = parseInt(m.content) - 1;
                 if (!(num >= 0 && num < requestees().length)) {
-                    await user.send({
+                    await signerUser.send({
                         embed: {
                             description: `Invalid requester number! Please send a number between 1 and ${requestees().length}.`,
                             color: 1111111
                         }
                     })
                 } else {
-                    let id = requestees()[num];
+                    let userBeingSignedID = requestees()[num];
                     // SIGNING HERE
 
                     let token = this.generateToken();
-                    await user.send({
+                    await signerUser.send({
                         embed: {
                             title: `Signing Yearbook`,
-                            description: `Signing <@!${id}>'s yearbook! \n***Use this link to sign:*** ${this.generateLink(user, await this.client.users.fetch(id), token)} \n(I promise its not a virus)\n\n` +
+                            description: `Signing <@!${userBeingSignedID}>'s yearbook! \n***Use this link to sign:*** ${this.generateLink(signerUser, await this.client.users.fetch(userBeingSignedID), token)} \n(I promise its not a virus)\n\n` +
                                 `To abort, type "end".`,
                             color: 1111111
                         }
@@ -450,13 +499,13 @@ export class YearbookBot implements Module {
                             while (!resolved) {
                                 let b: Discord.Collection<string, Discord.Message>;
                                 try {
-                                    b = await user.dmChannel.awaitMessages((m: Discord.Message) => {
+                                    b = await signerUser.dmChannel.awaitMessages((m: Discord.Message) => {
                                         return !m.author.bot;
                                     }, { max: 1, time: 1000 * 30*60, errors: ['time'] }); // * 60 in production
                                 } catch (err) {
 
                                     if (!resolved) {
-                                        await user.send({
+                                        await signerUser.send({
                                             embed: {
                                                 description: `The signature timed out. To restart it, retype the number or type "help" if you're confused.`,
                                                 color: 1111111
@@ -470,7 +519,7 @@ export class YearbookBot implements Module {
 
                                 if (!resolved) {
                                     if (b.first().content.toLowerCase() === "end") {
-                                        await user.send({
+                                        await signerUser.send({
                                             embed: {
                                                 description: `Aborted!`,
                                                 color: 1111111
@@ -490,22 +539,22 @@ export class YearbookBot implements Module {
 
                     if (resolved) {
                         // console.log(this.signatureCache)
-                        await user.send({
+                        await signerUser.send({
                             embed: {
-                                description: `🥳 Successfully Signed Yearbook for <@!${id}>!`,
+                                description: `🥳 Successfully Signed Yearbook for <@!${userBeingSignedID}>!`,
                                 color: 1111111,
                                 image: {
-                                    url: this.signatureCache.get(id).find((d) => d.USERID === user.id).LINK
+                                    url: this.signatureCache.get(userBeingSignedID).find((d) => d.USERID === signerUser.id).LINK
                                 }
                             }
                         });
 
-                        this.requestsfor.set(user.id, this.requestsfor.get(user.id).filter(c => c !== id));
+                        this.requestsfor.set(signerUser.id, this.requestsfor.get(signerUser.id).filter(c => c !== userBeingSignedID));
                     }
 
                 }
             } else if (m.content.toLowerCase() === "end") {
-                await user.send({
+                await signerUser.send({
                     embed: {
                         description: "Session ended! To restart it, run /sign or --sign in a server.",
                         color: 1111111
@@ -515,7 +564,7 @@ export class YearbookBot implements Module {
             } else if (m.content.toLowerCase() === "help")  {
                 sendHelp();
             } else {
-                await user.send({
+                await signerUser.send({
                     embed: {
                         description: `Uh oh, that's not a command I recognize. Type in the number of the person who you want to sign, or type "help" for help.`,
                         color: 1111111
@@ -525,7 +574,7 @@ export class YearbookBot implements Module {
 
             if (requestees().length === 0) {
 
-                await user.send({
+                await signerUser.send({
                     embed: {
                         description: "Session ended! There are no more requested yearbooks to sign.",
                         color: 1111111
@@ -535,7 +584,7 @@ export class YearbookBot implements Module {
         }
 
 
-        this.parent.DMSessions.delete(user.id);
+        this.parent.DMSessions.delete(signerUser.id);
 
     }
 
