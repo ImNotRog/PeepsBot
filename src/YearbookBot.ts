@@ -662,6 +662,14 @@ export class YearbookBot implements Module {
                             }
                         });
 
+                        let userbeingsigned = await this.client.users.fetch(userBeingSignedID);
+                        userbeingsigned.send({
+                            embed: {
+                                color: 1111111,
+                                description: `🥳 ${signerUser} signed your yearbook! Run /manageyearbook in a server to view it!`
+                            }
+                        })
+
                         this.requestsfor.set(signerUser.id, this.requestsfor.get(signerUser.id).filter(c => c !== userBeingSignedID));
                     }
 
