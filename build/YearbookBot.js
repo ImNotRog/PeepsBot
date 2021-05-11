@@ -182,7 +182,7 @@ class YearbookBot {
                             yield invoke({
                                 embed: {
                                     color: 1111111,
-                                    description: `${user}, your presence has been requested by ${requested}! Type --sign or /sign to begin signing!`
+                                    description: `${requested}, your presence has been requested by ${user}! Type --sign or /sign to begin signing!`
                                 }
                             });
                             channel.send(`<@!${requested.id}>`);
