@@ -71,7 +71,7 @@ export class ProcessorBot {
     // private readonly helpActive = false;
 
     private readonly clearCommands = true;
-    private readonly mountCommands = false;
+    private readonly mountCommands = true;
 
     public modules: Module[];
     public commands: Command[];
