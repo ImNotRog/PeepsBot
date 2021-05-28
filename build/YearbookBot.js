@@ -46,7 +46,7 @@ class YearbookBot {
             this.commands = [
                 {
                     name: 'CreateUser',
-                    description: 'Creates a user for the Yearbook Signing Bot (in development)',
+                    description: 'Creates a user for the Yearbook Signing Bot',
                     available: () => true,
                     parameters: [],
                     regularCallback: (message) => __awaiter(this, void 0, void 0, function* () {

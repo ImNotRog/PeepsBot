@@ -29,7 +29,6 @@ export class YearbookBot implements Module {
     fpbg: Discord.Guild;
     private readonly perPage = 8;
     private readonly size = 750;
-    private FPBGMessageBuffer: Buffer;
 
     usersCache: Map<string, YearbookUserObj>;
 
@@ -65,7 +64,7 @@ export class YearbookBot implements Module {
         this.commands = [
             {
                 name: 'CreateUser',
-                description: 'Creates a user for the Yearbook Signing Bot (in development)',
+                description: 'Creates a user for the Yearbook Signing Bot',
                 available: () => true,
                 parameters: [],
                 regularCallback: async (message) => {
