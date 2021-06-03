@@ -30,45 +30,45 @@ import { PROCESS } from "./ProcessMessage";
 export class ProcessorBot {
 
     private readonly prefix = "--";
-    private readonly quotesActive = true;
-    private readonly trackerActive = true;
-    private readonly bdayActive = true;
-    private readonly reactActive = true;
-    private readonly nameChangerActive = true;
-    private readonly roleManagerActive = true;
-    private readonly scremActive = true;
-    private readonly synonymActive = true;
-    private readonly geckoInVCActive = true;
-    private readonly imageActive = true;
-    private readonly emojiActive = true;
-    private readonly pianoManActive = true;
-    private readonly hugActive = true;
-
-    private readonly yearbookActive = true;
-
-    private readonly testActive = true;
-    private readonly helpActive = true;
-
-    // TESTING:
-
-    // private readonly quotesActive = false;
-    // private readonly trackerActive = false;
-    // private readonly bdayActive = false;
-    // private readonly reactActive = false;
-    // private readonly nameChangerActive = false;
-    // private readonly roleManagerActive = false;
-    // private readonly scremActive = false;
-    // private readonly synonymActive = false;
-    // private readonly geckoInVCActive = false;
-    // private readonly imageActive = false;
-    // private readonly emojiActive = false;
-    // private readonly pianoManActive = false;
-    // private readonly hugActive = false;
+    // private readonly quotesActive = true;
+    // private readonly trackerActive = true;
+    // private readonly bdayActive = true;
+    // private readonly reactActive = true;
+    // private readonly nameChangerActive = true;
+    // private readonly roleManagerActive = true;
+    // private readonly scremActive = true;
+    // private readonly synonymActive = true;
+    // private readonly geckoInVCActive = true;
+    // private readonly imageActive = true;
+    // private readonly emojiActive = true;
+    // private readonly pianoManActive = true;
+    // private readonly hugActive = true;
 
     // private readonly yearbookActive = true;
 
-    // private readonly testActive = false;
-    // private readonly helpActive = false;
+    // private readonly testActive = true;
+    // private readonly helpActive = true;
+
+    // TESTING:
+
+    private readonly quotesActive = false;
+    private readonly trackerActive = false;
+    private readonly bdayActive = false;
+    private readonly reactActive = false;
+    private readonly nameChangerActive = false;
+    private readonly roleManagerActive = false;
+    private readonly scremActive = false;
+    private readonly synonymActive = false;
+    private readonly geckoInVCActive = false;
+    private readonly imageActive = false;
+    private readonly emojiActive = false;
+    private readonly pianoManActive = false;
+    private readonly hugActive = false;
+
+    private readonly yearbookActive = true;
+
+    private readonly testActive = false;
+    private readonly helpActive = false;
 
     private readonly clearCommands = true;
     private readonly mountCommands = true;
