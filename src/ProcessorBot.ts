@@ -68,7 +68,7 @@ export class ProcessorBot {
     private readonly yearbookActive = true;
 
     private readonly testActive = false;
-    private readonly helpActive = false;
+    private readonly helpActive = true;
 
     private readonly clearCommands = true;
     private readonly mountCommands = true;

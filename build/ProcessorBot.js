@@ -66,7 +66,7 @@ class ProcessorBot {
         this.hugActive = false;
         this.yearbookActive = true;
         this.testActive = false;
-        this.helpActive = false;
+        this.helpActive = true;
         this.clearCommands = true;
         this.mountCommands = true;
         this.modules = [];
