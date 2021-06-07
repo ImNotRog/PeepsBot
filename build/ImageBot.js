@@ -27,7 +27,7 @@ class ImageBot {
         this.imagesFolder = '1Bil_W-7kd43marLiwlL6nZ7nEZAUzKQ2';
         this.imagesSheet = '17iYieSC2zDKpxgSPqhk6fcJZQjVBvJFE5S5KS1IcON8';
         this.jackChannels = ['809143110302826497'];
-        this.approvedChannels = ['808469386746789938', '809143110302826497'];
+        this.approvedChannels = ['808469386746789938'];
         this.voting = ['Jack', 'Nature'];
         this.client = client;
         this.driveUser = new DriveUser_1.DriveUser(auth);

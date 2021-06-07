@@ -25,7 +25,7 @@ export class ImageBot implements Module {
 
     private readonly jackChannels = ['809143110302826497']
 
-    private approvedChannels = ['808469386746789938', '809143110302826497'];
+    private approvedChannels = ['808469386746789938'];
     private voting = ['Jack', 'Nature'];
     
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
