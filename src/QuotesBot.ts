@@ -131,8 +131,8 @@ export class QuotesBot implements Module {
                     })
                 }
             },
-            this.teacherCommand("Little"),
-            this.teacherCommand("Kinyanjui"),
+            // this.teacherCommand("Little"),
+            // this.teacherCommand("Kinyanjui"),
         ]
         // console.log(this.processContent(`"Grrr" - Lemon Think`))
         // console.log(this.processContent(`"Grrr" - Mr.Little`))
@@ -187,7 +187,7 @@ export class QuotesBot implements Module {
             } else {
                 message.channel.send({
                     embed: {
-                        description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing mumpsimus!",
+                        description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters.",
                         color: 1111111
                     }
                 })
@@ -272,14 +272,16 @@ export class QuotesBot implements Module {
         }
     }
 
-    processContent(content:string): {teacher:string, content:string}  {
-        let teacher = "Little";
+    processContent(content:string): {teacher:string|null, content:string|null}  {
+        let teacher = null;
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
             let things = teacher.split(/[ \.]/g).filter(a => a.length);
             teacher = things.join(' ');
 
             content = content.slice(0, content.lastIndexOf("-"));
+        } else {
+            return {teacher: null, content: null};
         }
 
         teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
@@ -293,8 +295,8 @@ export class QuotesBot implements Module {
         }
     }
     
-    validTeacher(teacher:string) {
-        return ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
+    validTeacher(teacher:string|null) {
+        return teacher && ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
 
     async onReaction(reaction: Discord.MessageReaction, user: any) {

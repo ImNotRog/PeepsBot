@@ -67,7 +67,7 @@ class ProcessorBot {
         // private readonly yearbookActive = false;
         // private readonly testActive = false;
         // private readonly helpActive = false;
-        this.clearCommands = true;
+        this.clearCommands = false;
         this.mountCommands = true;
         this.modules = [];
         if (this.quotesActive)
@@ -208,7 +208,7 @@ class ProcessorBot {
                         };
                     })
                 }
-            });
+            }).catch(err => console.log({ command, guildID }));
         });
     }
     MountCommandsOnServer(guildID) {
@@ -283,7 +283,7 @@ class ProcessorBot {
     getMountedCommandsOnServer(guildID) {
         return __awaiter(this, void 0, void 0, function* () {
             // @ts-ignore
-            return yield this.client.api.applications(this.client.user.id).guilds(guildID).commands.get();
+            return yield this.client.api.applications(this.client.user.id).guilds(guildID).commands.get().catch(() => { console.log(guildID); return []; });
         });
     }
     getMountedCommands() {

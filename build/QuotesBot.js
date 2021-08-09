@@ -128,8 +128,8 @@ class QuotesBot {
                     });
                 }
             },
-            this.teacherCommand("Little"),
-            this.teacherCommand("Kinyanjui"),
+            // this.teacherCommand("Little"),
+            // this.teacherCommand("Kinyanjui"),
         ];
         // console.log(this.processContent(`"Grrr" - Lemon Think`))
         // console.log(this.processContent(`"Grrr" - Mr.Little`))
@@ -183,7 +183,7 @@ class QuotesBot {
                 else {
                     message.channel.send({
                         embed: {
-                            description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters. Only the last name of the teacher and nothing else, you overdramatic overembellishing mumpsimus!",
+                            description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters.",
                             color: 1111111
                         }
                     });
@@ -257,12 +257,15 @@ class QuotesBot {
         });
     }
     processContent(content) {
-        let teacher = "Little";
+        let teacher = null;
         if (content.includes("-")) {
             teacher = content.slice(content.lastIndexOf('-') + 1);
             let things = teacher.split(/[ \.]/g).filter(a => a.length);
             teacher = things.join(' ');
             content = content.slice(0, content.lastIndexOf("-"));
+        }
+        else {
+            return { teacher: null, content: null };
         }
         teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
         if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
@@ -274,7 +277,7 @@ class QuotesBot {
         };
     }
     validTeacher(teacher) {
-        return ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
+        return teacher && ([...teacher].every(c => `abcdefghijklmnopqrstuvwxyz`.includes(c.toLowerCase()))) && teacher.length > 0 && teacher.length < 20;
     }
     onReaction(reaction, user) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -70,7 +70,7 @@ export class ProcessorBot {
     // private readonly testActive = false;
     // private readonly helpActive = false;
 
-    private readonly clearCommands = true;
+    private readonly clearCommands = false;
     private readonly mountCommands = true;
 
     public modules: Module[];
@@ -233,7 +233,7 @@ export class ProcessorBot {
                     }
                 })
             }
-        });
+        }).catch(err => console.log({command, guildID}));
     }
 
     async MountCommandsOnServer(guildID:string) {
@@ -303,7 +303,7 @@ export class ProcessorBot {
 
     async getMountedCommandsOnServer(guildID: string): Promise<MountedCommand[]> {
         // @ts-ignore
-        return await this.client.api.applications(this.client.user.id).guilds(guildID).commands.get();
+        return await this.client.api.applications(this.client.user.id).guilds(guildID).commands.get().catch(() => { console.log(guildID); return []});
     }
 
     async getMountedCommands(): Promise<MountedCommand[]> {
