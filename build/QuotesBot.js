@@ -181,12 +181,13 @@ class QuotesBot {
                     message.react('👍');
                 }
                 else {
-                    message.channel.send({
-                        embed: {
-                            description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters.",
-                            color: 1111111
-                        }
-                    });
+                    // message.channel.send({
+                    //     embed: {
+                    //         description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters.",
+                    //         color: 1111111
+                    //     }
+                    // })
+                    message.react('827975615986532403');
                 }
             }
             const result = ProcessMessage_1.PROCESS(message);
