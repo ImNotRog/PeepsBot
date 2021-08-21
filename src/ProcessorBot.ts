@@ -84,7 +84,7 @@ export class ProcessorBot {
     constructor(auth, db: FirebaseFirestore.Firestore, client: Discord.Client, MW: string) {
 
         this.modules = [];
-        if (this.quotesActive) this.modules.push(new QuotesBot(auth, client));
+        if (this.quotesActive) this.modules.push(new QuotesBot(auth, client, db));
         if (this.trackerActive) this.modules.push(new TrackerBot(auth));
         if (this.bdayActive) this.modules.push(new CalendarBot(auth, client));
         if (this.reactActive) this.modules.push(new ReactBot());

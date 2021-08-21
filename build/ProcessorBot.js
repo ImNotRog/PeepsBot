@@ -71,7 +71,7 @@ class ProcessorBot {
         this.mountCommands = true;
         this.modules = [];
         if (this.quotesActive)
-            this.modules.push(new QuotesBot_1.QuotesBot(auth, client));
+            this.modules.push(new QuotesBot_1.QuotesBot(auth, client, db));
         if (this.trackerActive)
             this.modules.push(new GroovyTrackerBot_1.TrackerBot(auth));
         if (this.bdayActive)
