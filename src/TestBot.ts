@@ -126,7 +126,7 @@ export class TestBot implements Module {
     async onMessage(message: Discord.Message): Promise<void> {
         
         // console.log(PROCESS(message));
-        
+         
     }
 
     async onConstruct(): Promise<void> {
