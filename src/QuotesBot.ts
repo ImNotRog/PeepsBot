@@ -3,27 +3,32 @@ import { Utilities } from "./Utilities";
 import Discord = require("discord.js");
 import { Command, Module } from "./Module";
 import { PROCESS } from "./ProcessMessage";
-import * as fs from "fs";
+import * as crypto from "crypto";
+
+type Quote = {
+    content: string;
+    link: string;
+    stars: number;
+    submittee: string;
+    timestamp: number;
+}
+
 export class QuotesBot implements Module {
     public name = "Quotes Bot";
 
-    private sheetsUser: SheetsUser;
     private client: Discord.Client;
-    private cache: Map<string, any[][]>;
+    private cache: Map<string, (Quote&{id: string})[]>;
     private readonly collectingChannels = ["754912483390652426", "756698378116530266", "811357805444857866", "811418821205819393"]
-    // private readonly littleservers = ["748669830244073533", "568220839590494209", "750066407093436509"];
     private readonly prefix: string = "--";
     public helpEmbed: { title: string; description: string; fields: { name: string; value: string; }[]; };
     public commands: Command[];
     
+    private db: FirebaseFirestore.Firestore;
 
-    constructor(auth, client: Discord.Client) {
-
-        let currmap = new Map();
-        currmap.set("quotes", "1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM");
-        this.sheetsUser = new SheetsUser(auth, currmap);
+    constructor(auth, client: Discord.Client, db: FirebaseFirestore.Firestore) {
 
         this.client = client;
+        this.db = db;
 
         this.cache = new Map();
 
@@ -43,6 +48,7 @@ export class QuotesBot implements Module {
             ]
         }
 
+        
         this.commands = [
             {
                 name: "Quote",
@@ -63,9 +69,9 @@ export class QuotesBot implements Module {
                 ],
                 available: () => true,
                 slashCallback: (invoke, channel, user, teacher:string, message?:string) => {
-                    teacher = teacher.charAt(0).toUpperCase() + teacher.slice(1).toLowerCase();
+                    teacher = teacher.toLowerCase();
                     if (this.availableTeachers(channel.guild).includes(teacher)) {
-                        let q = this.randomQuote(teacher);
+                        let q = this.randomQuote(teacher).content;
                         if (q.length > 400) {
                             q = q.slice(0, 400) + "... [quote truncated]";
                         }
@@ -86,9 +92,9 @@ export class QuotesBot implements Module {
                     
                 },
                 regularCallback: (message, teacher:string, m?:string) => {
-                    teacher = teacher.charAt(0).toUpperCase() + teacher.slice(1).toLowerCase();
+                    teacher = teacher.toLowerCase();
                     if (this.availableTeachers(message.guild).includes(teacher)) {
-                        let q = this.randomQuote(teacher);
+                        let q = this.randomQuote(teacher).content;
                         if (q.length > 400) {
                             q = q.slice(0, 400) + "... [quote truncated]";
                         }
@@ -97,8 +103,6 @@ export class QuotesBot implements Module {
                         } else {
                             message.channel.send(`${teacher}: ${q}`, { allowedMentions: { parse: [] } });
                         }
-
-                        // message.channel.send(q, {allowedMentions: {parse: []}})
                     } else {
                         message.channel.send({
                             embed: {
@@ -134,8 +138,7 @@ export class QuotesBot implements Module {
             // this.teacherCommand("Little"),
             // this.teacherCommand("Kinyanjui"),
         ]
-        // console.log(this.processContent(`"Grrr" - Lemon Think`))
-        // console.log(this.processContent(`"Grrr" - Mr.Little`))
+        
     }
 
     teacherCommand(teacher:string, available?: (guild:Discord.Guild) => boolean):Command {
@@ -152,7 +155,7 @@ export class QuotesBot implements Module {
             ],
             available: available ? available : (guild) => guild.id === "748669830244073533",
             callback: (message?:string) => {
-                let q = this.randomQuote(teacher);
+                let q = this.randomQuote(teacher).content;
                 if (q.length > 400) {
                     q = q.slice(0, 400) + "... [quote truncated]";
                 }
@@ -173,43 +176,43 @@ export class QuotesBot implements Module {
         if (guild.id === "748669830244073533") {
             return [...this.cache.keys()];
         } else {
-            return ["Little"];
+            return ["little"];
         }
     }
 
     async onMessage(message: Discord.Message): Promise<void> {
 
+        
         if (this.collectingChannels.indexOf(message.channel.id) !== -1 && !message.author.bot) {
             // Verify quote
             let { teacher } = this.processContent(message.content);
             if(this.validTeacher(teacher)) {
                 message.react('👍');
             } else {
-                // message.channel.send({
-                //     embed: {
-                //         description: "That's an invalid teacher! Please refrain from using numbers, spaces, or special characters.",
-                //         color: 1111111
-                //     }
-                // })
                 message.react('827975615986532403');
             }
         }
 
         const result = PROCESS(message);
         if(result) {
-            let teach = result.command[0].toUpperCase() + result.command.slice(1).toLowerCase();
+            const teach = result.command[0].toLowerCase();
             if(this.cache.has(teach)) {
                 if ( (teach === "Little") !== (message.guild.id === '748669830244073533')) {
-                    let q = this.randomQuote(teach);
+                    const q = this.randomQuote(teach).content;
 
                     message.channel.send(q.length < 400 ? q : q.slice(0, 400) + '... [quote truncated]', { allowedMentions: { parse: [] } });
                 }
             }
 
             if(result.command === "quotescache" && result.args.length === 1) {
-                const a = Utilities.capitilize(result.args[0]);
+                const a = result.args[0].toLowerCase();
                 if(this.cache.has(a)) {
-                    let str = this.cache.get(a).map(a => a.map(b => b.slice(0, 100)).join(' - ')).join('\n');
+                    let str = this.cache.get(a).map(quote => 
+                        quote.link === "UNAVAILABLE" ? 
+                            `${quote.content.slice(0,100)} - ${quote.stars}` :
+                            `[${quote.content.slice(0,100)}](${quote.link}) - ${quote.stars}`
+                        )
+                        .join('\n');
                     message.channel.send({
                         embed: {
                             title: `Quotes Cache for ${a}`,
@@ -219,47 +222,85 @@ export class QuotesBot implements Module {
                     })
                 }
             }
-
-            if (["quotes", "quotesheet", "quotessheet"].includes(result.command) && message.guild.id === '748669830244073533') {
-                message.channel.send({
-                    embed: {
-                        description: `[Link to the quotes.](https://docs.google.com/spreadsheets/d/1I7_QTvIuME6GDUvvDPomk4d2TJVneAzIlCGzrkUklEM/edit#gid=1331218902)`,
-                        color: 1111111
-                    }
-                }) 
-            }
         }
-
+        
     }
 
-    async addQuote(quote:string, teacher:string, stars:number) {
+    async addQuote(quote:string, teacher:string, stars:number, message: Discord.Message) {
         // console.log({quote,teacher,stars})
         if(this.cache.has(teacher)) {
-            await this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
-            this.cache.set(teacher, await this.sheetsUser.readSheet("quotes", teacher));
+            // match quote
+            const qs = this.cache.get(teacher);
+            const match = qs.find( ({link}) => link === message.url) ?? qs.find(({content}) => content === quote);
+
+
+            if(match) {
+
+                match.stars = stars;
+
+                const qobj = {...match};
+                delete qobj.id;
+                
+                await this.db.collection('Quotes').doc(teacher).update({
+                    [match.id]: {
+                        ...qobj
+                    }
+                })
+            } else {
+                const id = (crypto.randomBytes(24).toString('hex'));
+
+                const qobj: Quote = {
+                    content: quote, 
+                    link: message.url, 
+                    stars,
+                    submittee: message.author.id,
+                    timestamp: message.createdTimestamp
+                }
+
+                this.cache.get(teacher).push({
+                    ...qobj,
+                    id
+                })
+
+                await this.db.collection('Quotes').doc(teacher).update({
+                    [id]: qobj
+                })
+            }
         } else {
-            await this.sheetsUser.createSubsheet( "quotes", teacher, {
-                columnResize: [800,100],
-                headers: ["Quote", "Number"]
-            });
-            await this.sheetsUser.addWithoutDuplicates("quotes", teacher, [quote, stars], [true, "CHANGE"]);
-            this.cache.set(teacher, await this.sheetsUser.readSheet("quotes", teacher));
+            const id = (crypto.randomBytes(24).toString('hex'));
+            const qobj: Quote = {
+                content: quote,
+                link: message.url,
+                stars,
+                submittee: message.author.id,
+                timestamp: message.createdTimestamp
+            }
+            this.cache.set(teacher, [{...qobj, id}]);
+            await this.db.collection('Quotes').doc(teacher).set({
+                [id]: qobj
+            })
         }
     }
 
     async onConstruct(): Promise<void> {
 
-        await this.sheetsUser.onConstruct();
-        fs.writeFileSync("./temp/test.txt", (await this.sheetsUser.getSubsheets("quotes")).join("\n"));
+        const qcol = this.db.collection('Quotes');
+        const data = (await qcol.get()).docs;
+        for(const doc of data) {
+            const category = doc.id;
+            const obj = doc.data();
 
-        let valueranges = await this.sheetsUser.bulkRead("quotes");
+            let arr = [];
 
-        for (const valuerange of valueranges) {
-            let range = valuerange.range;
-            if (range) {
-                let cat = range.slice(0, range.lastIndexOf('!')).replace(/['"]/g, '');
-                this.cache.set(cat, valuerange.values);
+            for(const id in obj) {
+                const datum = obj[id];
+                arr.push({
+                    ...datum,
+                    id
+                })
             }
+
+            this.cache.set(category, arr);
         }
 
         for (const id of this.collectingChannels) {
@@ -285,7 +326,7 @@ export class QuotesBot implements Module {
             return {teacher: null, content: null};
         }
 
-        teacher = teacher[0].toUpperCase() + teacher.slice(1).toLowerCase();
+        teacher = teacher.toLowerCase();
 
         if (content.includes(`"`) && content.indexOf(`"`) !== content.lastIndexOf(`"`)) {
             content = content.slice(content.indexOf(`"`) + 1, content.lastIndexOf(`"`));
@@ -317,27 +358,27 @@ export class QuotesBot implements Module {
             if(this.validTeacher(teacher)) {
                 // console.log(`${content} -- ${teacher} has ${reaction.count} stars.`);
 
-                this.addQuote(content, teacher, reaction.count-1);
+                this.addQuote(content, teacher, reaction.count-1, reaction.message);
             }
         }
 
 
     }
     
-    randomQuote(teacher:string):string {
+    randomQuote(teacher:string):Quote {
         let total = 0;
         let cache = this.cache.get(teacher);
-        for(let i = 1; i < cache.length; i++) {
-            total += parseInt(cache[i][1]);
+        for(const quote of cache) {
+            total += Math.max(quote.stars,0);
         }
 
         let rand = Math.random() * total;
-        for (let i = 1; i < cache.length; i++) {
-            rand -= parseInt(cache[i][1]);
-            if(rand < 0) {
-                return cache[i][0];
+        for (const quote of cache) {
+            rand -= Math.max(quote.stars, 0);
+            if(rand <= 0) {
+                return quote;
             }
         }
-        return "Uh oh, something went wrong."
+        throw "Uh oh, something went wrong."
     }
 }
