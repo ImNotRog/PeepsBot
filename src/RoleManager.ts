@@ -12,7 +12,7 @@ export class RoleManagerBot implements Module {
     private readonly approvedChannels = ["750804960333135914", "748670606085587060"];
     private readonly fperbio = "748669830244073533";
     private readonly entrancechannel = "750186607352479755";
-    private readonly messageids = ["815007707467612221", "815007708528377867"];
+    private readonly messageids = ["878705754541002862", "878705778427572284", "878705824447488021", "878705849231605822"];
     private numvotes = 3;
     private prefix = `--`;
     private server:Discord.Guild;
@@ -177,7 +177,6 @@ export class RoleManagerBot implements Module {
             for (const messageid of this.messageids) {
                 this.messages.push(await channel.messages.fetch(messageid));
             }
-
         }
 
         await this.cacheRoles();
@@ -196,22 +195,27 @@ export class RoleManagerBot implements Module {
 
         let i = 0;
 
-        this.roledivs = [];
+        this.roledivs = Array(this.messageids.length).fill([]);
+        let divi = 0;
         while (i < this.colorroles.length) {
-            this.roledivs.push(this.colorroles.slice(i, i + this.alpha.length));
+            this.roledivs[divi] = (this.colorroles.slice(i, i + this.alpha.length));
             i += this.alpha.length;
+            divi++;
         }
 
         for (let i = 0; i < this.roledivs.length; i++) {
-            let currroles = this.roledivs[i].map((role, index) => ` ${this.alpha[index]}: <@&${role.id}>`);
-            let length = currroles.length;
+
+            const rd = this.roledivs[i];
 
             let cols = 3;
-            let parts = Array(cols).fill(0).map((zero, index) => currroles.slice(index * length / cols, (index + 1) * length / cols));
+            let parts = Array(cols).fill(0).map(() => []);
+            for (let j = 0; j < rd.length; j++) {
+                parts[j % 3].push(`${this.alpha[j]}: <@&${rd[j].id}>`)
+            }
 
-            let newparts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.join("\n") } });
+            let newparts = parts.map((value, index) => { return { name: `Column ${index + 1}`, inline: true, value: value.length > 0 ? value.join("\n") : `N/A` } });
             
-            let alphalength = this.roledivs[i].length;
+            let alphalength = rd.length;
 
             for(let j = 0; j < alphalength; j++) {
                 this.messages[i].react(this.alpha[j]);

@@ -131,6 +131,13 @@ export class TestBot implements Module {
 
     async onConstruct(): Promise<void> {
 
+        // const ref = fs.readFileSync('./temp/ref.txt').toString();
+        // const syllabus = await this.client.channels.fetch("750186607352479755");
+
+        // if(syllabus.isText()){
+        //     syllabus.send(ref);
+        // }
+
         // const fpbg = await this.client.guilds.fetch("748669830244073533");
         // let allemotes = [...fpbg.emojis.cache.values()].filter(emote => !emote.animated).slice(40,50);
 
